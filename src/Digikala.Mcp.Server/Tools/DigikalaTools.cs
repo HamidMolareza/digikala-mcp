@@ -70,6 +70,56 @@ public sealed class SearchProductsTool(SearchProductsService service, ILogger<Se
 }
 
 [McpServerToolType]
+public sealed class RecommendProductsForNeedTool(
+    RecommendProductsForNeedService service,
+    ILogger<RecommendProductsForNeedTool> logger)
+{
+    [McpServerTool, Description("Recommend products for a natural-language shopping need using Digikala data only, with transparent evidence.")]
+    public Task<ProductNeedRecommendationsDto> recommend_products_for_need(
+        [Description("Natural-language shopping need or constraint set.")] string needDescription,
+        [Description("Category slug, e.g. 'personal-care' or 'mobile-phone'. Null for all categories.")] string? categorySlug = null,
+        [Description("Maximum number of recommendations to return.")] int limit = 5,
+        [Description("Only return currently available products when true.")] bool? onlyAvailable = true,
+        [Description("Optional minimum rating threshold, e.g. 4.0")] double? minRating = null,
+        [Description("Optional minimum review count threshold, e.g. 30")] int? minReviewCount = null,
+        [Description("Optional minimum selling price in rials.")] long? minPriceRials = null,
+        [Description("Optional maximum selling price in rials.")] long? maxPriceRials = null,
+        [Description("Terms to positively boost when ranking candidates.")] string[]? preferTerms = null,
+        [Description("Terms to penalize when ranking candidates.")] string[]? avoidTerms = null,
+        [Description("Include review-derived evidence and snippets in the recommendation response.")] bool includeEvidence = true,
+        CancellationToken ct = default)
+    {
+        logger.LogInformation(
+            "Tool recommend_products_for_need invoked: needDescription={NeedDescription}, category={Category}, limit={Limit}, onlyAvailable={OnlyAvailable}, minRating={MinRating}, minReviewCount={MinReviewCount}, minPriceRials={MinPriceRials}, maxPriceRials={MaxPriceRials}, preferTerms={PreferTerms}, avoidTerms={AvoidTerms}, includeEvidence={IncludeEvidence}",
+            needDescription,
+            categorySlug,
+            limit,
+            onlyAvailable,
+            minRating,
+            minReviewCount,
+            minPriceRials,
+            maxPriceRials,
+            preferTerms,
+            avoidTerms,
+            includeEvidence);
+
+        return service.ExecuteAsync(
+            needDescription,
+            categorySlug,
+            limit,
+            onlyAvailable,
+            minRating,
+            minReviewCount,
+            minPriceRials,
+            maxPriceRials,
+            preferTerms,
+            avoidTerms,
+            includeEvidence,
+            ct);
+    }
+}
+
+[McpServerToolType]
 public sealed class GetProductFeedbackSummaryTool(GetProductFeedbackSummaryService service, ILogger<GetProductFeedbackSummaryTool> logger)
 {
     [McpServerTool, Description("Return compact evidence-based feedback signals for one product using detail and review data.")]
