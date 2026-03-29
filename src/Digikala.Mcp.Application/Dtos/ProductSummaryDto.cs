@@ -18,4 +18,5 @@ public record ProductSummaryDto
     public string? CategorySlug { get; init; }
     public bool IsAvailable { get; init; }
     public string Url { get; init; } = string.Empty;
+    public double? SearchScore { get; set; }
 }

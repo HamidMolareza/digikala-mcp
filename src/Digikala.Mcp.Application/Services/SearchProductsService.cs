@@ -13,6 +13,13 @@ public sealed class SearchProductsService(IDigikalaApiClient apiClient, ICacheSt
         string? categorySlug = null,
         int page = 1,
         int? sort = null,
+        double? minRating = null,
+        int? minReviewCount = null,
+        bool? onlyAvailable = null,
+        long? minPriceRials = null,
+        long? maxPriceRials = null,
+        int? limit = null,
+        bool prioritizeBestMatch = true,
         CancellationToken ct = default)
     {
         var normalizedCategorySlug = string.IsNullOrWhiteSpace(categorySlug) ? "search" : categorySlug.Trim();
@@ -21,7 +28,14 @@ public sealed class SearchProductsService(IDigikalaApiClient apiClient, ICacheSt
             ("query", query),
             ("category", normalizedCategorySlug),
             ("page", page),
-            ("sort", sort));
+            ("sort", sort),
+            ("minRating", minRating),
+            ("minReviewCount", minReviewCount),
+            ("onlyAvailable", onlyAvailable),
+            ("minPriceRials", minPriceRials),
+            ("maxPriceRials", maxPriceRials),
+            ("limit", limit),
+            ("prioritizeBestMatch", prioritizeBestMatch));
 
         return await ToolExecutionHelper.GetOrCreateAsync(
             cache,
@@ -36,8 +50,83 @@ public sealed class SearchProductsService(IDigikalaApiClient apiClient, ICacheSt
                     query: query,
                     ct: token);
 
-                return mapper.MapToSearchResult(response);
+                var result = mapper.MapToSearchResult(response);
+                var appliedFilters = new List<string>();
+
+                IEnumerable<ProductSummaryDto> products = result.Products;
+
+                if (minRating is not null)
+                {
+                    appliedFilters.Add($"min_rating>={minRating:0.0}");
+                    products = products.Where(item => (item.Rating ?? 0) >= minRating.Value);
+                }
+
+                if (minReviewCount is not null)
+                {
+                    appliedFilters.Add($"min_review_count>={minReviewCount}");
+                    products = products.Where(item => item.ReviewCount >= minReviewCount.Value);
+                }
+
+                if (onlyAvailable is not null)
+                {
+                    appliedFilters.Add($"only_available={onlyAvailable.Value}");
+                    products = products.Where(item => item.IsAvailable == onlyAvailable.Value);
+                }
+
+                if (minPriceRials is not null)
+                {
+                    appliedFilters.Add($"min_price_rials>={minPriceRials}");
+                    products = products.Where(item => item.PriceRials >= minPriceRials.Value);
+                }
+
+                if (maxPriceRials is not null)
+                {
+                    appliedFilters.Add($"max_price_rials<={maxPriceRials}");
+                    products = products.Where(item => item.PriceRials <= maxPriceRials.Value);
+                }
+
+                var rankedProducts = products
+                    .Select(item =>
+                    {
+                        item.SearchScore = CalculateSearchScore(item);
+                        return item;
+                    });
+
+                if (prioritizeBestMatch)
+                {
+                    appliedFilters.Add("prioritize_best_match=true");
+                    rankedProducts = rankedProducts
+                        .OrderByDescending(item => item.SearchScore ?? double.MinValue)
+                        .ThenByDescending(item => item.Rating ?? 0)
+                        .ThenByDescending(item => item.ReviewCount)
+                        .ThenBy(item => item.PriceRials == 0 ? long.MaxValue : item.PriceRials);
+                }
+
+                var materialized = rankedProducts.ToList();
+                if (limit is > 0)
+                {
+                    appliedFilters.Add($"limit={limit}");
+                    materialized = materialized.Take(limit.Value).ToList();
+                }
+
+                return result with
+                {
+                    Products = materialized,
+                    BestMatch = materialized.FirstOrDefault(),
+                    FilteredCount = materialized.Count,
+                    AppliedFilters = appliedFilters,
+                };
             },
             ct);
+    }
+
+    private static double CalculateSearchScore(ProductSummaryDto product)
+    {
+        var ratingComponent = (product.Rating ?? 0d) * 100d;
+        var reviewConfidence = Math.Log10(Math.Max(1, product.ReviewCount)) * 20d;
+        var availabilityBonus = product.IsAvailable ? 15d : 0d;
+        var pricePenalty = product.PriceRials > 0 ? Math.Min(product.PriceRials / 10_000_000d, 15d) : 0d;
+
+        return ratingComponent + reviewConfidence + availabilityBonus - pricePenalty;
     }
 }

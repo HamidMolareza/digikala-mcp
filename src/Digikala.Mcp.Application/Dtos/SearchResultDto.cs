@@ -5,9 +5,12 @@ public sealed record SearchResultDto
     public bool IsStale { get; set; }
     public string? Warning { get; set; }
     public List<ProductSummaryDto> Products { get; init; } = [];
+    public ProductSummaryDto? BestMatch { get; set; }
     public int TotalCount { get; init; }
+    public int FilteredCount { get; set; }
     public int CurrentPage { get; init; }
     public int TotalPages { get; init; }
+    public List<string> AppliedFilters { get; set; } = [];
     public List<FilterGroupDto> AvailableFilters { get; init; } = [];
     public List<string> AvailableSortOptions { get; init; } = [];
 }

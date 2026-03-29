@@ -15,10 +15,42 @@ public sealed class SearchProductsTool(SearchProductsService service, ILogger<Se
         [Description("Category slug, e.g. 'mobile-phone'. Null for all categories.")] string? categorySlug = null,
         [Description("Page number, starting from 1")] int page = 1,
         [Description("Sort: 1=relevance, 4=popular, 7=cheapest, 8=expensive, 25=best-selling, 27=newest")] int? sort = null,
+        [Description("Optional minimum rating threshold, e.g. 4.5")] double? minRating = null,
+        [Description("Optional minimum review count threshold, e.g. 500")] int? minReviewCount = null,
+        [Description("Only return currently available products when true.")] bool? onlyAvailable = null,
+        [Description("Optional minimum selling price in rials.")] long? minPriceRials = null,
+        [Description("Optional maximum selling price in rials.")] long? maxPriceRials = null,
+        [Description("Maximum number of products to keep after filtering and ranking.")] int? limit = null,
+        [Description("Rank matches to surface the best overall choice first.")] bool prioritizeBestMatch = true,
         CancellationToken ct = default)
     {
-        logger.LogInformation("Tool search_products invoked: query={Query}, category={Category}, page={Page}, sort={Sort}", query, categorySlug, page, sort);
-        return service.ExecuteAsync(query, categorySlug, page, sort, ct);
+        logger.LogInformation(
+            "Tool search_products invoked: query={Query}, category={Category}, page={Page}, sort={Sort}, minRating={MinRating}, minReviewCount={MinReviewCount}, onlyAvailable={OnlyAvailable}, minPriceRials={MinPriceRials}, maxPriceRials={MaxPriceRials}, limit={Limit}, prioritizeBestMatch={PrioritizeBestMatch}",
+            query,
+            categorySlug,
+            page,
+            sort,
+            minRating,
+            minReviewCount,
+            onlyAvailable,
+            minPriceRials,
+            maxPriceRials,
+            limit,
+            prioritizeBestMatch);
+
+        return service.ExecuteAsync(
+            query,
+            categorySlug,
+            page,
+            sort,
+            minRating,
+            minReviewCount,
+            onlyAvailable,
+            minPriceRials,
+            maxPriceRials,
+            limit,
+            prioritizeBestMatch,
+            ct);
     }
 }
 
