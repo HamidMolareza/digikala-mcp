@@ -37,38 +37,56 @@ public sealed class SqliteCacheStore : ICacheStore
     {
         var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         await using var context = await _dbContextFactory.CreateDbContextAsync(ct);
-        var bytes = await context.CacheEntries
+        var entry = await context.CacheEntries
             .AsNoTracking()
             .Where(item => item.Key == key && item.ExpiresAt > now)
-            .Select(item => item.Value)
+            .Select(item => new { item.Key, item.Value })
             .SingleOrDefaultAsync(ct);
 
-        if (bytes is null)
+        if (entry is null)
         {
             _logger.LogDebug("Cache MISS: {Key}", key);
             return null;
         }
 
-        _logger.LogDebug("Cache HIT: {Key}", key);
-        return JsonSerializer.Deserialize<T>(bytes);
+        try
+        {
+            _logger.LogDebug("Cache HIT: {Key}", key);
+            return JsonSerializer.Deserialize<T>(entry.Value);
+        }
+        catch (Exception exception) when (exception is JsonException or NotSupportedException)
+        {
+            _logger.LogWarning(exception, "Discarding unreadable cache entry for {Key}", key);
+            await RemoveAsync(entry.Key, ct);
+            return null;
+        }
     }
 
     public async Task<T?> GetStaleAsync<T>(string key, CancellationToken ct = default) where T : class
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync(ct);
-        var bytes = await context.CacheEntries
+        var entry = await context.CacheEntries
             .AsNoTracking()
             .Where(item => item.Key == key)
-            .Select(item => item.Value)
+            .Select(item => new { item.Key, item.Value })
             .SingleOrDefaultAsync(ct);
 
-        if (bytes is null)
+        if (entry is null)
         {
             return null;
         }
 
-        _logger.LogWarning("Serving stale cache entry for {Key}", key);
-        return JsonSerializer.Deserialize<T>(bytes);
+        try
+        {
+            _logger.LogWarning("Serving stale cache entry for {Key}", key);
+            return JsonSerializer.Deserialize<T>(entry.Value);
+        }
+        catch (Exception exception) when (exception is JsonException or NotSupportedException)
+        {
+            _logger.LogWarning(exception, "Discarding unreadable stale cache entry for {Key}", key);
+            await RemoveAsync(entry.Key, ct);
+            return null;
+        }
     }
 
     public async Task SetAsync<T>(string key, T value, CacheTier tier, CancellationToken ct = default) where T : class
@@ -89,29 +107,36 @@ public sealed class SqliteCacheStore : ICacheStore
         var expiresAt = now + (ttlMinutes * 60);
         var bytes = JsonSerializer.SerializeToUtf8Bytes(value);
 
-        await using var context = await _dbContextFactory.CreateDbContextAsync(ct);
-        var existing = await context.CacheEntries.SingleOrDefaultAsync(item => item.Key == key, ct);
-        if (existing is null)
+        try
         {
-            context.CacheEntries.Add(new CacheEntry
+            await using var context = await _dbContextFactory.CreateDbContextAsync(ct);
+            var existing = await context.CacheEntries.SingleOrDefaultAsync(item => item.Key == key, ct);
+            if (existing is null)
             {
-                Key = key,
-                Value = bytes,
-                Tier = tier.ToString(),
-                ExpiresAt = expiresAt,
-                CreatedAt = now,
-            });
-        }
-        else
-        {
-            existing.Value = bytes;
-            existing.Tier = tier.ToString();
-            existing.ExpiresAt = expiresAt;
-            existing.CreatedAt = now;
-        }
+                context.CacheEntries.Add(new CacheEntry
+                {
+                    Key = key,
+                    Value = bytes,
+                    Tier = tier.ToString(),
+                    ExpiresAt = expiresAt,
+                    CreatedAt = now,
+                });
+            }
+            else
+            {
+                existing.Value = bytes;
+                existing.Tier = tier.ToString();
+                existing.ExpiresAt = expiresAt;
+                existing.CreatedAt = now;
+            }
 
-        await context.SaveChangesAsync(ct);
-        _logger.LogDebug("Cache SET: {Key} tier={Tier} ttl={Ttl}m", key, tier, ttlMinutes);
+            await context.SaveChangesAsync(ct);
+            _logger.LogDebug("Cache SET: {Key} tier={Tier} ttl={Ttl}m", key, tier, ttlMinutes);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "Cache SET failed for {Key}", key);
+        }
     }
 
     public async Task RemoveAsync(string key, CancellationToken ct = default)

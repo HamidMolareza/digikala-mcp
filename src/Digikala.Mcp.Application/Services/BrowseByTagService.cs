@@ -14,7 +14,7 @@ public sealed class BrowseByTagService(IDigikalaApiClient apiClient, ICacheStore
         CancellationToken ct = default)
     {
         var cacheKey = ToolExecutionHelper.CreateCacheKey("browse_by_tag", ("tag", tagSlug), ("page", page));
-        return await ToolExecutionHelper.GetOrCreateAsync(
+        return await ToolExecutionHelper.GetOrCreateWithStaleFallbackAsync(
             cache,
             cacheKey,
             CacheTier.MediumTerm,

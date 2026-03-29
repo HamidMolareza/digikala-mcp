@@ -14,7 +14,7 @@ public sealed class GetProductRecommendationsService(IDigikalaApiClient apiClien
         CancellationToken ct = default)
     {
         var cacheKey = ToolExecutionHelper.CreateCacheKey("get_product_recommendations", ("productId", productId), ("offset", offset));
-        return await ToolExecutionHelper.GetOrCreateAsync(
+        return await ToolExecutionHelper.GetOrCreateWithStaleFallbackAsync(
             cache,
             cacheKey,
             CacheTier.MediumTerm,

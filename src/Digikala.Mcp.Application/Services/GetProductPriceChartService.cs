@@ -13,7 +13,7 @@ public sealed class GetProductPriceChartService(IDigikalaApiClient apiClient, IC
         CancellationToken ct = default)
     {
         var cacheKey = ToolExecutionHelper.CreateCacheKey("get_product_price_chart", ("productId", productId));
-        return await ToolExecutionHelper.GetOrCreateAsync(
+        return await ToolExecutionHelper.GetOrCreateWithStaleFallbackAsync(
             cache,
             cacheKey,
             CacheTier.ShortTerm,

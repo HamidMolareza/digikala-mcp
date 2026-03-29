@@ -14,7 +14,7 @@ public sealed class GetProductQuestionsService(IDigikalaApiClient apiClient, ICa
         CancellationToken ct = default)
     {
         var cacheKey = ToolExecutionHelper.CreateCacheKey("get_product_questions", ("productId", productId), ("page", page));
-        return await ToolExecutionHelper.GetOrCreateAsync(
+        return await ToolExecutionHelper.GetOrCreateWithStaleFallbackAsync(
             cache,
             cacheKey,
             CacheTier.ShortTerm,

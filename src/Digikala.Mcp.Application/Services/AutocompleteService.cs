@@ -13,7 +13,7 @@ public sealed class AutocompleteService(IDigikalaApiClient apiClient, ICacheStor
         CancellationToken ct = default)
     {
         var cacheKey = ToolExecutionHelper.CreateCacheKey("autocomplete", ("q", query));
-        return await ToolExecutionHelper.GetOrCreateAsync(
+        return await ToolExecutionHelper.GetOrCreateWithStaleFallbackAsync(
             cache,
             cacheKey,
             CacheTier.ShortTerm,

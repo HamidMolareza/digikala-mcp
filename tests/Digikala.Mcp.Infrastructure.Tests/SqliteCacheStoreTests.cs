@@ -90,6 +90,45 @@ public class SqliteCacheStoreTests : IAsyncDisposable
         Assert.NotNull(stale);
         Assert.Equal("stale", stale.Name);
     }
+
+    [Fact]
+    public async Task Get_ShouldDiscardUnreadableEntry()
+    {
+        await using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+        {
+            await connection.OpenAsync();
+            await using var command = connection.CreateCommand();
+            command.CommandText = """
+                INSERT INTO cache_entries (key, value, tier, expires_at, created_at)
+                VALUES (@key, @value, @tier, @expiresAt, @createdAt)
+                """;
+            command.Parameters.AddWithValue("@key", "broken-key");
+            command.Parameters.AddWithValue("@value", new byte[] { 0x01, 0x02, 0x03 });
+            command.Parameters.AddWithValue("@tier", CacheTier.ShortTerm.ToString());
+            command.Parameters.AddWithValue("@expiresAt", DateTimeOffset.UtcNow.AddMinutes(5).ToUnixTimeSeconds());
+            command.Parameters.AddWithValue("@createdAt", DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+            await command.ExecuteNonQueryAsync();
+        }
+
+        var result = await _cache.GetAsync<TestData>("broken-key");
+        var stale = await _cache.GetStaleAsync<TestData>("broken-key");
+
+        Assert.Null(result);
+        Assert.Null(stale);
+    }
+
+    [Fact]
+    public async Task RemoveByTier_ShouldDeleteOnlyMatchingTier()
+    {
+        await _cache.SetAsync("short-key", new TestData("short", 1), CacheTier.ShortTerm);
+        await _cache.SetAsync("long-key", new TestData("long", 2), CacheTier.LongTerm);
+
+        await _cache.RemoveByTierAsync(CacheTier.ShortTerm);
+
+        Assert.Null(await _cache.GetStaleAsync<TestData>("short-key"));
+        Assert.NotNull(await _cache.GetAsync<TestData>("long-key"));
+    }
+
     public ValueTask DisposeAsync()
     {
         if (File.Exists(_dbPath)) File.Delete(_dbPath);

@@ -13,7 +13,7 @@ public sealed class GetCategoryLandingService(IDigikalaApiClient apiClient, ICac
         CancellationToken ct = default)
     {
         var cacheKey = ToolExecutionHelper.CreateCacheKey("get_category_landing", ("category", categorySlug));
-        return await ToolExecutionHelper.GetOrCreateAsync(
+        return await ToolExecutionHelper.GetOrCreateWithStaleFallbackAsync(
             cache,
             cacheKey,
             CacheTier.LongTerm,

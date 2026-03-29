@@ -71,7 +71,7 @@ public sealed class SearchProductsService(IDigikalaApiClient apiClient, ICacheSt
 
         try
         {
-            return await ToolExecutionHelper.GetOrCreateAsync(
+            return await ToolExecutionHelper.GetOrCreateWithStaleFallbackAsync(
                 cache,
                 cacheKey,
                 CacheTier.ShortTerm,

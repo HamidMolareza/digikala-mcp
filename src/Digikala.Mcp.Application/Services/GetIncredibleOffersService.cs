@@ -13,7 +13,7 @@ public sealed class GetIncredibleOffersService(IDigikalaApiClient apiClient, ICa
         CancellationToken ct = default)
     {
         var cacheKey = ToolExecutionHelper.CreateCacheKey("get_incredible_offers", ("page", page));
-        return await ToolExecutionHelper.GetOrCreateAsync(
+        return await ToolExecutionHelper.GetOrCreateWithStaleFallbackAsync(
             cache,
             cacheKey,
             CacheTier.ShortTerm,

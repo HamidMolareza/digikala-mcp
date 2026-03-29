@@ -13,7 +13,7 @@ public sealed class GetBrandPageService(IDigikalaApiClient apiClient, ICacheStor
         CancellationToken ct = default)
     {
         var cacheKey = ToolExecutionHelper.CreateCacheKey("get_brand_page", ("brand", brandSlug));
-        return await ToolExecutionHelper.GetOrCreateAsync(
+        return await ToolExecutionHelper.GetOrCreateWithStaleFallbackAsync(
             cache,
             cacheKey,
             CacheTier.MediumTerm,

@@ -12,7 +12,7 @@ public sealed class GetSellerVouchersService(IDigikalaApiClient apiClient, ICach
         CancellationToken ct = default)
     {
         var cacheKey = ToolExecutionHelper.CreateCacheKey("get_seller_vouchers", ("productId", productId));
-        return await ToolExecutionHelper.GetOrCreateAsync(
+        return await ToolExecutionHelper.GetOrCreateWithStaleFallbackAsync(
             cache,
             cacheKey,
             CacheTier.ShortTerm,

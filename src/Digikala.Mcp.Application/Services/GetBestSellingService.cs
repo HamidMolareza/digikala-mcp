@@ -14,7 +14,7 @@ public sealed class GetBestSellingService(IDigikalaApiClient apiClient, ICacheSt
         CancellationToken ct = default)
     {
         var cacheKey = ToolExecutionHelper.CreateCacheKey("get_best_selling", ("categoryId", categoryId), ("lastDays", lastDays));
-        return await ToolExecutionHelper.GetOrCreateAsync(
+        return await ToolExecutionHelper.GetOrCreateWithStaleFallbackAsync(
             cache,
             cacheKey,
             CacheTier.MediumTerm,

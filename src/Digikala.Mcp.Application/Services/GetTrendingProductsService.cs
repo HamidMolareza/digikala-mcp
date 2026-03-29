@@ -11,7 +11,7 @@ public sealed class GetTrendingProductsService(IDigikalaApiClient apiClient, ICa
     public async Task<List<ProductSummaryDto>> ExecuteAsync(CancellationToken ct = default)
     {
         const string cacheKey = "get_trending_products";
-        return await ToolExecutionHelper.GetOrCreateAsync(
+        return await ToolExecutionHelper.GetOrCreateWithStaleFallbackAsync(
             cache,
             cacheKey,
             CacheTier.ShortTerm,

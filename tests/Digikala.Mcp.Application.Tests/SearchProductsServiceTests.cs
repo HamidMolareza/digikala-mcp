@@ -190,4 +190,115 @@ public class SearchProductsServiceTests
         Assert.Equal(0, result.FilteredCount);
         Assert.NotNull(result.Warning);
     }
+
+    [Fact]
+    public async Task ExecuteAsync_ShouldReturnFreshResult_WhenCacheWriteFails()
+    {
+        using var document = JsonDocument.Parse("""
+            {
+              "status": 200,
+              "data": {
+                "products": [
+                  {
+                    "id": 1,
+                    "title_fa": "گوشی موبایل",
+                    "status": "marketable",
+                    "rating": { "rate": 4.7, "count": 650 },
+                    "default_variant": { "price": { "selling_price": 400000000 } },
+                    "url": { "uri": "/a" },
+                    "images": []
+                  }
+                ],
+                "pager": { "current_page": 1, "total_pages": 1, "total_items": 1 },
+                "filters": [],
+                "sort_options": []
+              }
+            }
+            """);
+
+        _cacheStore.GetAsync<SearchResultDto>(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns((SearchResultDto?)null);
+        _cacheStore.SetAsync(Arg.Any<string>(), Arg.Any<SearchResultDto>(), Arg.Any<Digikala.Mcp.Domain.Enums.CacheTier>(), Arg.Any<CancellationToken>())
+            .Returns<Task>(_ => throw new InvalidOperationException("cache write failed"));
+        _apiClient.SearchCategoryAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<Dictionary<string, string[]>?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(document);
+
+        var result = await _service.ExecuteAsync("iphone");
+
+        Assert.Single(result.Products);
+        Assert.Equal(1, result.TotalCount);
+        await _apiClient.Received(1).SearchCategoryAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<Dictionary<string, string[]>?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_ShouldReuseCacheKey_WhenPreferredTermsOrderDiffers()
+    {
+        var cache = new MemoryCacheStore();
+        var service = new SearchProductsService(_apiClient, cache, new ProductMapper());
+        using var document = JsonDocument.Parse("""
+            {
+              "status": 200,
+              "data": {
+                "products": [
+                  {
+                    "id": 1,
+                    "title_fa": "شامپو روزانه ملایم بدون سولفات",
+                    "status": "marketable",
+                    "rating": { "rate": 4.6, "count": 800 },
+                    "default_variant": { "price": { "selling_price": 2600000 } },
+                    "url": { "uri": "/b" },
+                    "images": []
+                  }
+                ],
+                "pager": { "current_page": 1, "total_pages": 1, "total_items": 1 },
+                "filters": [],
+                "sort_options": []
+              }
+            }
+            """);
+
+        _apiClient.SearchCategoryAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<Dictionary<string, string[]>?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(document);
+
+        var first = await service.ExecuteAsync(
+            "شامپو",
+            preferTerms: ["ملایم", "روزانه", "بدون سولفات"],
+            avoidTerms: ["کنترل کننده چربی قوی", "ضد شوره"]);
+        var second = await service.ExecuteAsync(
+            "شامپو",
+            preferTerms: ["بدون سولفات", "روزانه", "ملایم"],
+            avoidTerms: ["ضد شوره", "کنترل کننده چربی قوی"]);
+
+        Assert.Single(first.Products);
+        Assert.Single(second.Products);
+        await _apiClient.Received(1).SearchCategoryAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<Dictionary<string, string[]>?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>());
+    }
+
+    private sealed class MemoryCacheStore : ICacheStore
+    {
+        private readonly Dictionary<string, object> _entries = new(StringComparer.Ordinal);
+
+        public Task CleanupExpiredAsync(CancellationToken ct = default) => Task.CompletedTask;
+
+        public Task<T?> GetAsync<T>(string key, CancellationToken ct = default) where T : class =>
+            Task.FromResult(_entries.TryGetValue(key, out var value) ? value as T : null);
+
+        public Task<T?> GetStaleAsync<T>(string key, CancellationToken ct = default) where T : class =>
+            Task.FromResult(_entries.TryGetValue(key, out var value) ? value as T : null);
+
+        public Task RemoveAsync(string key, CancellationToken ct = default)
+        {
+            _entries.Remove(key);
+            return Task.CompletedTask;
+        }
+
+        public Task RemoveByTierAsync(Digikala.Mcp.Domain.Enums.CacheTier tier, CancellationToken ct = default) =>
+            Task.CompletedTask;
+
+        public Task SetAsync<T>(string key, T value, Digikala.Mcp.Domain.Enums.CacheTier tier, CancellationToken ct = default) where T : class
+        {
+            _entries[key] = value;
+            return Task.CompletedTask;
+        }
+    }
 }
