@@ -10,6 +10,7 @@ public sealed class GetIncredibleOffersService(IDigikalaApiClient apiClient, ICa
 {
     public async Task<OffersListDto> ExecuteAsync(
         int page = 1,
+        bool skipCache = false,
         CancellationToken ct = default)
     {
         var cacheKey = ToolExecutionHelper.CreateCacheKey("get_incredible_offers", ("page", page));
@@ -24,6 +25,7 @@ public sealed class GetIncredibleOffersService(IDigikalaApiClient apiClient, ICa
                     : await apiClient.GetIncredibleOffersProductsAsync(page, ct: token);
                 return mapper.MapToOffersList(response);
             },
+            skipCache,
             ct);
     }
 }

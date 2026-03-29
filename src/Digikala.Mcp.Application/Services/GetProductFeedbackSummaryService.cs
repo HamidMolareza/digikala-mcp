@@ -31,6 +31,7 @@ public sealed class GetProductFeedbackSummaryService(
         int maxThemes = 8,
         bool includeReviewSnippets = true,
         int maxSnippets = 6,
+        bool skipCache = false,
         CancellationToken ct = default)
     {
         var request = new Dictionary<string, string?>
@@ -41,12 +42,13 @@ public sealed class GetProductFeedbackSummaryService(
             ["maxThemes"] = maxThemes.ToString(),
             ["includeReviewSnippets"] = includeReviewSnippets.ToString(),
             ["maxSnippets"] = maxSnippets.ToString(),
+            ["skipCache"] = skipCache.ToString(),
         };
 
         try
         {
-            var detailTask = detailService.ExecuteAsync(productId, null, ct);
-            var reviewsTask = reviewsService.ExecuteAsync(productId, 1, ct);
+            var detailTask = detailService.ExecuteAsync(productId, null, skipCache, ct);
+            var reviewsTask = reviewsService.ExecuteAsync(productId, 1, skipCache, ct);
             await Task.WhenAll(detailTask, reviewsTask);
 
             var detail = await detailTask;
@@ -61,6 +63,8 @@ public sealed class GetProductFeedbackSummaryService(
             {
                 ProductId = productId,
                 IsStale = detail.IsStale || reviews.IsStale,
+                IsFromCache = detail.IsFromCache || reviews.IsFromCache,
+                CacheStatus = BuildCompositeCacheStatus(detail.CacheStatus, reviews.CacheStatus),
                 Warning = detail.Warning ?? reviews.Warning,
                 Pros = pros,
                 Cons = cons,
@@ -81,6 +85,21 @@ public sealed class GetProductFeedbackSummaryService(
                     request),
             };
         }
+    }
+
+    private static string BuildCompositeCacheStatus(params string[] statuses)
+    {
+        var distinct = statuses
+            .Where(item => !string.IsNullOrWhiteSpace(item))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        return distinct.Length switch
+        {
+            0 => "unknown",
+            1 => distinct[0],
+            _ => string.Join('+', distinct.OrderBy(item => item, StringComparer.OrdinalIgnoreCase)),
+        };
     }
 
     private static List<FeedbackCountDto> AggregateCounts(

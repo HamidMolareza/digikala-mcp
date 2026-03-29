@@ -25,6 +25,7 @@ public sealed class SearchProductsService(IDigikalaApiClient apiClient, ICacheSt
         bool includeAvailableFilters = true,
         bool preferBalancedMatches = false,
         bool prioritizeBestMatch = true,
+        bool skipCache = false,
         CancellationToken ct = default)
     {
         var normalizedCategorySlug = string.IsNullOrWhiteSpace(categorySlug) ? "search" : categorySlug.Trim();
@@ -48,6 +49,7 @@ public sealed class SearchProductsService(IDigikalaApiClient apiClient, ICacheSt
             ["includeAvailableFilters"] = includeAvailableFilters.ToString(),
             ["preferBalancedMatches"] = preferBalancedMatches.ToString(),
             ["prioritizeBestMatch"] = prioritizeBestMatch.ToString(),
+            ["skipCache"] = skipCache.ToString(),
         };
 
         var cacheKey = ToolExecutionHelper.CreateCacheKey(
@@ -100,6 +102,7 @@ public sealed class SearchProductsService(IDigikalaApiClient apiClient, ICacheSt
                         preferBalancedMatches,
                         prioritizeBestMatch);
                 },
+                skipCache,
                 ct);
         }
         catch (Exception exception)

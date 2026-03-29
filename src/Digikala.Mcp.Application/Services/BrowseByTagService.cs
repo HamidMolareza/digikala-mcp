@@ -11,6 +11,7 @@ public sealed class BrowseByTagService(IDigikalaApiClient apiClient, ICacheStore
     public async Task<SearchResultDto> ExecuteAsync(
         string tagSlug,
         int page = 1,
+        bool skipCache = false,
         CancellationToken ct = default)
     {
         var cacheKey = ToolExecutionHelper.CreateCacheKey("browse_by_tag", ("tag", tagSlug), ("page", page));
@@ -23,6 +24,7 @@ public sealed class BrowseByTagService(IDigikalaApiClient apiClient, ICacheStore
                 using var response = await apiClient.GetTagProductsAsync(tagSlug, page, token);
                 return mapper.MapToSearchResult(response);
             },
+            skipCache,
             ct);
     }
 }

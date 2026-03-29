@@ -10,6 +10,7 @@ public sealed class GetProductPriceChartService(IDigikalaApiClient apiClient, IC
 {
     public async Task<PriceChartDto> ExecuteAsync(
         long productId,
+        bool skipCache = false,
         CancellationToken ct = default)
     {
         var cacheKey = ToolExecutionHelper.CreateCacheKey("get_product_price_chart", ("productId", productId));
@@ -22,6 +23,7 @@ public sealed class GetProductPriceChartService(IDigikalaApiClient apiClient, IC
                 using var response = await apiClient.GetProductPriceChartAsync(productId, ct: token);
                 return mapper.MapToPriceChart(productId, response);
             },
+            skipCache,
             ct);
     }
 }

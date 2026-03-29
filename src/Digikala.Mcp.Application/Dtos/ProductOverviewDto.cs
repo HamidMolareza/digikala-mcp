@@ -3,6 +3,8 @@ namespace Digikala.Mcp.Application.Dtos;
 public sealed record ProductOverviewDto
 {
     public bool IsStale { get; set; }
+    public bool IsFromCache { get; set; }
+    public string CacheStatus { get; set; } = "unknown";
     public bool HasError { get; set; }
     public string? Warning { get; set; }
     public List<string> SectionWarnings { get; init; } = [];

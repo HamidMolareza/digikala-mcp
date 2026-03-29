@@ -29,6 +29,8 @@ public class SearchProductsServiceTests
         var result = await _service.ExecuteAsync("iphone");
 
         Assert.Same(cached, result);
+        Assert.True(result.IsFromCache);
+        Assert.Equal("cache", result.CacheStatus);
         await _apiClient.DidNotReceiveWithAnyArgs().SearchCategoryAsync(default!, default, default, default, default, default);
     }
 
@@ -45,8 +47,53 @@ public class SearchProductsServiceTests
         var result = await _service.ExecuteAsync("iphone");
 
         Assert.True(result.IsStale);
+        Assert.True(result.IsFromCache);
+        Assert.Equal("stale-cache", result.CacheStatus);
         Assert.NotNull(result.Warning);
         Assert.Equal(3, result.TotalCount);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_ShouldBypassCache_WhenSkipCacheRequested()
+    {
+        var cached = new SearchResultDto
+        {
+            TotalCount = 1,
+            Products = [new ProductSummaryDto { Id = 99, Title = "cached" }],
+        };
+        using var document = JsonDocument.Parse("""
+            {
+              "status": 200,
+              "data": {
+                "products": [
+                  {
+                    "id": 1,
+                    "title_fa": "live",
+                    "status": "marketable",
+                    "rating": { "rate": 4.7, "count": 650 },
+                    "default_variant": { "price": { "selling_price": 400000000 } },
+                    "url": { "uri": "/a" },
+                    "images": []
+                  }
+                ],
+                "pager": { "current_page": 1, "total_pages": 1, "total_items": 1 },
+                "filters": [],
+                "sort_options": []
+              }
+            }
+            """);
+
+        _cacheStore.GetAsync<SearchResultDto>(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(cached);
+        _apiClient.SearchCategoryAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<Dictionary<string, string[]>?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(document);
+
+        var result = await _service.ExecuteAsync("iphone", skipCache: true);
+
+        Assert.Equal(1, result.Products[0].Id);
+        Assert.False(result.IsFromCache);
+        Assert.Equal("bypassed", result.CacheStatus);
+        await _apiClient.Received(1).SearchCategoryAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<Dictionary<string, string[]>?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]

@@ -34,6 +34,7 @@ public sealed class RecommendProductsForNeedService(
         IEnumerable<string>? preferTerms = null,
         IEnumerable<string>? avoidTerms = null,
         bool includeEvidence = true,
+        bool skipCache = false,
         CancellationToken ct = default)
     {
         var understanding = BuildUnderstanding(needDescription, preferTerms, avoidTerms);
@@ -50,6 +51,7 @@ public sealed class RecommendProductsForNeedService(
             ["preferTerms"] = understanding.PreferTerms.Count == 0 ? null : string.Join(", ", understanding.PreferTerms),
             ["avoidTerms"] = understanding.AvoidTerms.Count == 0 ? null : string.Join(", ", understanding.AvoidTerms),
             ["includeEvidence"] = includeEvidence.ToString(),
+            ["skipCache"] = skipCache.ToString(),
         };
 
         try
@@ -72,6 +74,7 @@ public sealed class RecommendProductsForNeedService(
                 includeAvailableFilters: false,
                 preferBalancedMatches: understanding.PreferBalancedMatches,
                 prioritizeBestMatch: true,
+                skipCache: skipCache,
                 ct: ct);
 
             if (searchResult.Error is not null && searchResult.Products.Count == 0)
@@ -79,6 +82,8 @@ public sealed class RecommendProductsForNeedService(
                 return new ProductNeedRecommendationsDto
                 {
                     IsStale = searchResult.IsStale,
+                    IsFromCache = searchResult.IsFromCache,
+                    CacheStatus = searchResult.CacheStatus,
                     Warning = searchResult.Warning,
                     Error = searchResult.Error,
                     SearchQuery = understanding.SearchQuery,
@@ -96,6 +101,7 @@ public sealed class RecommendProductsForNeedService(
                     maxThemes: 4,
                     includeReviewSnippets: includeEvidence,
                     maxSnippets: includeEvidence ? 3 : 1,
+                    skipCache: skipCache,
                     ct: ct)));
 
             var scoredCandidates = (await Task.WhenAll(feedbackTasks))
@@ -110,6 +116,8 @@ public sealed class RecommendProductsForNeedService(
             return new ProductNeedRecommendationsDto
             {
                 IsStale = searchResult.IsStale || visibleCandidates.Any(item => item.Feedback.IsStale),
+                IsFromCache = searchResult.IsFromCache || visibleCandidates.Any(item => item.Feedback.IsFromCache),
+                CacheStatus = BuildRecommendationCacheStatus(searchResult.CacheStatus, visibleCandidates.Select(item => item.Feedback.CacheStatus)),
                 Warning = searchResult.Warning,
                 SearchQuery = understanding.SearchQuery,
                 QueryUnderstanding = understanding.ToDto(),
@@ -132,6 +140,22 @@ public sealed class RecommendProductsForNeedService(
                 QueryUnderstanding = understanding.ToDto(),
             };
         }
+    }
+
+    private static string BuildRecommendationCacheStatus(string primaryStatus, IEnumerable<string> candidateStatuses)
+    {
+        var distinct = new[] { primaryStatus }
+            .Concat(candidateStatuses)
+            .Where(item => !string.IsNullOrWhiteSpace(item))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        return distinct.Length switch
+        {
+            0 => "unknown",
+            1 => distinct[0],
+            _ => string.Join('+', distinct.OrderBy(item => item, StringComparer.OrdinalIgnoreCase)),
+        };
     }
 
     private static RecommendationUnderstanding BuildUnderstanding(

@@ -9,6 +9,7 @@ public sealed class GetSellerVouchersService(IDigikalaApiClient apiClient, ICach
 {
     public async Task<List<SellerVoucherDto>> ExecuteAsync(
         long productId,
+        bool skipCache = false,
         CancellationToken ct = default)
     {
         var cacheKey = ToolExecutionHelper.CreateCacheKey("get_seller_vouchers", ("productId", productId));
@@ -31,6 +32,7 @@ public sealed class GetSellerVouchersService(IDigikalaApiClient apiClient, ICach
                     })
                     .ToList();
             },
+            skipCache,
             ct);
     }
 }

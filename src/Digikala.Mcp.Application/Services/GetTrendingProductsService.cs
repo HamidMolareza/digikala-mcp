@@ -8,7 +8,7 @@ namespace Digikala.Mcp.Application.Services;
 
 public sealed class GetTrendingProductsService(IDigikalaApiClient apiClient, ICacheStore cache, ProductMapper mapper)
 {
-    public async Task<List<ProductSummaryDto>> ExecuteAsync(CancellationToken ct = default)
+    public async Task<List<ProductSummaryDto>> ExecuteAsync(bool skipCache = false, CancellationToken ct = default)
     {
         const string cacheKey = "get_trending_products";
         return await ToolExecutionHelper.GetOrCreateWithStaleFallbackAsync(
@@ -26,6 +26,7 @@ public sealed class GetTrendingProductsService(IDigikalaApiClient apiClient, ICa
                         : default;
                 return mapper.MapToSummaryList(products);
             },
+            skipCache,
             ct);
     }
 }

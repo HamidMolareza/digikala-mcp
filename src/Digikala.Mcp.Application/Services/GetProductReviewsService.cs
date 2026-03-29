@@ -11,6 +11,7 @@ public sealed class GetProductReviewsService(IDigikalaApiClient apiClient, ICach
     public async Task<ReviewListDto> ExecuteAsync(
         long productId,
         int page = 1,
+        bool skipCache = false,
         CancellationToken ct = default)
     {
         var cacheKey = ToolExecutionHelper.CreateCacheKey("get_product_reviews", ("productId", productId), ("page", page));
@@ -23,6 +24,7 @@ public sealed class GetProductReviewsService(IDigikalaApiClient apiClient, ICach
                 using var response = await apiClient.GetProductCommentsAsync(productId, page, ct: token);
                 return mapper.MapToReviewList(response);
             },
+            skipCache,
             ct);
     }
 }

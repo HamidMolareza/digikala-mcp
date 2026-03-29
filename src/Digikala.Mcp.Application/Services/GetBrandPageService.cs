@@ -10,6 +10,7 @@ public sealed class GetBrandPageService(IDigikalaApiClient apiClient, ICacheStor
 {
     public async Task<BrandPageDto> ExecuteAsync(
         string brandSlug,
+        bool skipCache = false,
         CancellationToken ct = default)
     {
         var cacheKey = ToolExecutionHelper.CreateCacheKey("get_brand_page", ("brand", brandSlug));
@@ -22,6 +23,7 @@ public sealed class GetBrandPageService(IDigikalaApiClient apiClient, ICacheStor
                 using var response = await apiClient.GetBrandPremiumAsync(brandSlug, token);
                 return mapper.MapToBrandPage(response);
             },
+            skipCache,
             ct);
     }
 }

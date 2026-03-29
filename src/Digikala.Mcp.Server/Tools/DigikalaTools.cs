@@ -27,10 +27,11 @@ public sealed class SearchProductsTool(SearchProductsService service, ILogger<Se
         [Description("Include available filters and sort options in the response.")] bool includeAvailableFilters = true,
         [Description("Prefer balanced and daily-use matches over harsher treatment-style matches.")] bool preferBalancedMatches = false,
         [Description("Rank matches to surface the best overall choice first.")] bool prioritizeBestMatch = true,
+        [Description("When true, bypasses cache reads and writes and forces a live upstream fetch.")] bool skipCache = false,
         CancellationToken ct = default)
     {
         logger.LogInformation(
-            "Tool search_products invoked: query={Query}, category={Category}, page={Page}, sort={Sort}, minRating={MinRating}, minReviewCount={MinReviewCount}, onlyAvailable={OnlyAvailable}, minPriceRials={MinPriceRials}, maxPriceRials={MaxPriceRials}, limit={Limit}, preferTerms={PreferTerms}, avoidTerms={AvoidTerms}, includeAttributeHighlights={IncludeAttributeHighlights}, includeAvailableFilters={IncludeAvailableFilters}, preferBalancedMatches={PreferBalancedMatches}, prioritizeBestMatch={PrioritizeBestMatch}",
+            "Tool search_products invoked: query={Query}, category={Category}, page={Page}, sort={Sort}, minRating={MinRating}, minReviewCount={MinReviewCount}, onlyAvailable={OnlyAvailable}, minPriceRials={MinPriceRials}, maxPriceRials={MaxPriceRials}, limit={Limit}, preferTerms={PreferTerms}, avoidTerms={AvoidTerms}, includeAttributeHighlights={IncludeAttributeHighlights}, includeAvailableFilters={IncludeAvailableFilters}, preferBalancedMatches={PreferBalancedMatches}, prioritizeBestMatch={PrioritizeBestMatch}, skipCache={SkipCache}",
             query,
             categorySlug,
             page,
@@ -46,7 +47,8 @@ public sealed class SearchProductsTool(SearchProductsService service, ILogger<Se
             includeAttributeHighlights,
             includeAvailableFilters,
             preferBalancedMatches,
-            prioritizeBestMatch);
+            prioritizeBestMatch,
+            skipCache);
 
         return service.ExecuteAsync(
             query,
@@ -65,6 +67,7 @@ public sealed class SearchProductsTool(SearchProductsService service, ILogger<Se
             includeAvailableFilters,
             preferBalancedMatches,
             prioritizeBestMatch,
+            skipCache,
             ct);
     }
 }
@@ -87,10 +90,11 @@ public sealed class RecommendProductsForNeedTool(
         [Description("Terms to positively boost when ranking candidates.")] string[]? preferTerms = null,
         [Description("Terms to penalize when ranking candidates.")] string[]? avoidTerms = null,
         [Description("Include review-derived evidence and snippets in the recommendation response.")] bool includeEvidence = true,
+        [Description("When true, bypasses cache reads and writes and forces live upstream fetches.")] bool skipCache = false,
         CancellationToken ct = default)
     {
         logger.LogInformation(
-            "Tool recommend_products_for_need invoked: needDescription={NeedDescription}, category={Category}, limit={Limit}, onlyAvailable={OnlyAvailable}, minRating={MinRating}, minReviewCount={MinReviewCount}, minPriceRials={MinPriceRials}, maxPriceRials={MaxPriceRials}, preferTerms={PreferTerms}, avoidTerms={AvoidTerms}, includeEvidence={IncludeEvidence}",
+            "Tool recommend_products_for_need invoked: needDescription={NeedDescription}, category={Category}, limit={Limit}, onlyAvailable={OnlyAvailable}, minRating={MinRating}, minReviewCount={MinReviewCount}, minPriceRials={MinPriceRials}, maxPriceRials={MaxPriceRials}, preferTerms={PreferTerms}, avoidTerms={AvoidTerms}, includeEvidence={IncludeEvidence}, skipCache={SkipCache}",
             needDescription,
             categorySlug,
             limit,
@@ -101,7 +105,8 @@ public sealed class RecommendProductsForNeedTool(
             maxPriceRials,
             preferTerms,
             avoidTerms,
-            includeEvidence);
+            includeEvidence,
+            skipCache);
 
         return service.ExecuteAsync(
             needDescription,
@@ -115,6 +120,7 @@ public sealed class RecommendProductsForNeedTool(
             preferTerms,
             avoidTerms,
             includeEvidence,
+            skipCache,
             ct);
     }
 }
@@ -130,18 +136,20 @@ public sealed class GetProductFeedbackSummaryTool(GetProductFeedbackSummaryServi
         [Description("Maximum number of themes to return.")] int maxThemes = 8,
         [Description("Include short review snippets as evidence.")] bool includeReviewSnippets = true,
         [Description("Maximum number of snippets across themes.")] int maxSnippets = 6,
+        [Description("When true, bypasses cache reads and writes and forces live upstream fetches.")] bool skipCache = false,
         CancellationToken ct = default)
     {
         logger.LogInformation(
-            "Tool get_product_feedback_summary invoked: productId={ProductId}, maxPros={MaxPros}, maxCons={MaxCons}, maxThemes={MaxThemes}, includeReviewSnippets={IncludeReviewSnippets}, maxSnippets={MaxSnippets}",
+            "Tool get_product_feedback_summary invoked: productId={ProductId}, maxPros={MaxPros}, maxCons={MaxCons}, maxThemes={MaxThemes}, includeReviewSnippets={IncludeReviewSnippets}, maxSnippets={MaxSnippets}, skipCache={SkipCache}",
             productId,
             maxPros,
             maxCons,
             maxThemes,
             includeReviewSnippets,
-            maxSnippets);
+            maxSnippets,
+            skipCache);
 
-        return service.ExecuteAsync(productId, maxPros, maxCons, maxThemes, includeReviewSnippets, maxSnippets, ct);
+        return service.ExecuteAsync(productId, maxPros, maxCons, maxThemes, includeReviewSnippets, maxSnippets, skipCache, ct);
     }
 }
 
@@ -152,10 +160,11 @@ public sealed class GetProductDetailTool(GetProductDetailService service, ILogge
     public Task<ProductDetailDto> get_product_detail(
         [Description("Numeric product ID")] long productId,
         [Description("Warehouse ID for Fresh products. Null for main store.")] int? warehouseId = null,
+        [Description("When true, bypasses cache reads and writes and forces a live upstream fetch.")] bool skipCache = false,
         CancellationToken ct = default)
     {
-        logger.LogInformation("Tool get_product_detail invoked: productId={ProductId}, warehouseId={WarehouseId}", productId, warehouseId);
-        return service.ExecuteAsync(productId, warehouseId, ct);
+        logger.LogInformation("Tool get_product_detail invoked: productId={ProductId}, warehouseId={WarehouseId}, skipCache={SkipCache}", productId, warehouseId, skipCache);
+        return service.ExecuteAsync(productId, warehouseId, skipCache, ct);
     }
 }
 
@@ -169,17 +178,19 @@ public sealed class GetProductOverviewTool(GetProductOverviewService service, IL
         [Description("Number of top reviews to return.")] int topReviewsCount = 3,
         [Description("Number of top questions to return.")] int topQuestionsCount = 3,
         [Description("Number of recommendations to return.")] int topRecommendationsCount = 6,
+        [Description("When true, bypasses cache reads and writes and forces live upstream fetches for all sections.")] bool skipCache = false,
         CancellationToken ct = default)
     {
         logger.LogInformation(
-            "Tool get_product_overview invoked: productId={ProductId}, warehouseId={WarehouseId}, topReviewsCount={TopReviewsCount}, topQuestionsCount={TopQuestionsCount}, topRecommendationsCount={TopRecommendationsCount}",
+            "Tool get_product_overview invoked: productId={ProductId}, warehouseId={WarehouseId}, topReviewsCount={TopReviewsCount}, topQuestionsCount={TopQuestionsCount}, topRecommendationsCount={TopRecommendationsCount}, skipCache={SkipCache}",
             productId,
             warehouseId,
             topReviewsCount,
             topQuestionsCount,
-            topRecommendationsCount);
+            topRecommendationsCount,
+            skipCache);
 
-        return service.ExecuteAsync(productId, warehouseId, topReviewsCount, topQuestionsCount, topRecommendationsCount, ct);
+        return service.ExecuteAsync(productId, warehouseId, topReviewsCount, topQuestionsCount, topRecommendationsCount, skipCache, ct);
     }
 }
 
@@ -189,10 +200,11 @@ public sealed class GetProductPriceChartTool(GetProductPriceChartService service
     [McpServerTool, Description("Get historical price data for a product.")]
     public Task<PriceChartDto> get_product_price_chart(
         [Description("Numeric product ID")] long productId,
+        [Description("When true, bypasses cache reads and writes and forces a live upstream fetch.")] bool skipCache = false,
         CancellationToken ct = default)
     {
-        logger.LogInformation("Tool get_product_price_chart invoked: productId={ProductId}", productId);
-        return service.ExecuteAsync(productId, ct);
+        logger.LogInformation("Tool get_product_price_chart invoked: productId={ProductId}, skipCache={SkipCache}", productId, skipCache);
+        return service.ExecuteAsync(productId, skipCache, ct);
     }
 }
 
@@ -203,10 +215,11 @@ public sealed class GetProductReviewsTool(GetProductReviewsService service, ILog
     public Task<ReviewListDto> get_product_reviews(
         [Description("Numeric product ID")] long productId,
         [Description("Page number, starting from 1")] int page = 1,
+        [Description("When true, bypasses cache reads and writes and forces a live upstream fetch.")] bool skipCache = false,
         CancellationToken ct = default)
     {
-        logger.LogInformation("Tool get_product_reviews invoked: productId={ProductId}, page={Page}", productId, page);
-        return service.ExecuteAsync(productId, page, ct);
+        logger.LogInformation("Tool get_product_reviews invoked: productId={ProductId}, page={Page}, skipCache={SkipCache}", productId, page, skipCache);
+        return service.ExecuteAsync(productId, page, skipCache, ct);
     }
 }
 
@@ -217,10 +230,11 @@ public sealed class GetProductQuestionsTool(GetProductQuestionsService service, 
     public Task<QuestionListDto> get_product_questions(
         [Description("Numeric product ID")] long productId,
         [Description("Page number, starting from 1")] int page = 1,
+        [Description("When true, bypasses cache reads and writes and forces a live upstream fetch.")] bool skipCache = false,
         CancellationToken ct = default)
     {
-        logger.LogInformation("Tool get_product_questions invoked: productId={ProductId}, page={Page}", productId, page);
-        return service.ExecuteAsync(productId, page, ct);
+        logger.LogInformation("Tool get_product_questions invoked: productId={ProductId}, page={Page}, skipCache={SkipCache}", productId, page, skipCache);
+        return service.ExecuteAsync(productId, page, skipCache, ct);
     }
 }
 
@@ -231,10 +245,11 @@ public sealed class GetProductRecommendationsTool(GetProductRecommendationsServi
     public Task<List<ProductSummaryDto>> get_product_recommendations(
         [Description("Numeric product ID")] long productId,
         [Description("Offset for pagination, starting from 0")] int offset = 0,
+        [Description("When true, bypasses cache reads and writes and forces a live upstream fetch.")] bool skipCache = false,
         CancellationToken ct = default)
     {
-        logger.LogInformation("Tool get_product_recommendations invoked: productId={ProductId}, offset={Offset}", productId, offset);
-        return service.ExecuteAsync(productId, offset, ct);
+        logger.LogInformation("Tool get_product_recommendations invoked: productId={ProductId}, offset={Offset}, skipCache={SkipCache}", productId, offset, skipCache);
+        return service.ExecuteAsync(productId, offset, skipCache, ct);
     }
 }
 
@@ -245,10 +260,11 @@ public sealed class GetBestSellingTool(GetBestSellingService service, ILogger<Ge
     public Task<List<ProductSummaryDto>> get_best_selling(
         [Description("Numeric category ID. Null for all.")] int? categoryId = null,
         [Description("Time window filter, e.g. 'month'")] string? lastDays = null,
+        [Description("When true, bypasses cache reads and writes and forces a live upstream fetch.")] bool skipCache = false,
         CancellationToken ct = default)
     {
-        logger.LogInformation("Tool get_best_selling invoked: categoryId={CategoryId}, lastDays={LastDays}", categoryId, lastDays);
-        return service.ExecuteAsync(categoryId, lastDays, ct);
+        logger.LogInformation("Tool get_best_selling invoked: categoryId={CategoryId}, lastDays={LastDays}, skipCache={SkipCache}", categoryId, lastDays, skipCache);
+        return service.ExecuteAsync(categoryId, lastDays, skipCache, ct);
     }
 }
 
@@ -258,10 +274,11 @@ public sealed class GetIncredibleOffersTool(GetIncredibleOffersService service, 
     [McpServerTool, Description("Get products currently on incredible/lightning deals.")]
     public Task<OffersListDto> get_incredible_offers(
         [Description("Page number, starting from 1")] int page = 1,
+        [Description("When true, bypasses cache reads and writes and forces a live upstream fetch.")] bool skipCache = false,
         CancellationToken ct = default)
     {
-        logger.LogInformation("Tool get_incredible_offers invoked: page={Page}", page);
-        return service.ExecuteAsync(page, ct);
+        logger.LogInformation("Tool get_incredible_offers invoked: page={Page}, skipCache={SkipCache}", page, skipCache);
+        return service.ExecuteAsync(page, skipCache, ct);
     }
 }
 
@@ -269,10 +286,12 @@ public sealed class GetIncredibleOffersTool(GetIncredibleOffersService service, 
 public sealed class GetTrendingProductsTool(GetTrendingProductsService service, ILogger<GetTrendingProductsTool> logger)
 {
     [McpServerTool, Description("Get trending products.")]
-    public Task<List<ProductSummaryDto>> get_trending_products(CancellationToken ct = default)
+    public Task<List<ProductSummaryDto>> get_trending_products(
+        [Description("When true, bypasses cache reads and writes and forces a live upstream fetch.")] bool skipCache = false,
+        CancellationToken ct = default)
     {
-        logger.LogInformation("Tool get_trending_products invoked");
-        return service.ExecuteAsync(ct);
+        logger.LogInformation("Tool get_trending_products invoked: skipCache={SkipCache}", skipCache);
+        return service.ExecuteAsync(skipCache, ct);
     }
 }
 
@@ -282,10 +301,11 @@ public sealed class GetCategoryLandingTool(GetCategoryLandingService service, IL
     [McpServerTool, Description("Get a category landing page with subcategories, popular brands, and highlights.")]
     public Task<CategoryDto> get_category_landing(
         [Description("Category slug, e.g. 'electronic-devices'")] string categorySlug,
+        [Description("When true, bypasses cache reads and writes and forces a live upstream fetch.")] bool skipCache = false,
         CancellationToken ct = default)
     {
-        logger.LogInformation("Tool get_category_landing invoked: categorySlug={CategorySlug}", categorySlug);
-        return service.ExecuteAsync(categorySlug, ct);
+        logger.LogInformation("Tool get_category_landing invoked: categorySlug={CategorySlug}, skipCache={SkipCache}", categorySlug, skipCache);
+        return service.ExecuteAsync(categorySlug, skipCache, ct);
     }
 }
 
@@ -296,10 +316,11 @@ public sealed class BrowseByTagTool(BrowseByTagService service, ILogger<BrowseBy
     public Task<SearchResultDto> browse_by_tag(
         [Description("Tag slug, e.g. 'iphone-16'")] string tagSlug,
         [Description("Page number, starting from 1")] int page = 1,
+        [Description("When true, bypasses cache reads and writes and forces a live upstream fetch.")] bool skipCache = false,
         CancellationToken ct = default)
     {
-        logger.LogInformation("Tool browse_by_tag invoked: tagSlug={TagSlug}, page={Page}", tagSlug, page);
-        return service.ExecuteAsync(tagSlug, page, ct);
+        logger.LogInformation("Tool browse_by_tag invoked: tagSlug={TagSlug}, page={Page}, skipCache={SkipCache}", tagSlug, page, skipCache);
+        return service.ExecuteAsync(tagSlug, page, skipCache, ct);
     }
 }
 
@@ -309,10 +330,11 @@ public sealed class AutocompleteTool(AutocompleteService service, ILogger<Autoco
     [McpServerTool, Description("Get search autocomplete suggestions and trends for a query prefix.")]
     public Task<AutocompleteDto> autocomplete(
         [Description("Search query prefix")] string query,
+        [Description("When true, bypasses cache reads and writes and forces a live upstream fetch.")] bool skipCache = false,
         CancellationToken ct = default)
     {
-        logger.LogInformation("Tool autocomplete invoked: query={Query}", query);
-        return service.ExecuteAsync(query, ct);
+        logger.LogInformation("Tool autocomplete invoked: query={Query}, skipCache={SkipCache}", query, skipCache);
+        return service.ExecuteAsync(query, skipCache, ct);
     }
 }
 
@@ -322,10 +344,11 @@ public sealed class GetBrandPageTool(GetBrandPageService service, ILogger<GetBra
     [McpServerTool, Description("Get a premium brand landing page.")]
     public Task<BrandPageDto> get_brand_page(
         [Description("Brand slug, e.g. 'persil'")] string brandSlug,
+        [Description("When true, bypasses cache reads and writes and forces a live upstream fetch.")] bool skipCache = false,
         CancellationToken ct = default)
     {
-        logger.LogInformation("Tool get_brand_page invoked: brandSlug={BrandSlug}", brandSlug);
-        return service.ExecuteAsync(brandSlug, ct);
+        logger.LogInformation("Tool get_brand_page invoked: brandSlug={BrandSlug}, skipCache={SkipCache}", brandSlug, skipCache);
+        return service.ExecuteAsync(brandSlug, skipCache, ct);
     }
 }
 
@@ -335,9 +358,10 @@ public sealed class GetSellerVouchersTool(GetSellerVouchersService service, ILog
     [McpServerTool, Description("Get seller vouchers/promotions for a product.")]
     public Task<List<SellerVoucherDto>> get_seller_vouchers(
         [Description("Numeric product ID")] long productId,
+        [Description("When true, bypasses cache reads and writes and forces a live upstream fetch.")] bool skipCache = false,
         CancellationToken ct = default)
     {
-        logger.LogInformation("Tool get_seller_vouchers invoked: productId={ProductId}", productId);
-        return service.ExecuteAsync(productId, ct);
+        logger.LogInformation("Tool get_seller_vouchers invoked: productId={ProductId}, skipCache={SkipCache}", productId, skipCache);
+        return service.ExecuteAsync(productId, skipCache, ct);
     }
 }

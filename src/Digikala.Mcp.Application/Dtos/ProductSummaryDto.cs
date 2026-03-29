@@ -5,6 +5,8 @@ namespace Digikala.Mcp.Application.Dtos;
 public record ProductSummaryDto
 {
     public bool IsStale { get; set; }
+    public bool IsFromCache { get; set; }
+    public string CacheStatus { get; set; } = "unknown";
     public string? Warning { get; set; }
     public long Id { get; init; }
     public string Title { get; init; } = string.Empty;

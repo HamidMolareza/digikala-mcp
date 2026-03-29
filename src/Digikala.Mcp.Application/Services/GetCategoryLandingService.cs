@@ -10,6 +10,7 @@ public sealed class GetCategoryLandingService(IDigikalaApiClient apiClient, ICac
 {
     public async Task<CategoryDto> ExecuteAsync(
         string categorySlug,
+        bool skipCache = false,
         CancellationToken ct = default)
     {
         var cacheKey = ToolExecutionHelper.CreateCacheKey("get_category_landing", ("category", categorySlug));
@@ -22,6 +23,7 @@ public sealed class GetCategoryLandingService(IDigikalaApiClient apiClient, ICac
                 using var response = await apiClient.GetCategoryLandingAsync(categorySlug, token);
                 return mapper.MapToCategory(response);
             },
+            skipCache,
             ct);
     }
 }

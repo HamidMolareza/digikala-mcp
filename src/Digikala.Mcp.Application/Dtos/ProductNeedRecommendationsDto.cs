@@ -3,6 +3,8 @@ namespace Digikala.Mcp.Application.Dtos;
 public sealed record ProductNeedRecommendationsDto
 {
     public bool IsStale { get; set; }
+    public bool IsFromCache { get; set; }
+    public string CacheStatus { get; set; } = "unknown";
     public string? Warning { get; set; }
     public ToolIssueDto? Error { get; set; }
     public string SearchQuery { get; init; } = string.Empty;

@@ -11,6 +11,7 @@ public sealed class GetBestSellingService(IDigikalaApiClient apiClient, ICacheSt
     public async Task<List<ProductSummaryDto>> ExecuteAsync(
         int? categoryId = null,
         string? lastDays = null,
+        bool skipCache = false,
         CancellationToken ct = default)
     {
         var cacheKey = ToolExecutionHelper.CreateCacheKey("get_best_selling", ("categoryId", categoryId), ("lastDays", lastDays));
@@ -24,6 +25,7 @@ public sealed class GetBestSellingService(IDigikalaApiClient apiClient, ICacheSt
                 var data = JsonHelpers.GetData(response);
                 return mapper.MapToSummaryList(data.TryGetNested(out var products, "products") ? products : default);
             },
+            skipCache,
             ct);
     }
 }

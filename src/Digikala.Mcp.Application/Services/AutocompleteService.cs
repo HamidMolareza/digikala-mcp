@@ -10,6 +10,7 @@ public sealed class AutocompleteService(IDigikalaApiClient apiClient, ICacheStor
 {
     public async Task<AutocompleteDto> ExecuteAsync(
         string query,
+        bool skipCache = false,
         CancellationToken ct = default)
     {
         var cacheKey = ToolExecutionHelper.CreateCacheKey("autocomplete", ("q", query));
@@ -22,6 +23,7 @@ public sealed class AutocompleteService(IDigikalaApiClient apiClient, ICacheStor
                 using var response = await apiClient.GetAutocompleteAsync(query, token);
                 return mapper.MapToAutocomplete(response);
             },
+            skipCache,
             ct);
     }
 }

@@ -16,31 +16,32 @@ public sealed class GetProductOverviewService(
         int topReviewsCount = 3,
         int topQuestionsCount = 3,
         int topRecommendationsCount = 6,
+        bool skipCache = false,
         CancellationToken ct = default)
     {
         var detailTask = FetchSection(
             "detail",
-            () => detailService.ExecuteAsync(productId, warehouseId, ct),
+            () => detailService.ExecuteAsync(productId, warehouseId, skipCache, ct),
             "Product detail is unavailable.",
             new Dictionary<string, string?> { ["productId"] = productId.ToString(), ["warehouseId"] = warehouseId?.ToString() });
         var priceChartTask = FetchSection(
             "priceChart",
-            () => priceChartService.ExecuteAsync(productId, ct),
+            () => priceChartService.ExecuteAsync(productId, skipCache, ct),
             "Price chart is unavailable.",
             new Dictionary<string, string?> { ["productId"] = productId.ToString() });
         var reviewsTask = FetchSection(
             "reviews",
-            () => reviewsService.ExecuteAsync(productId, 1, ct),
+            () => reviewsService.ExecuteAsync(productId, 1, skipCache, ct),
             "Reviews are unavailable.",
             new Dictionary<string, string?> { ["productId"] = productId.ToString(), ["page"] = "1" });
         var questionsTask = FetchSection(
             "questions",
-            () => questionsService.ExecuteAsync(productId, 1, ct),
+            () => questionsService.ExecuteAsync(productId, 1, skipCache, ct),
             "Questions are unavailable.",
             new Dictionary<string, string?> { ["productId"] = productId.ToString(), ["page"] = "1" });
         var recommendationsTask = FetchSection(
             "recommendations",
-            () => recommendationsService.ExecuteAsync(productId, 0, ct),
+            () => recommendationsService.ExecuteAsync(productId, 0, skipCache, ct),
             "Recommendations are unavailable.",
             new Dictionary<string, string?> { ["productId"] = productId.ToString(), ["offset"] = "0" });
 
@@ -65,6 +66,8 @@ public sealed class GetProductOverviewService(
         return new ProductOverviewDto
         {
             IsStale = detail.IsStale || priceChart.IsStale || reviews.IsStale || questions.IsStale || recommendations.IsStale,
+            IsFromCache = detail.IsFromCache || priceChart.IsFromCache || reviews.IsFromCache || questions.IsFromCache || recommendations.IsFromCache,
+            CacheStatus = BuildOverviewCacheStatus(detail.CacheStatus, priceChart.CacheStatus, reviews.CacheStatus, questions.CacheStatus, recommendations.CacheStatus),
             HasError = detail.Issue is not null,
             Warning = sectionWarnings.Count > 0 ? string.Join(" ", sectionWarnings) : null,
             SectionWarnings = sectionWarnings,
@@ -94,6 +97,21 @@ public sealed class GetProductOverviewService(
         };
     }
 
+    private static string BuildOverviewCacheStatus(params string[] statuses)
+    {
+        var distinct = statuses
+            .Where(item => !string.IsNullOrWhiteSpace(item))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        return distinct.Length switch
+        {
+            0 => "unknown",
+            1 => distinct[0],
+            _ => string.Join('+', distinct.OrderBy(item => item, StringComparer.OrdinalIgnoreCase)),
+        };
+    }
+
     private static void Register<T>(
         IDictionary<string, string> sectionStatus,
         ICollection<string> sectionWarnings,
@@ -118,7 +136,7 @@ public sealed class GetProductOverviewService(
         try
         {
             var value = await factory();
-            return new SectionResult<T>(name, value, IsStale(value), null);
+            return new SectionResult<T>(name, value, IsStale(value), IsFromCache(value), GetCacheStatus(value), null);
         }
         catch (Exception exception)
         {
@@ -126,6 +144,8 @@ public sealed class GetProductOverviewService(
                 name,
                 default,
                 false,
+                false,
+                "unknown",
                 ToolIssueFactory.Create("get_product_overview", failureMessage, exception, request));
         }
     }
@@ -143,5 +163,33 @@ public sealed class GetProductOverviewService(
                isStale;
     }
 
-    private sealed record SectionResult<T>(string Name, T? Value, bool IsStale, ToolIssueDto? Issue);
+    private static bool IsFromCache<T>(T? value)
+    {
+        if (value is null)
+        {
+            return false;
+        }
+
+        var property = value.GetType().GetProperty("IsFromCache");
+        return property?.PropertyType == typeof(bool) &&
+               property.GetValue(value) is bool isFromCache &&
+               isFromCache;
+    }
+
+    private static string GetCacheStatus<T>(T? value)
+    {
+        if (value is null)
+        {
+            return "unknown";
+        }
+
+        var property = value.GetType().GetProperty("CacheStatus");
+        return property?.PropertyType == typeof(string) &&
+               property.GetValue(value) is string cacheStatus &&
+               !string.IsNullOrWhiteSpace(cacheStatus)
+            ? cacheStatus
+            : "unknown";
+    }
+
+    private sealed record SectionResult<T>(string Name, T? Value, bool IsStale, bool IsFromCache, string CacheStatus, ToolIssueDto? Issue);
 }

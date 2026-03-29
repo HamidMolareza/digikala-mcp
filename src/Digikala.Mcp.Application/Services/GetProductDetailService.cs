@@ -11,6 +11,7 @@ public sealed class GetProductDetailService(IDigikalaApiClient apiClient, ICache
     public async Task<ProductDetailDto> ExecuteAsync(
         long productId,
         int? warehouseId = null,
+        bool skipCache = false,
         CancellationToken ct = default)
     {
         var cacheKey = ToolExecutionHelper.CreateCacheKey("get_product_detail", ("productId", productId), ("warehouseId", warehouseId));
@@ -26,6 +27,7 @@ public sealed class GetProductDetailService(IDigikalaApiClient apiClient, ICache
                 var data = JsonHelpers.GetData(response);
                 return mapper.MapToDetail(data.TryGetNested(out var product, "product") ? product : data);
             },
+            skipCache,
             ct);
     }
 }

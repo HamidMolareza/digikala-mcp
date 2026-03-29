@@ -13,9 +13,17 @@ internal static class ToolExecutionHelper
         string cacheKey,
         CacheTier tier,
         Func<CancellationToken, Task<T>> factory,
+        bool skipCache = false,
         CancellationToken ct = default)
         where T : class
     {
+        if (skipCache)
+        {
+            var bypassedValue = await factory(ct);
+            MarkWithCacheState(bypassedValue, isFromCache: false, cacheStatus: "bypassed");
+            return bypassedValue;
+        }
+
         T? cached = null;
         try
         {
@@ -27,6 +35,7 @@ internal static class ToolExecutionHelper
 
         if (cached is not null)
         {
+            MarkWithCacheState(cached, isFromCache: true, cacheStatus: "cache");
             return cached;
         }
 
@@ -39,6 +48,7 @@ internal static class ToolExecutionHelper
         {
         }
 
+        MarkWithCacheState(value, isFromCache: false, cacheStatus: "live");
         return value;
     }
 
@@ -47,21 +57,28 @@ internal static class ToolExecutionHelper
         string cacheKey,
         CacheTier tier,
         Func<CancellationToken, Task<T>> factory,
+        bool skipCache = false,
         CancellationToken ct = default)
         where T : class
     {
         try
         {
-            return await GetOrCreateAsync(cache, cacheKey, tier, factory, ct);
+            return await GetOrCreateAsync(cache, cacheKey, tier, factory, skipCache, ct);
         }
         catch
         {
+            if (skipCache)
+            {
+                throw;
+            }
+
             try
             {
                 var stale = await cache.GetStaleAsync<T>(cacheKey, ct);
                 if (stale is not null)
                 {
                     MarkAsStale(stale);
+                    MarkWithCacheState(stale, isFromCache: true, cacheStatus: "stale-cache");
                     return stale;
                 }
             }
@@ -127,6 +144,30 @@ internal static class ToolExecutionHelper
     {
         SetPropertyIfPresent(value, "IsStale", true);
         SetPropertyIfPresent(value, "Warning", "Served from stale cache because the upstream request failed.");
+    }
+
+    private static void MarkWithCacheState<T>(T value, bool isFromCache, string cacheStatus) where T : class
+    {
+        if (value is IEnumerable enumerable && value is not string)
+        {
+            foreach (var item in enumerable)
+            {
+                if (item is not null)
+                {
+                    SetCacheState(item, isFromCache, cacheStatus);
+                }
+            }
+
+            return;
+        }
+
+        SetCacheState(value, isFromCache, cacheStatus);
+    }
+
+    private static void SetCacheState(object target, bool isFromCache, string cacheStatus)
+    {
+        SetPropertyIfPresent(target, "IsFromCache", isFromCache);
+        SetPropertyIfPresent(target, "CacheStatus", cacheStatus);
     }
 
     private static void SetPropertyIfPresent(object target, string propertyName, object propertyValue)

@@ -11,6 +11,7 @@ public sealed class GetProductQuestionsService(IDigikalaApiClient apiClient, ICa
     public async Task<QuestionListDto> ExecuteAsync(
         long productId,
         int page = 1,
+        bool skipCache = false,
         CancellationToken ct = default)
     {
         var cacheKey = ToolExecutionHelper.CreateCacheKey("get_product_questions", ("productId", productId), ("page", page));
@@ -23,6 +24,7 @@ public sealed class GetProductQuestionsService(IDigikalaApiClient apiClient, ICa
                 using var response = await apiClient.GetProductQuestionsAsync(productId, page, ct: token);
                 return mapper.MapToQuestionList(response);
             },
+            skipCache,
             ct);
     }
 }

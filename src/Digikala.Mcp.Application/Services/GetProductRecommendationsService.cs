@@ -11,6 +11,7 @@ public sealed class GetProductRecommendationsService(IDigikalaApiClient apiClien
     public async Task<List<ProductSummaryDto>> ExecuteAsync(
         long productId,
         int offset = 0,
+        bool skipCache = false,
         CancellationToken ct = default)
     {
         var cacheKey = ToolExecutionHelper.CreateCacheKey("get_product_recommendations", ("productId", productId), ("offset", offset));
@@ -29,6 +30,7 @@ public sealed class GetProductRecommendationsService(IDigikalaApiClient apiClien
                         : default;
                 return mapper.MapToSummaryList(products);
             },
+            skipCache,
             ct);
     }
 }
