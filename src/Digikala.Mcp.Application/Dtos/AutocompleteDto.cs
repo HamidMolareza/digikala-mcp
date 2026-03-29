@@ -2,6 +2,8 @@ namespace Digikala.Mcp.Application.Dtos;
 
 public sealed record AutocompleteDto
 {
+    public bool IsStale { get; set; }
+    public string? Warning { get; set; }
     public List<SuggestionDto> Suggestions { get; init; } = [];
     public List<string> TrendingSearches { get; init; } = [];
 }

@@ -2,6 +2,8 @@ namespace Digikala.Mcp.Application.Dtos;
 
 public sealed record ReviewDto
 {
+    public bool IsStale { get; set; }
+    public string? Warning { get; set; }
     public long Id { get; init; }
     public string Title { get; init; } = string.Empty;
     public string Body { get; init; } = string.Empty;
@@ -17,6 +19,8 @@ public sealed record ReviewDto
 
 public sealed record ReviewListDto
 {
+    public bool IsStale { get; set; }
+    public string? Warning { get; set; }
     public List<ReviewDto> Reviews { get; init; } = [];
     public int CurrentPage { get; init; }
     public int TotalPages { get; init; }

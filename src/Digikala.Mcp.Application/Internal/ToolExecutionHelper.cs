@@ -1,5 +1,7 @@
 using Digikala.Mcp.Domain.Enums;
 using Digikala.Mcp.Domain.Interfaces;
+using System.Collections;
+using System.Reflection;
 
 namespace Digikala.Mcp.Application.Internal;
 
@@ -19,9 +21,23 @@ internal static class ToolExecutionHelper
             return cached;
         }
 
-        var value = await factory(ct);
-        await cache.SetAsync(cacheKey, value, tier, ct);
-        return value;
+        try
+        {
+            var value = await factory(ct);
+            await cache.SetAsync(cacheKey, value, tier, ct);
+            return value;
+        }
+        catch
+        {
+            var stale = await cache.GetStaleAsync<T>(cacheKey, ct);
+            if (stale is not null)
+            {
+                MarkAsStale(stale);
+                return stale;
+            }
+
+            throw;
+        }
     }
 
     public static string CreateCacheKey(string toolName, params (string Key, object? Value)[] parts)
@@ -42,4 +58,39 @@ internal static class ToolExecutionHelper
             IEnumerable<string> items => string.Join(',', items.Select(item => item.Trim())),
             _ => value.ToString()?.Trim() ?? string.Empty,
         };
+
+    private static void MarkAsStale<T>(T value) where T : class
+    {
+        if (value is IEnumerable enumerable && value is not string)
+        {
+            foreach (var item in enumerable)
+            {
+                if (item is not null)
+                {
+                    MarkObjectAsStale(item);
+                }
+            }
+
+            return;
+        }
+
+        MarkObjectAsStale(value);
+    }
+
+    private static void MarkObjectAsStale(object value)
+    {
+        SetPropertyIfPresent(value, "IsStale", true);
+        SetPropertyIfPresent(value, "Warning", "Served from stale cache because the upstream request failed.");
+    }
+
+    private static void SetPropertyIfPresent(object target, string propertyName, object propertyValue)
+    {
+        var property = target.GetType().GetProperty(propertyName, BindingFlags.Instance | BindingFlags.Public);
+        if (property is null || !property.CanWrite || property.PropertyType != propertyValue.GetType())
+        {
+            return;
+        }
+
+        property.SetValue(target, propertyValue);
+    }
 }

@@ -4,6 +4,8 @@ using Digikala.Mcp.Infrastructure.Configuration;
 using Digikala.Mcp.Infrastructure.HttpClients;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Http.Resilience;
+using Polly;
 
 namespace Digikala.Mcp.Infrastructure.Extensions;
 
@@ -14,6 +16,9 @@ public static class ServiceCollectionExtensions
     {
         services.Configure<DigikalaOptions>(configuration.GetSection(DigikalaOptions.SectionName));
         services.Configure<CacheOptions>(configuration.GetSection(CacheOptions.SectionName));
+        services.Configure<ServerLoggingOptions>(configuration.GetSection(ServerLoggingOptions.SectionName));
+
+        services.AddSingleton<RateLimitingDelegatingHandler>();
 
         services.AddHttpClient<IDigikalaApiClient, DigikalaHttpClient>((sp, client) =>
         {
@@ -29,7 +34,18 @@ public static class ServiceCollectionExtensions
             client.DefaultRequestHeaders.Add("Referer", "https://www.digikala.com/");
             client.DefaultRequestHeaders.UserAgent.ParseAdd(options.UserAgent);
         })
-        .AddStandardResilienceHandler();
+        .AddHttpMessageHandler<RateLimitingDelegatingHandler>()
+        .AddStandardResilienceHandler(options =>
+        {
+            options.Retry.MaxRetryAttempts = 1;
+            options.Retry.Delay = TimeSpan.FromMilliseconds(500);
+            options.CircuitBreaker.FailureRatio = 1.0;
+            options.CircuitBreaker.MinimumThroughput = 5;
+            options.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(30);
+            options.CircuitBreaker.BreakDuration = TimeSpan.FromSeconds(60);
+            options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(10);
+            options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(10);
+        });
 
         services.AddSingleton<ICacheStore, SqliteCacheStore>();
         services.AddHostedService<CacheCleanupService>();

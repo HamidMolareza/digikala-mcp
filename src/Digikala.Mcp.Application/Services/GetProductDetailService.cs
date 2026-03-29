@@ -1,20 +1,16 @@
-using System.ComponentModel;
 using Digikala.Mcp.Application.Dtos;
 using Digikala.Mcp.Application.Internal;
 using Digikala.Mcp.Application.Mapping;
 using Digikala.Mcp.Domain.Enums;
 using Digikala.Mcp.Domain.Interfaces;
-using ModelContextProtocol.Server;
 
-namespace Digikala.Mcp.Application.Tools;
+namespace Digikala.Mcp.Application.Services;
 
-[McpServerToolType]
-public sealed class GetProductDetailTool(IDigikalaApiClient apiClient, ICacheStore cache, ProductMapper mapper)
+public sealed class GetProductDetailService(IDigikalaApiClient apiClient, ICacheStore cache, ProductMapper mapper)
 {
-    [McpServerTool, Description("Get full product detail including variants, images, price, seller, and specs.")]
-    public async Task<ProductDetailDto> get_product_detail(
-        [Description("Numeric product ID")] long productId,
-        [Description("Warehouse ID for Fresh products. Null for main store.")] int? warehouseId = null,
+    public async Task<ProductDetailDto> ExecuteAsync(
+        long productId,
+        int? warehouseId = null,
         CancellationToken ct = default)
     {
         var cacheKey = ToolExecutionHelper.CreateCacheKey("get_product_detail", ("productId", productId), ("warehouseId", warehouseId));

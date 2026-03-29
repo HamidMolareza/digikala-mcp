@@ -1,18 +1,14 @@
-using System.ComponentModel;
 using Digikala.Mcp.Application.Dtos;
 using Digikala.Mcp.Application.Internal;
 using Digikala.Mcp.Domain.Enums;
 using Digikala.Mcp.Domain.Interfaces;
-using ModelContextProtocol.Server;
 
-namespace Digikala.Mcp.Application.Tools;
+namespace Digikala.Mcp.Application.Services;
 
-[McpServerToolType]
-public sealed class GetSellerVouchersTool(IDigikalaApiClient apiClient, ICacheStore cache)
+public sealed class GetSellerVouchersService(IDigikalaApiClient apiClient, ICacheStore cache)
 {
-    [McpServerTool, Description("Get seller vouchers/promotions for a product.")]
-    public async Task<List<SellerVoucherDto>> get_seller_vouchers(
-        [Description("Numeric product ID")] long productId,
+    public async Task<List<SellerVoucherDto>> ExecuteAsync(
+        long productId,
         CancellationToken ct = default)
     {
         var cacheKey = ToolExecutionHelper.CreateCacheKey("get_seller_vouchers", ("productId", productId));

@@ -18,6 +18,11 @@ public sealed class SqliteCacheStore : ICacheStore, IAsyncDisposable
     {
         _options = options.Value;
         _logger = logger;
+        var directory = Path.GetDirectoryName(Path.GetFullPath(_options.DatabasePath));
+        if (!string.IsNullOrWhiteSpace(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
         _connection = new SqliteConnection($"Data Source={_options.DatabasePath}");
         _connection.Open();
         InitializeSchema();
@@ -40,6 +45,24 @@ public sealed class SqliteCacheStore : ICacheStore, IAsyncDisposable
         }
 
         _logger.LogDebug("Cache HIT: {Key}", key);
+        return JsonSerializer.Deserialize<T>(bytes);
+    }
+
+    public async Task<T?> GetStaleAsync<T>(string key, CancellationToken ct = default) where T : class
+    {
+        const string sql = "SELECT value FROM cache_entries WHERE key = @key";
+
+        await using var cmd = _connection.CreateCommand();
+        cmd.CommandText = sql;
+        cmd.Parameters.AddWithValue("@key", key);
+
+        var result = await cmd.ExecuteScalarAsync(ct);
+        if (result is not byte[] bytes)
+        {
+            return null;
+        }
+
+        _logger.LogWarning("Serving stale cache entry for {Key}", key);
         return JsonSerializer.Deserialize<T>(bytes);
     }
 

@@ -1,20 +1,16 @@
-using System.ComponentModel;
 using Digikala.Mcp.Application.Dtos;
 using Digikala.Mcp.Application.Internal;
 using Digikala.Mcp.Application.Mapping;
 using Digikala.Mcp.Domain.Enums;
 using Digikala.Mcp.Domain.Interfaces;
-using ModelContextProtocol.Server;
 
-namespace Digikala.Mcp.Application.Tools;
+namespace Digikala.Mcp.Application.Services;
 
-[McpServerToolType]
-public sealed class GetProductQuestionsTool(IDigikalaApiClient apiClient, ICacheStore cache, QuestionMapper mapper)
+public sealed class GetProductQuestionsService(IDigikalaApiClient apiClient, ICacheStore cache, QuestionMapper mapper)
 {
-    [McpServerTool, Description("Get paginated Q&A for a product.")]
-    public async Task<QuestionListDto> get_product_questions(
-        [Description("Numeric product ID")] long productId,
-        [Description("Page number, starting from 1")] int page = 1,
+    public async Task<QuestionListDto> ExecuteAsync(
+        long productId,
+        int page = 1,
         CancellationToken ct = default)
     {
         var cacheKey = ToolExecutionHelper.CreateCacheKey("get_product_questions", ("productId", productId), ("page", page));

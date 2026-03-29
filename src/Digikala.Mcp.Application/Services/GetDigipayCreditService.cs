@@ -1,19 +1,14 @@
-using System.ComponentModel;
-using System.Text.Json;
 using Digikala.Mcp.Application.Dtos;
 using Digikala.Mcp.Application.Internal;
 using Digikala.Mcp.Domain.Enums;
 using Digikala.Mcp.Domain.Interfaces;
-using ModelContextProtocol.Server;
 
-namespace Digikala.Mcp.Application.Tools;
+namespace Digikala.Mcp.Application.Services;
 
-[McpServerToolType]
-public sealed class GetDigipayCreditTool(IDigikalaApiClient apiClient, ICacheStore cache)
+public sealed class GetDigipayCreditService(IDigikalaApiClient apiClient, ICacheStore cache)
 {
-    [McpServerTool, Description("Get Digipay credit/installment options for a product.")]
-    public async Task<DigipayCreditDto> get_digipay_credit(
-        [Description("Numeric product ID")] long productId,
+    public async Task<DigipayCreditDto> ExecuteAsync(
+        long productId,
         CancellationToken ct = default)
     {
         var cacheKey = ToolExecutionHelper.CreateCacheKey("get_digipay_credit", ("productId", productId));

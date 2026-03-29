@@ -2,6 +2,8 @@ namespace Digikala.Mcp.Application.Dtos;
 
 public sealed record SearchResultDto
 {
+    public bool IsStale { get; set; }
+    public string? Warning { get; set; }
     public List<ProductSummaryDto> Products { get; init; } = [];
     public int TotalCount { get; init; }
     public int CurrentPage { get; init; }

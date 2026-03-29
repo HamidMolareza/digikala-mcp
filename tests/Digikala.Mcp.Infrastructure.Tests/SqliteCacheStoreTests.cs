@@ -1,6 +1,7 @@
 using Digikala.Mcp.Domain.Enums;
 using Digikala.Mcp.Infrastructure.Cache;
 using Digikala.Mcp.Infrastructure.Configuration;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Xunit;
@@ -59,6 +60,30 @@ public class SqliteCacheStoreTests : IAsyncDisposable
 
         var result = await _cache.GetAsync<TestData>("live-key");
         Assert.NotNull(result);
+    }
+
+    [Fact]
+    public async Task GetStale_ShouldReturnExpiredEntry()
+    {
+        var data = new TestData("stale", 9);
+        await _cache.SetAsync("stale-key", data, CacheTier.ShortTerm);
+
+        await using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+        {
+            await connection.OpenAsync();
+            await using var command = connection.CreateCommand();
+            command.CommandText = "UPDATE cache_entries SET expires_at = @expiresAt WHERE key = @key";
+            command.Parameters.AddWithValue("@expiresAt", DateTimeOffset.UtcNow.AddMinutes(-1).ToUnixTimeSeconds());
+            command.Parameters.AddWithValue("@key", "stale-key");
+            await command.ExecuteNonQueryAsync();
+        }
+
+        var fresh = await _cache.GetAsync<TestData>("stale-key");
+        var stale = await _cache.GetStaleAsync<TestData>("stale-key");
+
+        Assert.Null(fresh);
+        Assert.NotNull(stale);
+        Assert.Equal("stale", stale.Name);
     }
 
     public async ValueTask DisposeAsync()

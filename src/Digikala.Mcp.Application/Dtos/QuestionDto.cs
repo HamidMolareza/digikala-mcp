@@ -2,6 +2,8 @@ namespace Digikala.Mcp.Application.Dtos;
 
 public sealed record QuestionDto
 {
+    public bool IsStale { get; set; }
+    public string? Warning { get; set; }
     public long Id { get; init; }
     public string Body { get; init; } = string.Empty;
     public string? UserName { get; init; }
@@ -20,6 +22,8 @@ public sealed record AnswerDto
 
 public sealed record QuestionListDto
 {
+    public bool IsStale { get; set; }
+    public string? Warning { get; set; }
     public List<QuestionDto> Questions { get; init; } = [];
     public int CurrentPage { get; init; }
     public int TotalPages { get; init; }

@@ -1,20 +1,16 @@
-using System.ComponentModel;
 using Digikala.Mcp.Application.Dtos;
 using Digikala.Mcp.Application.Internal;
 using Digikala.Mcp.Application.Mapping;
 using Digikala.Mcp.Domain.Enums;
 using Digikala.Mcp.Domain.Interfaces;
-using ModelContextProtocol.Server;
 
-namespace Digikala.Mcp.Application.Tools;
+namespace Digikala.Mcp.Application.Services;
 
-[McpServerToolType]
-public sealed class GetProductRecommendationsTool(IDigikalaApiClient apiClient, ICacheStore cache, ProductMapper mapper)
+public sealed class GetProductRecommendationsService(IDigikalaApiClient apiClient, ICacheStore cache, ProductMapper mapper)
 {
-    [McpServerTool, Description("Get recommended/similar products for a given product.")]
-    public async Task<List<ProductSummaryDto>> get_product_recommendations(
-        [Description("Numeric product ID")] long productId,
-        [Description("Offset for pagination, starting from 0")] int offset = 0,
+    public async Task<List<ProductSummaryDto>> ExecuteAsync(
+        long productId,
+        int offset = 0,
         CancellationToken ct = default)
     {
         var cacheKey = ToolExecutionHelper.CreateCacheKey("get_product_recommendations", ("productId", productId), ("offset", offset));

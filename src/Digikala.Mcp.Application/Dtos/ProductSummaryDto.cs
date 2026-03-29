@@ -4,6 +4,8 @@ namespace Digikala.Mcp.Application.Dtos;
 
 public record ProductSummaryDto
 {
+    public bool IsStale { get; set; }
+    public string? Warning { get; set; }
     public long Id { get; init; }
     public string Title { get; init; } = string.Empty;
     public string? EnglishTitle { get; init; }

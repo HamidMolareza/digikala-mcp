@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Collections.Concurrent;
 using Digikala.Mcp.Domain.Interfaces;
 using Digikala.Mcp.Infrastructure.Configuration;
 using Microsoft.Extensions.Logging;
@@ -12,6 +13,7 @@ public sealed class DigikalaHttpClient(
     ILogger<DigikalaHttpClient> logger) : IDigikalaApiClient
 {
     private readonly DigikalaOptions _options = options.Value;
+    private readonly ConcurrentDictionary<string, CircuitState> _circuitStates = new(StringComparer.OrdinalIgnoreCase);
 
     // Session / Bootstrap
 
@@ -274,14 +276,38 @@ public sealed class DigikalaHttpClient(
     {
         var baseUrl = useFeatureHost ? _options.FeaturesBaseUrl : _options.BaseUrl;
         var requestUri = $"{baseUrl.TrimEnd('/')}{relativeUrl}";
+        var host = new Uri(baseUrl).Host;
+
+        EnsureCircuitClosed(host);
 
         logger.LogDebug("GET {Url}", requestUri);
 
-        var response = await httpClient.GetAsync(requestUri, ct);
-        response.EnsureSuccessStatusCode();
+        try
+        {
+            var response = await httpClient.GetAsync(requestUri, ct);
+            if (!response.IsSuccessStatusCode)
+            {
+                RegisterFailure(host);
+                var body = await response.Content.ReadAsStringAsync(ct);
+                throw new HttpRequestException(
+                    $"Digikala API returned HTTP {(int)response.StatusCode} for {requestUri}. Body: {body}");
+            }
 
-        var stream = await response.Content.ReadAsStreamAsync(ct);
-        return await JsonDocument.ParseAsync(stream, cancellationToken: ct);
+            ResetFailures(host);
+
+            var stream = await response.Content.ReadAsStreamAsync(ct);
+            return await JsonDocument.ParseAsync(stream, cancellationToken: ct);
+        }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        {
+            RegisterFailure(host);
+            throw new TimeoutException($"Timed out calling {requestUri}");
+        }
+        catch
+        {
+            RegisterFailure(host);
+            throw;
+        }
     }
 
     private static string BuildUrl(string path, params (string key, string? value)[] queryParams)
@@ -306,4 +332,48 @@ public sealed class DigikalaHttpClient(
         }
         return string.Join('&', parts);
     }
+
+    private void EnsureCircuitClosed(string host)
+    {
+        if (!_circuitStates.TryGetValue(host, out var state))
+        {
+            return;
+        }
+
+        if (state.OpenUntilUtc is { } openUntil && openUntil > DateTimeOffset.UtcNow)
+        {
+            throw new HttpRequestException($"Circuit breaker is open for host '{host}' until {openUntil:O}.");
+        }
+
+        if (state.OpenUntilUtc is { } expiredAt && expiredAt <= DateTimeOffset.UtcNow)
+        {
+            _circuitStates.TryRemove(host, out _);
+        }
+    }
+
+    private void ResetFailures(string host)
+    {
+        _circuitStates.TryRemove(host, out _);
+    }
+
+    private void RegisterFailure(string host)
+    {
+        var now = DateTimeOffset.UtcNow;
+        _circuitStates.AddOrUpdate(
+            host,
+            _ => new CircuitState(1, now, null),
+            (_, current) =>
+            {
+                var firstFailureUtc = now - current.FirstFailureUtc <= TimeSpan.FromSeconds(30)
+                    ? current.FirstFailureUtc
+                    : now;
+                var failureCount = now - current.FirstFailureUtc <= TimeSpan.FromSeconds(30)
+                    ? current.FailureCount + 1
+                    : 1;
+                var openUntil = failureCount >= 5 ? now.AddSeconds(60) : current.OpenUntilUtc;
+                return new CircuitState(failureCount, firstFailureUtc, openUntil);
+            });
+    }
+
+    private sealed record CircuitState(int FailureCount, DateTimeOffset FirstFailureUtc, DateTimeOffset? OpenUntilUtc);
 }

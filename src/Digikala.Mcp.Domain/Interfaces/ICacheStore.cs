@@ -6,6 +6,8 @@ public interface ICacheStore
 {
     Task<T?> GetAsync<T>(string key, CancellationToken ct = default) where T : class;
 
+    Task<T?> GetStaleAsync<T>(string key, CancellationToken ct = default) where T : class;
+
     Task SetAsync<T>(string key, T value, CacheTier tier, CancellationToken ct = default) where T : class;
 
     Task RemoveAsync(string key, CancellationToken ct = default);

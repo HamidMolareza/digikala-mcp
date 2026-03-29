@@ -1,0 +1,4 @@
+interface:
+  display_name: "Digikala MCP"
+  short_description: "Maintain the Digikala MCP server"
+  default_prompt: "Use $digikala-mcp-maintainer to modify and validate the Digikala MCP server."

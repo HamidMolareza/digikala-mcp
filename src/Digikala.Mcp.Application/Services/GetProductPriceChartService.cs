@@ -1,19 +1,15 @@
-using System.ComponentModel;
 using Digikala.Mcp.Application.Dtos;
 using Digikala.Mcp.Application.Internal;
 using Digikala.Mcp.Application.Mapping;
 using Digikala.Mcp.Domain.Enums;
 using Digikala.Mcp.Domain.Interfaces;
-using ModelContextProtocol.Server;
 
-namespace Digikala.Mcp.Application.Tools;
+namespace Digikala.Mcp.Application.Services;
 
-[McpServerToolType]
-public sealed class GetProductPriceChartTool(IDigikalaApiClient apiClient, ICacheStore cache, PriceChartMapper mapper)
+public sealed class GetProductPriceChartService(IDigikalaApiClient apiClient, ICacheStore cache, PriceChartMapper mapper)
 {
-    [McpServerTool, Description("Get historical price data for a product.")]
-    public async Task<PriceChartDto> get_product_price_chart(
-        [Description("Numeric product ID")] long productId,
+    public async Task<PriceChartDto> ExecuteAsync(
+        long productId,
         CancellationToken ct = default)
     {
         var cacheKey = ToolExecutionHelper.CreateCacheKey("get_product_price_chart", ("productId", productId));
