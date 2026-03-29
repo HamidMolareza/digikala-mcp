@@ -37,6 +37,30 @@ public sealed class GetProductDetailTool(GetProductDetailService service, ILogge
 }
 
 [McpServerToolType]
+public sealed class GetProductOverviewTool(GetProductOverviewService service, ILogger<GetProductOverviewTool> logger)
+{
+    [McpServerTool, Description("Get the most useful combined product data in one call: detail, price chart, top reviews, top questions, and recommendations.")]
+    public Task<ProductOverviewDto> get_product_overview(
+        [Description("Numeric product ID")] long productId,
+        [Description("Warehouse ID for Fresh products. Null for main store.")] int? warehouseId = null,
+        [Description("Number of top reviews to return.")] int topReviewsCount = 3,
+        [Description("Number of top questions to return.")] int topQuestionsCount = 3,
+        [Description("Number of recommendations to return.")] int topRecommendationsCount = 6,
+        CancellationToken ct = default)
+    {
+        logger.LogInformation(
+            "Tool get_product_overview invoked: productId={ProductId}, warehouseId={WarehouseId}, topReviewsCount={TopReviewsCount}, topQuestionsCount={TopQuestionsCount}, topRecommendationsCount={TopRecommendationsCount}",
+            productId,
+            warehouseId,
+            topReviewsCount,
+            topQuestionsCount,
+            topRecommendationsCount);
+
+        return service.ExecuteAsync(productId, warehouseId, topReviewsCount, topQuestionsCount, topRecommendationsCount, ct);
+    }
+}
+
+[McpServerToolType]
 public sealed class GetProductPriceChartTool(GetProductPriceChartService service, ILogger<GetProductPriceChartTool> logger)
 {
     [McpServerTool, Description("Get historical price data for a product.")]
@@ -191,19 +215,6 @@ public sealed class GetSellerVouchersTool(GetSellerVouchersService service, ILog
         CancellationToken ct = default)
     {
         logger.LogInformation("Tool get_seller_vouchers invoked: productId={ProductId}", productId);
-        return service.ExecuteAsync(productId, ct);
-    }
-}
-
-[McpServerToolType]
-public sealed class GetDigipayCreditTool(GetDigipayCreditService service, ILogger<GetDigipayCreditTool> logger)
-{
-    [McpServerTool, Description("Get Digipay credit/installment options for a product.")]
-    public Task<DigipayCreditDto> get_digipay_credit(
-        [Description("Numeric product ID")] long productId,
-        CancellationToken ct = default)
-    {
-        logger.LogInformation("Tool get_digipay_credit invoked: productId={ProductId}", productId);
         return service.ExecuteAsync(productId, ct);
     }
 }

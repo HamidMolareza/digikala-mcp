@@ -62,6 +62,7 @@ builder.Services.AddSingleton<BrandMapper>();
 
 builder.Services.AddSingleton<SearchProductsService>();
 builder.Services.AddSingleton<GetProductDetailService>();
+builder.Services.AddSingleton<GetProductOverviewService>();
 builder.Services.AddSingleton<GetProductPriceChartService>();
 builder.Services.AddSingleton<GetProductReviewsService>();
 builder.Services.AddSingleton<GetProductQuestionsService>();
@@ -74,7 +75,6 @@ builder.Services.AddSingleton<BrowseByTagService>();
 builder.Services.AddSingleton<AutocompleteService>();
 builder.Services.AddSingleton<GetBrandPageService>();
 builder.Services.AddSingleton<GetSellerVouchersService>();
-builder.Services.AddSingleton<GetDigipayCreditService>();
 
 builder.Services
     .AddMcpServer(options =>
