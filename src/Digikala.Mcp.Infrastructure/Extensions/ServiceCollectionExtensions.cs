@@ -19,7 +19,7 @@ public static class ServiceCollectionExtensions
         services.Configure<CacheOptions>(configuration.GetSection(CacheOptions.SectionName));
         services.Configure<ServerLoggingOptions>(configuration.GetSection(ServerLoggingOptions.SectionName));
 
-        services.AddSingleton<RateLimitingDelegatingHandler>();
+        services.AddTransient<RateLimitingDelegatingHandler>();
         services.AddDbContextFactory<CacheDbContext>((sp, options) =>
         {
             var cacheOptions = configuration
