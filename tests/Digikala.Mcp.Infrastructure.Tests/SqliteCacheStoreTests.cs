@@ -3,6 +3,7 @@ using Digikala.Mcp.Infrastructure.Cache;
 using Digikala.Mcp.Infrastructure.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Xunit;
 
 namespace Digikala.Mcp.Infrastructure.Tests;
 

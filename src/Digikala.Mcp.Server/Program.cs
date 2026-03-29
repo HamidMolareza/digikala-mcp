@@ -35,7 +35,7 @@ builder.Services
         };
     })
     .WithStdioServerTransport()
-    .WithToolsFromAssemblyContaining<SearchProductsTool>();
+    .WithToolsFromAssembly(typeof(SearchProductsTool).Assembly);
 
 var app = builder.Build();
 await app.RunAsync();

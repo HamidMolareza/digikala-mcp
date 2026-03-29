@@ -2,7 +2,7 @@ using System.ComponentModel;
 
 namespace Digikala.Mcp.Application.Dtos;
 
-public sealed record ProductSummaryDto
+public record ProductSummaryDto
 {
     public long Id { get; init; }
     public string Title { get; init; } = string.Empty;

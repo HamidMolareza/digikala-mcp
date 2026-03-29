@@ -1,4 +1,6 @@
+using System.Text.Json;
 using Digikala.Mcp.Application.Mapping;
+using Xunit;
 
 namespace Digikala.Mcp.Application.Tests;
 
@@ -7,13 +9,43 @@ public class ProductMapperTests
     private readonly ProductMapper _mapper = new();
 
     [Fact]
-    public void MapToSummary_ShouldThrow_WhenNotImplemented()
+    public void MapToSummary_ShouldMapCommonProductFields()
     {
-        // Placeholder — will be replaced with real tests once mapping is implemented.
-        Assert.Throws<NotImplementedException>(() =>
-        {
-            var element = System.Text.Json.JsonDocument.Parse("{}").RootElement;
-            _mapper.MapToSummary(element);
-        });
+        using var document = JsonDocument.Parse("""
+            {
+              "id": 123,
+              "title_fa": "گوشی موبایل",
+              "title_en": "Phone",
+              "url": { "uri": "/product/dkp-123" },
+              "images": [
+                { "url": ["https://example.com/main.jpg"] }
+              ],
+              "status": "marketable",
+              "rating": { "rate": 4.2, "count": 12 },
+              "category": { "code": "mobile-phone" },
+              "default_variant": {
+                "price": {
+                  "selling_price": 100000,
+                  "rrp_price": 125000,
+                  "discount_percent": 20
+                }
+              }
+            }
+            """);
+
+        var result = _mapper.MapToSummary(document.RootElement);
+
+        Assert.Equal(123, result.Id);
+        Assert.Equal("گوشی موبایل", result.Title);
+        Assert.Equal("Phone", result.EnglishTitle);
+        Assert.Equal("https://example.com/main.jpg", result.MainImageUrl);
+        Assert.Equal(100000, result.PriceRials);
+        Assert.Equal(125000, result.OriginalPriceRials);
+        Assert.Equal(20, result.DiscountPercent);
+        Assert.Equal(4.2, result.Rating);
+        Assert.Equal(12, result.ReviewCount);
+        Assert.Equal("mobile-phone", result.CategorySlug);
+        Assert.True(result.IsAvailable);
+        Assert.Equal("/product/dkp-123", result.Url);
     }
 }
