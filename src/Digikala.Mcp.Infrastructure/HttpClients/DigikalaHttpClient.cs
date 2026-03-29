@@ -135,10 +135,16 @@ public sealed class DigikalaHttpClient(
     public async Task<JsonDocument> SearchCategoryAsync(string categorySlug, int page = 1, int? sort = null,
         Dictionary<string, string[]>? attributes = null, string? query = null, CancellationToken ct = default)
     {
-        var normalizedCategorySlug = string.IsNullOrWhiteSpace(categorySlug) ? "search" : categorySlug.Trim();
-        var path = string.Equals(normalizedCategorySlug, "search", StringComparison.OrdinalIgnoreCase)
-            ? "/v1/categories/search/"
-            : $"/v1/categories/{Uri.EscapeDataString(normalizedCategorySlug)}/search/";
+        if (string.IsNullOrWhiteSpace(categorySlug) ||
+            string.Equals(categorySlug.Trim(), "search", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ArgumentException(
+                "SearchCategoryAsync requires a real category slug. No documented global Digikala product-search endpoint is currently configured.",
+                nameof(categorySlug));
+        }
+
+        var normalizedCategorySlug = categorySlug.Trim();
+        var path = $"/v1/categories/{Uri.EscapeDataString(normalizedCategorySlug)}/search/";
         var url = BuildUrl(path,
             ("page", page.ToString()), ("sort", sort?.ToString()), ("q", query));
         if (attributes is not null)

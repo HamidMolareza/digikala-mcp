@@ -149,6 +149,7 @@ public class RecommendProductsForNeedServiceTests
 
         var result = await service.ExecuteAsync(
             "Find me a shampoo for oily hair that is not too strong and does not over-dry the hair.",
+            categorySlug: "hair-shampoo",
             limit: 1,
             onlyAvailable: true,
             minRating: 4.0,
@@ -179,9 +180,9 @@ public class RecommendProductsForNeedServiceTests
         var service = new RecommendProductsForNeedService(searchService, feedbackService);
 
         apiClient.SearchCategoryAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<Dictionary<string, string[]>?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
-            .Returns<Task<JsonDocument>>(_ => throw new HttpRequestException("Digikala API returned HTTP 500 for https://api.digikala.com/v1/categories/search/?page=1&q=shampoo"));
+            .Returns<Task<JsonDocument>>(_ => throw new HttpRequestException("Digikala API returned HTTP 500 for https://api.digikala.com/v1/categories/hair-shampoo/search/?page=1&q=shampoo"));
 
-        var result = await service.ExecuteAsync("Need a balanced shampoo for oily hair.", limit: 2);
+        var result = await service.ExecuteAsync("Need a balanced shampoo for oily hair.", categorySlug: "hair-shampoo", limit: 2);
 
         Assert.NotNull(result.Error);
         Assert.Equal("search_products", result.Error!.Tool);

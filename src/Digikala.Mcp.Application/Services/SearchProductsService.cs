@@ -8,6 +8,12 @@ namespace Digikala.Mcp.Application.Services;
 
 public sealed class SearchProductsService(IDigikalaApiClient apiClient, ICacheStore cache, ProductMapper mapper)
 {
+    private static readonly (string CategorySlug, string[] Terms)[] CategoryInferenceRules =
+    [
+        ("hair-shampoo", ["شامپو", "shampoo"]),
+        ("mobile-phone", ["گوشی", "موبایل", "mobile", "phone", "iphone", "samsung", "xiaomi", "pixel"]),
+    ];
+
     public async Task<SearchResultDto> ExecuteAsync(
         string query,
         string? categorySlug = null,
@@ -28,13 +34,19 @@ public sealed class SearchProductsService(IDigikalaApiClient apiClient, ICacheSt
         bool skipCache = false,
         CancellationToken ct = default)
     {
-        var normalizedCategorySlug = string.IsNullOrWhiteSpace(categorySlug) ? "search" : categorySlug.Trim();
+        var normalizedQuery = NormalizeQuery(query);
+        var normalizedCategorySlug = NormalizeCategorySlug(categorySlug);
+        var inferredCategorySlug = normalizedCategorySlug is null
+            ? TryInferCategorySlug(normalizedQuery)
+            : null;
+        var resolvedCategorySlug = inferredCategorySlug ?? normalizedCategorySlug;
         var normalizedPreferTerms = preferTerms?.Where(item => !string.IsNullOrWhiteSpace(item)).Select(item => item.Trim()).ToArray();
         var normalizedAvoidTerms = avoidTerms?.Where(item => !string.IsNullOrWhiteSpace(item)).Select(item => item.Trim()).ToArray();
         var request = new Dictionary<string, string?>
         {
-            ["query"] = query,
-            ["categorySlug"] = categorySlug,
+            ["query"] = normalizedQuery,
+            ["categorySlug"] = normalizedCategorySlug,
+            ["resolvedCategorySlug"] = resolvedCategorySlug,
             ["page"] = page.ToString(),
             ["sort"] = sort?.ToString(),
             ["minRating"] = minRating?.ToString(),
@@ -52,10 +64,26 @@ public sealed class SearchProductsService(IDigikalaApiClient apiClient, ICacheSt
             ["skipCache"] = skipCache.ToString(),
         };
 
+        if (string.IsNullOrWhiteSpace(normalizedQuery))
+        {
+            return CreateValidationError(
+                "Search query is required.",
+                "Provide a non-empty query string before calling search_products.",
+                request);
+        }
+
+        if (resolvedCategorySlug is null)
+        {
+            return CreateValidationError(
+                "search_products requires categorySlug unless the query can be mapped to a known Digikala category.",
+                "Provide a category slug such as 'mobile-phone' or 'hair-shampoo', or use a clear query like 'iphone' or 'shampoo'.",
+                request);
+        }
+
         var cacheKey = ToolExecutionHelper.CreateCacheKey(
             "search_products",
-            ("query", query),
-            ("category", normalizedCategorySlug),
+            ("query", normalizedQuery),
+            ("category", resolvedCategorySlug),
             ("page", page),
             ("sort", sort),
             ("minRating", minRating),
@@ -80,13 +108,21 @@ public sealed class SearchProductsService(IDigikalaApiClient apiClient, ICacheSt
                 async token =>
                 {
                     using var response = await apiClient.SearchCategoryAsync(
-                        normalizedCategorySlug,
+                        resolvedCategorySlug,
                         page,
                         sort,
-                        query: query,
+                        query: normalizedQuery,
                         ct: token);
 
                     var result = mapper.MapToSearchResult(response);
+                    if (inferredCategorySlug is not null)
+                    {
+                        result = result with
+                        {
+                            Warning = $"Category inferred as `{inferredCategorySlug}` because Digikala's documented public search API is category-scoped.",
+                        };
+                    }
+
                     return ApplyFilteringAndRanking(
                         result,
                         minRating,
@@ -229,5 +265,60 @@ public sealed class SearchProductsService(IDigikalaApiClient apiClient, ICacheSt
         var signalScore = ProductSuitabilityAnalyzer.CalculateSignalScore(product, preferBalancedMatches);
 
         return ratingComponent + reviewConfidence + availabilityBonus + signalScore - pricePenalty;
+    }
+
+    private static string NormalizeQuery(string query)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            return string.Empty;
+        }
+
+        return query.Trim().TrimEnd('.', '،', ',', ';', '؛');
+    }
+
+    private static string? NormalizeCategorySlug(string? categorySlug)
+    {
+        if (string.IsNullOrWhiteSpace(categorySlug))
+        {
+            return null;
+        }
+
+        var normalized = categorySlug.Trim();
+        return string.Equals(normalized, "search", StringComparison.OrdinalIgnoreCase)
+            ? null
+            : normalized;
+    }
+
+    private static string? TryInferCategorySlug(string query)
+    {
+        foreach (var (categorySlug, terms) in CategoryInferenceRules)
+        {
+            if (terms.Any(term => query.Contains(term, StringComparison.OrdinalIgnoreCase)))
+            {
+                return categorySlug;
+            }
+        }
+
+        return null;
+    }
+
+    private static SearchResultDto CreateValidationError(string message, string diagnostic, Dictionary<string, string?> request)
+    {
+        return new SearchResultDto
+        {
+            Warning = "Structured validation blocked an unsupported Digikala search request.",
+            Error = new ToolIssueDto
+            {
+                Code = "InvalidInput",
+                Message = message,
+                Tool = "search_products",
+                Request = request,
+                Retryable = false,
+                Diagnostics = [diagnostic],
+            },
+            FilteredCount = 0,
+            AppliedFilters = [],
+        };
     }
 }

@@ -54,7 +54,7 @@ public class DigikalaHttpClientTests
     }
 
     [Fact]
-    public async Task SearchCategoryAsync_ShouldUseGlobalSearchRoute_WhenSlugIsSearch()
+    public async Task SearchCategoryAsync_ShouldRejectGlobalSearchPlaceholder_WhenSlugIsSearch()
     {
         var handler = new RecordingHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
         {
@@ -63,12 +63,10 @@ public class DigikalaHttpClientTests
         var httpClient = new HttpClient(handler);
         var client = CreateClient(httpClient);
 
-        await client.SearchCategoryAsync("search", query: "iphone");
+        var exception = await Assert.ThrowsAsync<ArgumentException>(() => client.SearchCategoryAsync("search", query: "iphone"));
 
-        Assert.NotNull(handler.LastRequestUri);
-        Assert.Equal(
-            "https://api.example.com/v1/categories/search/?page=1&q=iphone",
-            handler.LastRequestUri!.ToString());
+        Assert.Contains("requires a real category slug", exception.Message, StringComparison.Ordinal);
+        Assert.Null(handler.LastRequestUri);
     }
 
     [Fact]

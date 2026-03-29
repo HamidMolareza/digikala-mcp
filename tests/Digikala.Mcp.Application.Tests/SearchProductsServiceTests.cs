@@ -26,11 +26,67 @@ public class SearchProductsServiceTests
         _cacheStore.GetAsync<SearchResultDto>(Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(cached);
 
-        var result = await _service.ExecuteAsync("iphone");
+        var result = await _service.ExecuteAsync("iphone", "mobile-phone");
 
         Assert.Same(cached, result);
         Assert.True(result.IsFromCache);
         Assert.Equal("cache", result.CacheStatus);
+        await _apiClient.DidNotReceiveWithAnyArgs().SearchCategoryAsync(default!, default, default, default, default, default);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_ShouldInferCategorySlug_ForRecognizedQueries()
+    {
+        using var document = JsonDocument.Parse("""
+            {
+              "status": 200,
+              "data": {
+                "products": [
+                  {
+                    "id": 1,
+                    "title_fa": "گوشی موبایل",
+                    "status": "marketable",
+                    "rating": { "rate": 4.7, "count": 650 },
+                    "default_variant": { "price": { "selling_price": 400000000 } },
+                    "url": { "uri": "/a" },
+                    "images": []
+                  }
+                ],
+                "pager": { "current_page": 1, "total_pages": 1, "total_items": 1 },
+                "filters": [],
+                "sort_options": []
+              }
+            }
+            """);
+
+        _cacheStore.GetAsync<SearchResultDto>(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns((SearchResultDto?)null);
+        _apiClient.SearchCategoryAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<Dictionary<string, string[]>?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(document);
+
+        var result = await _service.ExecuteAsync("iphone.");
+
+        Assert.Single(result.Products);
+        Assert.Contains("Category inferred as `mobile-phone`", result.Warning);
+        await _apiClient.Received(1).SearchCategoryAsync(
+            "mobile-phone",
+            Arg.Any<int>(),
+            Arg.Any<int?>(),
+            Arg.Any<Dictionary<string, string[]>?>(),
+            "iphone",
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_ShouldReturnStructuredValidationError_WhenCategoryCannotBeResolved()
+    {
+        var result = await _service.ExecuteAsync("random obscure query");
+
+        Assert.NotNull(result.Error);
+        Assert.Equal("InvalidInput", result.Error!.Code);
+        Assert.Contains("requires categorySlug", result.Error.Message, StringComparison.Ordinal);
+        Assert.False(result.Error.Retryable);
+        Assert.Equal(0, result.FilteredCount);
         await _apiClient.DidNotReceiveWithAnyArgs().SearchCategoryAsync(default!, default, default, default, default, default);
     }
 
@@ -44,7 +100,7 @@ public class SearchProductsServiceTests
         _apiClient.SearchCategoryAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<Dictionary<string, string[]>?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
             .Returns<Task<JsonDocument>>(_ => throw new HttpRequestException("boom"));
 
-        var result = await _service.ExecuteAsync("iphone");
+        var result = await _service.ExecuteAsync("iphone", "mobile-phone");
 
         Assert.True(result.IsStale);
         Assert.True(result.IsFromCache);
@@ -88,12 +144,18 @@ public class SearchProductsServiceTests
         _apiClient.SearchCategoryAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<Dictionary<string, string[]>?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
             .Returns(document);
 
-        var result = await _service.ExecuteAsync("iphone", skipCache: true);
+        var result = await _service.ExecuteAsync("iphone.", "mobile-phone", skipCache: true);
 
         Assert.Equal(1, result.Products[0].Id);
         Assert.False(result.IsFromCache);
         Assert.Equal("bypassed", result.CacheStatus);
-        await _apiClient.Received(1).SearchCategoryAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<Dictionary<string, string[]>?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>());
+        await _apiClient.Received(1).SearchCategoryAsync(
+            Arg.Any<string>(),
+            Arg.Any<int>(),
+            Arg.Any<int?>(),
+            Arg.Any<Dictionary<string, string[]>?>(),
+            Arg.Is<string?>(value => value == "iphone"),
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -202,6 +264,7 @@ public class SearchProductsServiceTests
 
         var result = await _service.ExecuteAsync(
             "شامپو",
+            "hair-shampoo",
             preferTerms: ["ملایم", "روزانه", "بدون سولفات"],
             avoidTerms: ["کنترل کننده چربی قوی"],
             includeAvailableFilters: false,
@@ -226,9 +289,9 @@ public class SearchProductsServiceTests
         _cacheStore.GetStaleAsync<SearchResultDto>(Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns((SearchResultDto?)null);
         _apiClient.SearchCategoryAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<Dictionary<string, string[]>?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
-            .Returns<Task<JsonDocument>>(_ => throw new HttpRequestException("Digikala API returned HTTP 500 for https://api.digikala.com/v1/categories/search/?page=1&q=iphone"));
+            .Returns<Task<JsonDocument>>(_ => throw new HttpRequestException("Digikala API returned HTTP 500 for https://api.digikala.com/v1/categories/mobile-phone/search/?page=1&q=iphone"));
 
-        var result = await _service.ExecuteAsync("iphone");
+        var result = await _service.ExecuteAsync("iphone", "mobile-phone");
 
         Assert.NotNull(result.Error);
         Assert.Equal("search_products", result.Error!.Tool);
@@ -270,7 +333,7 @@ public class SearchProductsServiceTests
         _apiClient.SearchCategoryAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<Dictionary<string, string[]>?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
             .Returns(document);
 
-        var result = await _service.ExecuteAsync("iphone");
+        var result = await _service.ExecuteAsync("iphone", "mobile-phone");
 
         Assert.Single(result.Products);
         Assert.Equal(1, result.TotalCount);
@@ -309,16 +372,61 @@ public class SearchProductsServiceTests
 
         var first = await service.ExecuteAsync(
             "شامپو",
+            "hair-shampoo",
             preferTerms: ["ملایم", "روزانه", "بدون سولفات"],
             avoidTerms: ["کنترل کننده چربی قوی", "ضد شوره"]);
         var second = await service.ExecuteAsync(
             "شامپو",
+            "hair-shampoo",
             preferTerms: ["بدون سولفات", "روزانه", "ملایم"],
             avoidTerms: ["ضد شوره", "کنترل کننده چربی قوی"]);
 
         Assert.Single(first.Products);
         Assert.Single(second.Products);
         await _apiClient.Received(1).SearchCategoryAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<Dictionary<string, string[]>?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_ShouldInferCategorySlug_ForCategoryLessShampooQueries()
+    {
+        using var document = JsonDocument.Parse("""
+            {
+              "status": 200,
+              "data": {
+                "products": [
+                  {
+                    "id": 1,
+                    "title_fa": "شامپو",
+                    "status": "marketable",
+                    "rating": { "rate": 4.6, "count": 80 },
+                    "default_variant": { "price": { "selling_price": 2500000 } },
+                    "url": { "uri": "/b" },
+                    "images": []
+                  }
+                ],
+                "pager": { "current_page": 1, "total_pages": 1, "total_items": 1 },
+                "filters": [],
+                "sort_options": []
+              }
+            }
+            """);
+
+        _cacheStore.GetAsync<SearchResultDto>(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns((SearchResultDto?)null);
+        _apiClient.SearchCategoryAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<Dictionary<string, string[]>?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(document);
+
+        var result = await _service.ExecuteAsync("شامپو");
+
+        Assert.Single(result.Products);
+        Assert.Contains("Category inferred as `hair-shampoo`", result.Warning);
+        await _apiClient.Received(1).SearchCategoryAsync(
+            "hair-shampoo",
+            Arg.Any<int>(),
+            Arg.Any<int?>(),
+            Arg.Any<Dictionary<string, string[]>?>(),
+            "شامپو",
+            Arg.Any<CancellationToken>());
     }
 
     private sealed class MemoryCacheStore : ICacheStore

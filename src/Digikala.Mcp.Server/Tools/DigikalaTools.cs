@@ -12,7 +12,7 @@ public sealed class SearchProductsTool(SearchProductsService service, ILogger<Se
     [McpServerTool, Description("Search products by keyword within an optional category, with filters, sorting, and pagination.")]
     public Task<SearchResultDto> search_products(
         [Description("Search keyword in Persian or English")] string query,
-        [Description("Category slug, e.g. 'mobile-phone'. Null for all categories.")] string? categorySlug = null,
+        [Description("Category slug, e.g. 'mobile-phone'. When omitted, the tool returns a validation hint because no documented global product-search endpoint is available.")] string? categorySlug = null,
         [Description("Page number, starting from 1")] int page = 1,
         [Description("Sort: 1=relevance, 4=popular, 7=cheapest, 8=expensive, 25=best-selling, 27=newest")] int? sort = null,
         [Description("Optional minimum rating threshold, e.g. 4.5")] double? minRating = null,
@@ -80,7 +80,7 @@ public sealed class RecommendProductsForNeedTool(
     [McpServerTool, Description("Recommend products for a natural-language shopping need using Digikala data only, with transparent evidence.")]
     public Task<ProductNeedRecommendationsDto> recommend_products_for_need(
         [Description("Natural-language shopping need or constraint set.")] string needDescription,
-        [Description("Category slug, e.g. 'personal-care' or 'mobile-phone'. Null for all categories.")] string? categorySlug = null,
+        [Description("Category slug, e.g. 'personal-care' or 'mobile-phone'. When omitted, recommendations may return a validation hint because no documented global product-search endpoint is available.")] string? categorySlug = null,
         [Description("Maximum number of recommendations to return.")] int limit = 5,
         [Description("Only return currently available products when true.")] bool? onlyAvailable = true,
         [Description("Optional minimum rating threshold, e.g. 4.0")] double? minRating = null,
