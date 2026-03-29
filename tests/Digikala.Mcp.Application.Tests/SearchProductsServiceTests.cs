@@ -113,4 +113,24 @@ public class SearchProductsServiceTests
         Assert.Contains("min_review_count>=500", result.AppliedFilters);
         Assert.All(result.Products, item => Assert.True(item.SearchScore > 0));
     }
+
+    [Fact]
+    public async Task ExecuteAsync_ShouldReturnStructuredError_WhenUpstreamAndCacheFail()
+    {
+        _cacheStore.GetAsync<SearchResultDto>(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns((SearchResultDto?)null);
+        _cacheStore.GetStaleAsync<SearchResultDto>(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns((SearchResultDto?)null);
+        _apiClient.SearchCategoryAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<Dictionary<string, string[]>?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns<Task<JsonDocument>>(_ => throw new HttpRequestException("Digikala API returned HTTP 500 for https://api.digikala.com/v1/categories/search/?page=1&q=iphone"));
+
+        var result = await _service.ExecuteAsync("iphone");
+
+        Assert.NotNull(result.Error);
+        Assert.Equal("search_products", result.Error!.Tool);
+        Assert.Equal(500, result.Error.StatusCode);
+        Assert.True(result.Error.Retryable);
+        Assert.Equal(0, result.FilteredCount);
+        Assert.NotNull(result.Warning);
+    }
 }

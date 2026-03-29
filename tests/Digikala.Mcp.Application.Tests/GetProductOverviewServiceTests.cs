@@ -142,6 +142,99 @@ public class GetProductOverviewServiceTests
         Assert.Equal(2, result.TopReviews.Single().Id);
         Assert.Equal(2, result.TopQuestions.Single().Id);
         Assert.Equal(7, result.Recommendations.Single().Id);
+        Assert.Equal("ok", result.SectionStatus["detail"]);
+        Assert.Empty(result.SectionIssues);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_ShouldReturnPartialOverview_WhenOptionalSectionsFail()
+    {
+        var apiClient = Substitute.For<IDigikalaApiClient>();
+        var cache = new NullCacheStore();
+        var detailService = new GetProductDetailService(apiClient, cache, new ProductMapper());
+        var priceChartService = new GetProductPriceChartService(apiClient, cache, new PriceChartMapper());
+        var reviewsService = new GetProductReviewsService(apiClient, cache, new ReviewMapper());
+        var questionsService = new GetProductQuestionsService(apiClient, cache, new QuestionMapper());
+        var recommendationsService = new GetProductRecommendationsService(apiClient, cache, new ProductMapper());
+
+        apiClient.GetProductV2Async(1001, null, Arg.Any<CancellationToken>())
+            .Returns(JsonDocument.Parse("""
+                {
+                  "data": {
+                    "product": {
+                      "id": 1001,
+                      "title_fa": "Phone",
+                      "status": "marketable",
+                      "default_variant": { "price": { "selling_price": 100 } },
+                      "url": { "uri": "/product/1001" },
+                      "images": []
+                    }
+                  }
+                }
+                """));
+        apiClient.GetProductPriceChartAsync(1001, null, Arg.Any<CancellationToken>())
+            .Returns<Task<JsonDocument>>(_ => throw new HttpRequestException("Digikala API returned HTTP 503 for https://api.digikala.com/v1/product/1001/price-chart/"));
+        apiClient.GetProductCommentsAsync(1001, 1, null, null, Arg.Any<CancellationToken>())
+            .Returns(JsonDocument.Parse("""{ "data": { "comments": [], "pager": { "current_page": 1, "total_pages": 1, "total_items": 0 } } }"""));
+        apiClient.GetProductQuestionsAsync(1001, 1, null, null, Arg.Any<CancellationToken>())
+            .Returns(JsonDocument.Parse("""{ "data": { "questions": [], "pager": { "current_page": 1, "total_pages": 1, "total_items": 0 } } }"""));
+        apiClient.GetProductRecommendationAsync(1001, 0, Arg.Any<CancellationToken>())
+            .Returns<Task<JsonDocument>>(_ => throw new HttpRequestException("Digikala API returned HTTP 500 for https://api.digikala.com/v1/product/1001/recommendation/?offset=0"));
+
+        var service = new GetProductOverviewService(
+            detailService,
+            priceChartService,
+            reviewsService,
+            questionsService,
+            recommendationsService);
+
+        var result = await service.ExecuteAsync(1001);
+
+        Assert.Equal(1001, result.Detail.Id);
+        Assert.False(result.HasError);
+        Assert.Equal("ok", result.SectionStatus["detail"]);
+        Assert.Equal("failed", result.SectionStatus["priceChart"]);
+        Assert.Equal("failed", result.SectionStatus["recommendations"]);
+        Assert.NotEmpty(result.SectionWarnings);
+        Assert.Contains("priceChart", result.SectionIssues.Keys);
+        Assert.Contains("recommendations", result.SectionIssues.Keys);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_ShouldReturnStructuredDetailFailure_WhenMainDetailFails()
+    {
+        var apiClient = Substitute.For<IDigikalaApiClient>();
+        var cache = new NullCacheStore();
+        var detailService = new GetProductDetailService(apiClient, cache, new ProductMapper());
+        var priceChartService = new GetProductPriceChartService(apiClient, cache, new PriceChartMapper());
+        var reviewsService = new GetProductReviewsService(apiClient, cache, new ReviewMapper());
+        var questionsService = new GetProductQuestionsService(apiClient, cache, new QuestionMapper());
+        var recommendationsService = new GetProductRecommendationsService(apiClient, cache, new ProductMapper());
+
+        apiClient.GetProductV2Async(1001, null, Arg.Any<CancellationToken>())
+            .Returns<Task<JsonDocument>>(_ => throw new HttpRequestException("Digikala API returned HTTP 404 for https://api.digikala.com/v2/product/1001/"));
+        apiClient.GetProductPriceChartAsync(1001, null, Arg.Any<CancellationToken>())
+            .Returns(JsonDocument.Parse("""{ "data": { "today": { "selling_price": 100 }, "price_chart": [] } }"""));
+        apiClient.GetProductCommentsAsync(1001, 1, null, null, Arg.Any<CancellationToken>())
+            .Returns(JsonDocument.Parse("""{ "data": { "comments": [], "pager": { "current_page": 1, "total_pages": 1, "total_items": 0 } } }"""));
+        apiClient.GetProductQuestionsAsync(1001, 1, null, null, Arg.Any<CancellationToken>())
+            .Returns(JsonDocument.Parse("""{ "data": { "questions": [], "pager": { "current_page": 1, "total_pages": 1, "total_items": 0 } } }"""));
+        apiClient.GetProductRecommendationAsync(1001, 0, Arg.Any<CancellationToken>())
+            .Returns(JsonDocument.Parse("""{ "data": { "products": [] } }"""));
+
+        var service = new GetProductOverviewService(
+            detailService,
+            priceChartService,
+            reviewsService,
+            questionsService,
+            recommendationsService);
+
+        var result = await service.ExecuteAsync(1001);
+
+        Assert.True(result.HasError);
+        Assert.Equal("failed", result.SectionStatus["detail"]);
+        Assert.Contains("detail", result.SectionIssues.Keys);
+        Assert.NotNull(result.Detail.Warning);
     }
 
     private sealed class NullCacheStore : ICacheStore

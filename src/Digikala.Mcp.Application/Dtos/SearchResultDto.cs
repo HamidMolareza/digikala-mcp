@@ -4,6 +4,7 @@ public sealed record SearchResultDto
 {
     public bool IsStale { get; set; }
     public string? Warning { get; set; }
+    public ToolIssueDto? Error { get; set; }
     public List<ProductSummaryDto> Products { get; init; } = [];
     public ProductSummaryDto? BestMatch { get; set; }
     public int TotalCount { get; init; }
