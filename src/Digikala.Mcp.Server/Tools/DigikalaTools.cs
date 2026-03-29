@@ -21,11 +21,16 @@ public sealed class SearchProductsTool(SearchProductsService service, ILogger<Se
         [Description("Optional minimum selling price in rials.")] long? minPriceRials = null,
         [Description("Optional maximum selling price in rials.")] long? maxPriceRials = null,
         [Description("Maximum number of products to keep after filtering and ranking.")] int? limit = null,
+        [Description("Terms to positively boost when ranking candidates.")] string[]? preferTerms = null,
+        [Description("Terms to penalize when ranking candidates.")] string[]? avoidTerms = null,
+        [Description("Include extracted attribute highlights in product summaries.")] bool includeAttributeHighlights = true,
+        [Description("Include available filters and sort options in the response.")] bool includeAvailableFilters = true,
+        [Description("Prefer balanced and daily-use matches over harsher treatment-style matches.")] bool preferBalancedMatches = false,
         [Description("Rank matches to surface the best overall choice first.")] bool prioritizeBestMatch = true,
         CancellationToken ct = default)
     {
         logger.LogInformation(
-            "Tool search_products invoked: query={Query}, category={Category}, page={Page}, sort={Sort}, minRating={MinRating}, minReviewCount={MinReviewCount}, onlyAvailable={OnlyAvailable}, minPriceRials={MinPriceRials}, maxPriceRials={MaxPriceRials}, limit={Limit}, prioritizeBestMatch={PrioritizeBestMatch}",
+            "Tool search_products invoked: query={Query}, category={Category}, page={Page}, sort={Sort}, minRating={MinRating}, minReviewCount={MinReviewCount}, onlyAvailable={OnlyAvailable}, minPriceRials={MinPriceRials}, maxPriceRials={MaxPriceRials}, limit={Limit}, preferTerms={PreferTerms}, avoidTerms={AvoidTerms}, includeAttributeHighlights={IncludeAttributeHighlights}, includeAvailableFilters={IncludeAvailableFilters}, preferBalancedMatches={PreferBalancedMatches}, prioritizeBestMatch={PrioritizeBestMatch}",
             query,
             categorySlug,
             page,
@@ -36,6 +41,11 @@ public sealed class SearchProductsTool(SearchProductsService service, ILogger<Se
             minPriceRials,
             maxPriceRials,
             limit,
+            preferTerms,
+            avoidTerms,
+            includeAttributeHighlights,
+            includeAvailableFilters,
+            preferBalancedMatches,
             prioritizeBestMatch);
 
         return service.ExecuteAsync(
@@ -49,6 +59,11 @@ public sealed class SearchProductsTool(SearchProductsService service, ILogger<Se
             minPriceRials,
             maxPriceRials,
             limit,
+            preferTerms,
+            avoidTerms,
+            includeAttributeHighlights,
+            includeAvailableFilters,
+            preferBalancedMatches,
             prioritizeBestMatch,
             ct);
     }

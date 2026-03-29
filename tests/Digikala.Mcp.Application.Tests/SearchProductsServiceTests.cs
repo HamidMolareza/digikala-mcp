@@ -115,6 +115,63 @@ public class SearchProductsServiceTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_ShouldBoostPreferredTerms_AndHideFilterMetadata_WhenRequested()
+    {
+        using var document = JsonDocument.Parse("""
+            {
+              "status": 200,
+              "data": {
+                "products": [
+                  {
+                    "id": 1,
+                    "title_fa": "شامپو کنترل کننده چربی قوی",
+                    "status": "marketable",
+                    "rating": { "rate": 4.8, "count": 900 },
+                    "default_variant": { "price": { "selling_price": 2500000 } },
+                    "url": { "uri": "/a" },
+                    "images": []
+                  },
+                  {
+                    "id": 2,
+                    "title_fa": "شامپو روزانه ملایم بدون سولفات برای موهای چرب",
+                    "status": "marketable",
+                    "rating": { "rate": 4.6, "count": 800 },
+                    "default_variant": { "price": { "selling_price": 2600000 } },
+                    "url": { "uri": "/b" },
+                    "images": []
+                  }
+                ],
+                "pager": { "current_page": 1, "total_pages": 1, "total_items": 2 },
+                "filters": [{ "title_fa": "برند", "code": "brand", "options": [] }],
+                "sort_options": [{ "title_fa": "مرتبط ترین" }]
+              }
+            }
+            """);
+
+        _cacheStore.GetAsync<SearchResultDto>(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns((SearchResultDto?)null);
+        _apiClient.SearchCategoryAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<Dictionary<string, string[]>?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(document);
+
+        var result = await _service.ExecuteAsync(
+            "شامپو",
+            preferTerms: ["ملایم", "روزانه", "بدون سولفات"],
+            avoidTerms: ["کنترل کننده چربی قوی"],
+            includeAvailableFilters: false,
+            preferBalancedMatches: true);
+
+        Assert.Equal(2, result.BestMatch!.Id);
+        Assert.Contains("ملایم", result.BestMatch.MatchedSignals);
+        Assert.Contains("روزانه", result.BestMatch.MatchedSignals);
+        Assert.Contains("بدون سولفات", result.BestMatch.MatchedSignals);
+        Assert.Contains("daily use", result.BestMatch.UseCaseHints);
+        Assert.True(result.BestMatch.IsSulfateFree);
+        Assert.True(result.BestMatch.IsDailyUse);
+        Assert.Empty(result.AvailableFilters);
+        Assert.Empty(result.AvailableSortOptions);
+    }
+
+    [Fact]
     public async Task ExecuteAsync_ShouldReturnStructuredError_WhenUpstreamAndCacheFail()
     {
         _cacheStore.GetAsync<SearchResultDto>(Arg.Any<string>(), Arg.Any<CancellationToken>())

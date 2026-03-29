@@ -19,4 +19,17 @@ public record ProductSummaryDto
     public bool IsAvailable { get; init; }
     public string Url { get; init; } = string.Empty;
     public double? SearchScore { get; set; }
+    public List<string> MatchedSignals { get; set; } = [];
+    public List<string> RejectedSignals { get; set; } = [];
+    public List<string> AttributeHighlights { get; set; } = [];
+    public List<string> UseCaseHints { get; set; } = [];
+    public List<string> SuitabilityNotes { get; set; } = [];
+    public List<string> SuitableForHairTypes { get; set; } = [];
+    public List<string> SuitableForScalpTypes { get; set; } = [];
+    public bool? IsDailyUse { get; set; }
+    public bool? IsSulfateFree { get; set; }
+    public bool? IsParabenFree { get; set; }
+    public List<string> KeyIngredients { get; set; } = [];
+    public List<string> ConcernsTargeted { get; set; } = [];
+    public List<string> PotentialCautions { get; set; } = [];
 }

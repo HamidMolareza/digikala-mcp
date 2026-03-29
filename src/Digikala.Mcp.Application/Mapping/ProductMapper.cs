@@ -16,7 +16,7 @@ public sealed class ProductMapper
         var sellingPrice = productElement.GetInt64OrNull("default_variant", "price", "selling_price") ?? 0;
         var originalPrice = productElement.GetInt64OrNull("default_variant", "price", "rrp_price");
 
-        return new ProductSummaryDto
+        var summary = new ProductSummaryDto
         {
             Id = productElement.GetInt64OrNull("id") ?? 0,
             Title = productElement.GetStringOrNull("title_fa") ?? productElement.GetStringOrNull("title_en") ?? string.Empty,
@@ -34,6 +34,8 @@ public sealed class ProductMapper
             IsAvailable = JsonHelpers.IsAvailableStatus(productElement.GetStringOrNull("status")),
             Url = productElement.GetUrl("url") ?? string.Empty,
         };
+
+        return ProductSuitabilityAnalyzer.EnrichSummary(summary);
     }
 
     public List<ProductSummaryDto> MapToSummaryList(JsonElement productsArray)
@@ -63,7 +65,7 @@ public sealed class ProductMapper
             .Cast<string>()
             .ToList();
 
-        return new ProductDetailDto
+        var detail = new ProductDetailDto
         {
             Id = summary.Id,
             Title = summary.Title,
@@ -123,6 +125,8 @@ public sealed class ProductMapper
                 .ToList(),
             ProsCons = pros.Count > 0 || cons.Count > 0 ? new ProsConsDto(pros, cons) : null,
         };
+
+        return ProductSuitabilityAnalyzer.EnrichDetail(detail);
     }
 
     public SearchResultDto MapToSearchResult(JsonDocument response)

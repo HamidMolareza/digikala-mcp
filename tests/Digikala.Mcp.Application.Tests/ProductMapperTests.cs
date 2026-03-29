@@ -48,4 +48,41 @@ public class ProductMapperTests
         Assert.True(result.IsAvailable);
         Assert.Equal("/product/dkp-123", result.Url);
     }
+
+    [Fact]
+    public void MapToDetail_ShouldExtractSuitabilitySignals()
+    {
+        using var document = JsonDocument.Parse("""
+            {
+              "id": 456,
+              "title_fa": "شامپو روزانه بدون سولفات برای موهای چرب و پوست سر حساس",
+              "url": { "uri": "/product/dkp-456" },
+              "images": [],
+              "status": "marketable",
+              "default_variant": { "price": { "selling_price": 100000 } },
+              "expert_reviews": {
+                "description": "فرمول ملایم و آبرسان با آلوئه ورا و بدون پارابن",
+                "advantages": ["مناسب استفاده روزانه", "متعادل کننده چربی"]
+              },
+              "specifications": [
+                {
+                  "title": "مشخصات",
+                  "attributes": [
+                    { "title": "ویژگی", "values": ["بدون سولفات", "بدون پارابن", "حاوی آلوئه ورا"] }
+                  ]
+                }
+              ]
+            }
+            """);
+
+        var result = _mapper.MapToDetail(document.RootElement);
+
+        Assert.True(result.IsDailyUse);
+        Assert.True(result.IsSulfateFree);
+        Assert.True(result.IsParabenFree);
+        Assert.Contains("oily hair", result.SuitableForHairTypes);
+        Assert.Contains("sensitive scalp", result.SuitableForScalpTypes);
+        Assert.Contains("آلوئه ورا", result.KeyIngredients);
+        Assert.Contains("balanced cleansing", result.UseCaseHints);
+    }
 }

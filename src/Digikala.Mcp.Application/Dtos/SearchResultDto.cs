@@ -12,8 +12,8 @@ public sealed record SearchResultDto
     public int CurrentPage { get; init; }
     public int TotalPages { get; init; }
     public List<string> AppliedFilters { get; set; } = [];
-    public List<FilterGroupDto> AvailableFilters { get; init; } = [];
-    public List<string> AvailableSortOptions { get; init; } = [];
+    public List<FilterGroupDto> AvailableFilters { get; set; } = [];
+    public List<string> AvailableSortOptions { get; set; } = [];
 }
 
 public sealed record FilterGroupDto
