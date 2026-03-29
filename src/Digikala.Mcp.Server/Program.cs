@@ -29,7 +29,7 @@ builder.Services.AddSerilog((services, loggerConfiguration) =>
 
     if (loggingOptions.EnableConsole)
     {
-        loggerConfiguration.WriteTo.Console();
+        loggerConfiguration.WriteTo.Console(standardErrorFromLevel: LogEventLevel.Verbose);
     }
 
     loggerConfiguration.WriteTo.Logger(lc => lc
