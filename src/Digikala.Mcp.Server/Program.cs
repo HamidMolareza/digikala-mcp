@@ -61,6 +61,7 @@ builder.Services.AddSingleton<AutocompleteMapper>();
 builder.Services.AddSingleton<BrandMapper>();
 
 builder.Services.AddSingleton<SearchProductsService>();
+builder.Services.AddSingleton<RankProductsService>();
 builder.Services.AddSingleton<RecommendProductsForNeedService>();
 builder.Services.AddSingleton<GetProductDetailService>();
 builder.Services.AddSingleton<GetProductFeedbackSummaryService>();

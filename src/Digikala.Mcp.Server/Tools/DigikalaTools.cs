@@ -73,6 +73,60 @@ public sealed class SearchProductsTool(SearchProductsService service, ILogger<Se
 }
 
 [McpServerToolType]
+public sealed class RankProductsTool(RankProductsService service, ILogger<RankProductsTool> logger)
+{
+    [McpServerTool, Description("Rank structured product candidates using explicit filters and ranking priorities only.")]
+    public Task<RankProductsResultDto> rank_products(
+        [Description("Search keyword in Persian or English")] string query,
+        [Description("Category slug, e.g. 'mobile-phone'. When omitted, the tool may infer a known category from the query or return a validation hint.")] string? categorySlug = null,
+        [Description("Only return currently available products when true.")] bool? onlyAvailable = true,
+        [Description("Terms that every result should match.")] string[]? requiredTerms = null,
+        [Description("Terms that should boost ranking when matched.")] string[]? preferredTerms = null,
+        [Description("Terms that should exclude results when matched.")] string[]? excludedTerms = null,
+        [Description("Ranking priority order. Supported values: buyer_popularity, rating, rating_count, best_match, price_low, price_high, availability")] string[]? rankingPriority = null,
+        [Description("Maximum number of ranked products to return.")] int limit = 5,
+        [Description("Optional minimum rating threshold, e.g. 4.5")] double? minRating = null,
+        [Description("Optional minimum rating count threshold, e.g. 500")] int? minReviewCount = null,
+        [Description("Optional minimum selling price in rials.")] long? minPriceRials = null,
+        [Description("Optional maximum selling price in rials.")] long? maxPriceRials = null,
+        [Description("When true, bypasses cache reads and writes and forces a live upstream fetch.")] bool skipCache = false,
+        CancellationToken ct = default)
+    {
+        logger.LogInformation(
+            "Tool rank_products invoked: query={Query}, category={Category}, onlyAvailable={OnlyAvailable}, requiredTerms={RequiredTerms}, preferredTerms={PreferredTerms}, excludedTerms={ExcludedTerms}, rankingPriority={RankingPriority}, limit={Limit}, minRating={MinRating}, minReviewCount={MinReviewCount}, minPriceRials={MinPriceRials}, maxPriceRials={MaxPriceRials}, skipCache={SkipCache}",
+            query,
+            categorySlug,
+            onlyAvailable,
+            requiredTerms,
+            preferredTerms,
+            excludedTerms,
+            rankingPriority,
+            limit,
+            minRating,
+            minReviewCount,
+            minPriceRials,
+            maxPriceRials,
+            skipCache);
+
+        return service.ExecuteAsync(
+            query,
+            categorySlug,
+            onlyAvailable,
+            requiredTerms,
+            preferredTerms,
+            excludedTerms,
+            rankingPriority,
+            limit,
+            minRating,
+            minReviewCount,
+            minPriceRials,
+            maxPriceRials,
+            skipCache,
+            ct);
+    }
+}
+
+[McpServerToolType]
 public sealed class RecommendProductsForNeedTool(
     RecommendProductsForNeedService service,
     ILogger<RecommendProductsForNeedTool> logger)
