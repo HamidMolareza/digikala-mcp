@@ -70,6 +70,32 @@ public sealed class SearchProductsTool(SearchProductsService service, ILogger<Se
 }
 
 [McpServerToolType]
+public sealed class GetProductFeedbackSummaryTool(GetProductFeedbackSummaryService service, ILogger<GetProductFeedbackSummaryTool> logger)
+{
+    [McpServerTool, Description("Return compact evidence-based feedback signals for one product using detail and review data.")]
+    public Task<ProductFeedbackSummaryDto> get_product_feedback_summary(
+        [Description("Numeric product ID")] long productId,
+        [Description("Maximum number of pro labels to return.")] int maxPros = 8,
+        [Description("Maximum number of con labels to return.")] int maxCons = 8,
+        [Description("Maximum number of themes to return.")] int maxThemes = 8,
+        [Description("Include short review snippets as evidence.")] bool includeReviewSnippets = true,
+        [Description("Maximum number of snippets across themes.")] int maxSnippets = 6,
+        CancellationToken ct = default)
+    {
+        logger.LogInformation(
+            "Tool get_product_feedback_summary invoked: productId={ProductId}, maxPros={MaxPros}, maxCons={MaxCons}, maxThemes={MaxThemes}, includeReviewSnippets={IncludeReviewSnippets}, maxSnippets={MaxSnippets}",
+            productId,
+            maxPros,
+            maxCons,
+            maxThemes,
+            includeReviewSnippets,
+            maxSnippets);
+
+        return service.ExecuteAsync(productId, maxPros, maxCons, maxThemes, includeReviewSnippets, maxSnippets, ct);
+    }
+}
+
+[McpServerToolType]
 public sealed class GetProductDetailTool(GetProductDetailService service, ILogger<GetProductDetailTool> logger)
 {
     [McpServerTool, Description("Get full product detail including variants, images, price, seller, and specs.")]

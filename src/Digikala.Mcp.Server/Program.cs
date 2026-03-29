@@ -62,6 +62,7 @@ builder.Services.AddSingleton<BrandMapper>();
 
 builder.Services.AddSingleton<SearchProductsService>();
 builder.Services.AddSingleton<GetProductDetailService>();
+builder.Services.AddSingleton<GetProductFeedbackSummaryService>();
 builder.Services.AddSingleton<GetProductOverviewService>();
 builder.Services.AddSingleton<GetProductPriceChartService>();
 builder.Services.AddSingleton<GetProductReviewsService>();
