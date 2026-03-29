@@ -2,6 +2,7 @@ using Digikala.Mcp.Domain.Interfaces;
 using Digikala.Mcp.Infrastructure.Cache;
 using Digikala.Mcp.Infrastructure.Configuration;
 using Digikala.Mcp.Infrastructure.HttpClients;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http.Resilience;
@@ -19,6 +20,20 @@ public static class ServiceCollectionExtensions
         services.Configure<ServerLoggingOptions>(configuration.GetSection(ServerLoggingOptions.SectionName));
 
         services.AddSingleton<RateLimitingDelegatingHandler>();
+        services.AddDbContextFactory<CacheDbContext>((sp, options) =>
+        {
+            var cacheOptions = configuration
+                .GetSection(CacheOptions.SectionName)
+                .Get<CacheOptions>() ?? new CacheOptions();
+
+            var directory = Path.GetDirectoryName(Path.GetFullPath(cacheOptions.DatabasePath));
+            if (!string.IsNullOrWhiteSpace(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            options.UseSqlite($"Data Source={cacheOptions.DatabasePath}");
+        });
 
         services.AddHttpClient<IDigikalaApiClient, DigikalaHttpClient>((sp, client) =>
         {

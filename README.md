@@ -1,64 +1,63 @@
 # Digikala MCP
 
-An MCP (Model Context Protocol) server that exposes Digikala's product APIs as AI-callable tools, enabling LLMs to search, browse, compare, and inspect products.
+Digikala MCP is a .NET 10 Model Context Protocol server for searching, comparing, and inspecting Digikala products with AI-friendly tools and DTOs.
 
 ## Architecture
 
-```
-Domain          → Entities, value objects, enums, interfaces (zero dependencies)
-Application     → AI DTOs, MCP tool handlers, mapping logic
-Infrastructure  → HTTP client (all 40 endpoints), response models, SQLite cache
-Server          → MCP host, DI composition root
-```
+- `src/Digikala.Mcp.Domain`: entities, enums, interfaces
+- `src/Digikala.Mcp.Application`: DTOs, mapping, reusable services
+- `src/Digikala.Mcp.Infrastructure`: HTTP client, EF-backed SQLite cache, resilience, configuration
+- `src/Digikala.Mcp.Server`: MCP host, Serilog setup, tool wrappers
 
-## Requirements
+## Main Tools
 
-- .NET 10 SDK
-- `ModelContextProtocol` v1.1.0
+- `search_products`
+- `get_product_overview`
+- `get_product_detail`
+- `get_product_price_chart`
+- `get_product_reviews`
+- `get_product_questions`
+- `get_product_recommendations`
+- `get_best_selling`
+- `get_incredible_offers`
+- `get_trending_products`
+- `get_category_landing`
+- `browse_by_tag`
+- `autocomplete`
+- `get_brand_page`
+- `get_seller_vouchers`
 
-## Quick Start
+## Search Optimization
 
-```bash
-cd src/Digikala.Mcp.Server
-dotnet run
-```
+`search_products` supports AI-oriented ranking and filtering:
 
-The server communicates over **stdio** using the MCP protocol.
+- `minRating`
+- `minReviewCount`
+- `onlyAvailable`
+- `minPriceRials`
+- `maxPriceRials`
+- `limit`
+- `prioritizeBestMatch`
 
-## Configuration
+The result includes `BestMatch`, `FilteredCount`, `AppliedFilters`, and per-product `SearchScore`.
 
-Edit `src/Digikala.Mcp.Server/appsettings.json` or use environment variables:
+## Runtime Paths
 
-| Key | Default | Description |
-|---|---|---|
-| `Digikala:BaseUrl` | `https://api.digikala.com` | Primary API |
-| `Cache:DatabasePath` | `./cache.db` | SQLite cache file |
-| `Cache:ShortTermTtlMinutes` | `5` | Volatile data TTL |
-| `Cache:MediumTermTtlMinutes` | `60` | Moderate-change data TTL |
-| `Cache:LongTermTtlMinutes` | `1440` | Stable data TTL |
+- Cache DB: `app-data/cache.db`
+- Audit logs: `app-data/logs/audit-<date>.clef`
+- Error logs: `app-data/logs/error-<date>.clef`
 
-## Available MCP Tools
-
-| Tool | Description |
-|---|---|
-| `search_products` | Search by keyword/category with filters and pagination |
-| `get_product_detail` | Full product info (price, specs, variants, seller) |
-| `get_product_price_chart` | Historical price data |
-| `get_product_reviews` | Paginated user reviews |
-| `get_product_questions` | Paginated Q&A |
-| `get_product_recommendations` | Similar/recommended products |
-| `get_best_selling` | Best sellers by category/time window |
-| `get_incredible_offers` | Lightning deals and offers |
-| `get_trending_products` | Trending products |
-| `get_category_landing` | Category page with subcategories and brands |
-| `browse_by_tag` | Products by SEO tag |
-| `autocomplete` | Search suggestions and trends |
-| `get_brand_page` | Premium brand landing page |
-| `get_seller_vouchers` | Seller promotions for a product |
-| `get_digipay_credit` | Installment/credit options |
-
-## Tests
+## Commands
 
 ```bash
-dotnet test
+dotnet restore Digikala.Mcp.slnx
+dotnet build Digikala.Mcp.slnx --no-restore
+dotnet test Digikala.Mcp.slnx --no-build
+timeout 5s dotnet run --project src/Digikala.Mcp.Server --no-build
 ```
+
+## Notes
+
+- Logging uses Serilog and is configurable via `ServerLogging` settings or environment variables.
+- The local cache uses SQLite through Entity Framework Core.
+- Docs that drive the implementation live under `docs/`.

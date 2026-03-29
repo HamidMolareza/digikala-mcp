@@ -2,6 +2,7 @@ using Digikala.Mcp.Domain.Enums;
 using Digikala.Mcp.Infrastructure.Cache;
 using Digikala.Mcp.Infrastructure.Configuration;
 using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Xunit;
@@ -17,7 +18,11 @@ public class SqliteCacheStoreTests : IAsyncDisposable
     {
         _dbPath = Path.Combine(Path.GetTempPath(), $"test_cache_{Guid.NewGuid():N}.db");
         var options = Options.Create(new CacheOptions { DatabasePath = _dbPath });
-        _cache = new SqliteCacheStore(options, NullLogger<SqliteCacheStore>.Instance);
+        var dbOptions = new DbContextOptionsBuilder<CacheDbContext>()
+            .UseSqlite($"Data Source={_dbPath}")
+            .Options;
+        var dbContextFactory = new TestDbContextFactory(dbOptions);
+        _cache = new SqliteCacheStore(options, dbContextFactory, NullLogger<SqliteCacheStore>.Instance);
     }
 
     [Fact]
@@ -85,11 +90,18 @@ public class SqliteCacheStoreTests : IAsyncDisposable
         Assert.NotNull(stale);
         Assert.Equal("stale", stale.Name);
     }
-
-    public async ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
-        await _cache.DisposeAsync();
         if (File.Exists(_dbPath)) File.Delete(_dbPath);
+        return ValueTask.CompletedTask;
+    }
+
+    private sealed class TestDbContextFactory(DbContextOptions<CacheDbContext> options) : IDbContextFactory<CacheDbContext>
+    {
+        public CacheDbContext CreateDbContext() => new(options);
+
+        public Task<CacheDbContext> CreateDbContextAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult(CreateDbContext());
     }
 
     private sealed record TestData(string Name, int Value);

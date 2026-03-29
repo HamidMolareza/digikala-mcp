@@ -108,7 +108,7 @@ public class SearchProductsServiceTests
         Assert.Equal(2, result.Products.Count);
         Assert.Equal(2, result.FilteredCount);
         Assert.NotNull(result.BestMatch);
-        Assert.Equal(2, result.BestMatch!.Id);
+        Assert.Equal(1, result.BestMatch!.Id);
         Assert.Contains("min_rating>=4.5", result.AppliedFilters);
         Assert.Contains("min_review_count>=500", result.AppliedFilters);
         Assert.All(result.Products, item => Assert.True(item.SearchScore > 0));

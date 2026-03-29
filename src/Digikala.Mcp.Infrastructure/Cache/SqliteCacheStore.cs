@@ -2,43 +2,48 @@ using System.Text.Json;
 using Digikala.Mcp.Domain.Enums;
 using Digikala.Mcp.Domain.Interfaces;
 using Digikala.Mcp.Infrastructure.Configuration;
-using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Digikala.Mcp.Infrastructure.Cache;
 
-public sealed class SqliteCacheStore : ICacheStore, IAsyncDisposable
+public sealed class SqliteCacheStore : ICacheStore
 {
-    private readonly SqliteConnection _connection;
     private readonly CacheOptions _options;
     private readonly ILogger<SqliteCacheStore> _logger;
+    private readonly IDbContextFactory<CacheDbContext> _dbContextFactory;
 
-    public SqliteCacheStore(IOptions<CacheOptions> options, ILogger<SqliteCacheStore> logger)
+    public SqliteCacheStore(
+        IOptions<CacheOptions> options,
+        IDbContextFactory<CacheDbContext> dbContextFactory,
+        ILogger<SqliteCacheStore> logger)
     {
         _options = options.Value;
+        _dbContextFactory = dbContextFactory;
         _logger = logger;
         var directory = Path.GetDirectoryName(Path.GetFullPath(_options.DatabasePath));
         if (!string.IsNullOrWhiteSpace(directory))
         {
             Directory.CreateDirectory(directory);
         }
-        _connection = new SqliteConnection($"Data Source={_options.DatabasePath}");
-        _connection.Open();
-        InitializeSchema();
+
+        using var context = _dbContextFactory.CreateDbContext();
+        context.Database.EnsureCreated();
+        context.Database.ExecuteSqlRaw("PRAGMA journal_mode=WAL;");
     }
 
     public async Task<T?> GetAsync<T>(string key, CancellationToken ct = default) where T : class
     {
-        const string sql = "SELECT value FROM cache_entries WHERE key = @key AND expires_at > @now";
+        var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        await using var context = await _dbContextFactory.CreateDbContextAsync(ct);
+        var bytes = await context.CacheEntries
+            .AsNoTracking()
+            .Where(item => item.Key == key && item.ExpiresAt > now)
+            .Select(item => item.Value)
+            .SingleOrDefaultAsync(ct);
 
-        await using var cmd = _connection.CreateCommand();
-        cmd.CommandText = sql;
-        cmd.Parameters.AddWithValue("@key", key);
-        cmd.Parameters.AddWithValue("@now", DateTimeOffset.UtcNow.ToUnixTimeSeconds());
-
-        var result = await cmd.ExecuteScalarAsync(ct);
-        if (result is not byte[] bytes)
+        if (bytes is null)
         {
             _logger.LogDebug("Cache MISS: {Key}", key);
             return null;
@@ -50,14 +55,14 @@ public sealed class SqliteCacheStore : ICacheStore, IAsyncDisposable
 
     public async Task<T?> GetStaleAsync<T>(string key, CancellationToken ct = default) where T : class
     {
-        const string sql = "SELECT value FROM cache_entries WHERE key = @key";
+        await using var context = await _dbContextFactory.CreateDbContextAsync(ct);
+        var bytes = await context.CacheEntries
+            .AsNoTracking()
+            .Where(item => item.Key == key)
+            .Select(item => item.Value)
+            .SingleOrDefaultAsync(ct);
 
-        await using var cmd = _connection.CreateCommand();
-        cmd.CommandText = sql;
-        cmd.Parameters.AddWithValue("@key", key);
-
-        var result = await cmd.ExecuteScalarAsync(ct);
-        if (result is not byte[] bytes)
+        if (bytes is null)
         {
             return null;
         }
@@ -84,72 +89,56 @@ public sealed class SqliteCacheStore : ICacheStore, IAsyncDisposable
         var expiresAt = now + (ttlMinutes * 60);
         var bytes = JsonSerializer.SerializeToUtf8Bytes(value);
 
-        const string sql = """
-            INSERT OR REPLACE INTO cache_entries (key, value, tier, expires_at, created_at)
-            VALUES (@key, @value, @tier, @expiresAt, @createdAt)
-            """;
+        await using var context = await _dbContextFactory.CreateDbContextAsync(ct);
+        var existing = await context.CacheEntries.SingleOrDefaultAsync(item => item.Key == key, ct);
+        if (existing is null)
+        {
+            context.CacheEntries.Add(new CacheEntry
+            {
+                Key = key,
+                Value = bytes,
+                Tier = tier.ToString(),
+                ExpiresAt = expiresAt,
+                CreatedAt = now,
+            });
+        }
+        else
+        {
+            existing.Value = bytes;
+            existing.Tier = tier.ToString();
+            existing.ExpiresAt = expiresAt;
+            existing.CreatedAt = now;
+        }
 
-        await using var cmd = _connection.CreateCommand();
-        cmd.CommandText = sql;
-        cmd.Parameters.AddWithValue("@key", key);
-        cmd.Parameters.AddWithValue("@value", bytes);
-        cmd.Parameters.AddWithValue("@tier", tier.ToString());
-        cmd.Parameters.AddWithValue("@expiresAt", expiresAt);
-        cmd.Parameters.AddWithValue("@createdAt", now);
-
-        await cmd.ExecuteNonQueryAsync(ct);
+        await context.SaveChangesAsync(ct);
         _logger.LogDebug("Cache SET: {Key} tier={Tier} ttl={Ttl}m", key, tier, ttlMinutes);
     }
 
     public async Task RemoveAsync(string key, CancellationToken ct = default)
     {
-        await using var cmd = _connection.CreateCommand();
-        cmd.CommandText = "DELETE FROM cache_entries WHERE key = @key";
-        cmd.Parameters.AddWithValue("@key", key);
-        await cmd.ExecuteNonQueryAsync(ct);
+        await using var context = await _dbContextFactory.CreateDbContextAsync(ct);
+        await context.CacheEntries
+            .Where(item => item.Key == key)
+            .ExecuteDeleteAsync(ct);
     }
 
     public async Task RemoveByTierAsync(CacheTier tier, CancellationToken ct = default)
     {
-        await using var cmd = _connection.CreateCommand();
-        cmd.CommandText = "DELETE FROM cache_entries WHERE tier = @tier";
-        cmd.Parameters.AddWithValue("@tier", tier.ToString());
-        await cmd.ExecuteNonQueryAsync(ct);
+        await using var context = await _dbContextFactory.CreateDbContextAsync(ct);
+        await context.CacheEntries
+            .Where(item => item.Tier == tier.ToString())
+            .ExecuteDeleteAsync(ct);
     }
 
     public async Task CleanupExpiredAsync(CancellationToken ct = default)
     {
-        await using var cmd = _connection.CreateCommand();
-        cmd.CommandText = "DELETE FROM cache_entries WHERE expires_at <= @now";
-        cmd.Parameters.AddWithValue("@now", DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+        var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        await using var context = await _dbContextFactory.CreateDbContextAsync(ct);
+        var deleted = await context.CacheEntries
+            .Where(item => item.ExpiresAt <= now)
+            .ExecuteDeleteAsync(ct);
 
-        var deleted = await cmd.ExecuteNonQueryAsync(ct);
         if (deleted > 0)
             _logger.LogDebug("Cache cleanup: removed {Count} expired entries", deleted);
-    }
-
-    private void InitializeSchema()
-    {
-        using var cmd = _connection.CreateCommand();
-        cmd.CommandText = """
-            PRAGMA journal_mode=WAL;
-
-            CREATE TABLE IF NOT EXISTS cache_entries (
-                key TEXT PRIMARY KEY,
-                value BLOB NOT NULL,
-                tier TEXT NOT NULL,
-                expires_at INTEGER NOT NULL,
-                created_at INTEGER NOT NULL
-            );
-
-            CREATE INDEX IF NOT EXISTS idx_cache_expires ON cache_entries(expires_at);
-            CREATE INDEX IF NOT EXISTS idx_cache_tier ON cache_entries(tier);
-            """;
-        cmd.ExecuteNonQuery();
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        await _connection.DisposeAsync();
     }
 }
