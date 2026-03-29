@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Digikala.Mcp.Server</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Digikala.Mcp.Application\Digikala.Mcp.Application.csproj" />
+    <ProjectReference Include="..\Digikala.Mcp.Infrastructure\Digikala.Mcp.Infrastructure.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="ModelContextProtocol" Version="1.1.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0-*" />
+  </ItemGroup>
+</Project>

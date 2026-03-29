@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <RootNamespace>Digikala.Mcp.Application.Tests</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Digikala.Mcp.Application\Digikala.Mcp.Application.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="*" />
+    <PackageReference Include="xunit" Version="*" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="*" />
+    <PackageReference Include="NSubstitute" Version="*" />
+  </ItemGroup>
+</Project>

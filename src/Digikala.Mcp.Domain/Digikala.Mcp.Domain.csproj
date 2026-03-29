@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Digikala.Mcp.Domain</RootNamespace>
+  </PropertyGroup>
+</Project>

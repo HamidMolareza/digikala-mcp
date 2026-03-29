@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Digikala.Mcp.Domain/Digikala.Mcp.Domain.csproj" />
+    <Project Path="src/Digikala.Mcp.Application/Digikala.Mcp.Application.csproj" />
+    <Project Path="src/Digikala.Mcp.Infrastructure/Digikala.Mcp.Infrastructure.csproj" />
+    <Project Path="src/Digikala.Mcp.Server/Digikala.Mcp.Server.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Digikala.Mcp.Application.Tests/Digikala.Mcp.Application.Tests.csproj" />
+    <Project Path="tests/Digikala.Mcp.Infrastructure.Tests/Digikala.Mcp.Infrastructure.Tests.csproj" />
+  </Folder>
+</Solution>
