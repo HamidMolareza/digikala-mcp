@@ -16,10 +16,12 @@ public record ProductSummaryDto
     public long? OriginalPriceRials { get; init; }
     public int? DiscountPercent { get; init; }
     public double? Rating { get; init; }
+    public int RatingCount { get; init; }
     public int ReviewCount { get; init; }
     public string? CategorySlug { get; init; }
     public bool IsAvailable { get; init; }
     public string Url { get; init; } = string.Empty;
+    public string AbsoluteUrl { get; init; } = string.Empty;
     public double? SearchScore { get; set; }
     public List<string> MatchedSignals { get; set; } = [];
     public List<string> RejectedSignals { get; set; } = [];

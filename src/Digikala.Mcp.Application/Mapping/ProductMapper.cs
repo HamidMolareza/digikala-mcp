@@ -6,6 +6,8 @@ namespace Digikala.Mcp.Application.Mapping;
 
 public sealed class ProductMapper
 {
+    private const string DigikalaWebBaseUrl = "https://www.digikala.com";
+
     public ProductSummaryDto MapToSummary(JsonElement productElement)
     {
         if (productElement.ValueKind != JsonValueKind.Object)
@@ -15,6 +17,8 @@ public sealed class ProductMapper
 
         var sellingPrice = productElement.GetInt64OrNull("default_variant", "price", "selling_price") ?? 0;
         var originalPrice = productElement.GetInt64OrNull("default_variant", "price", "rrp_price");
+        var relativeUrl = productElement.GetUrl("url") ?? string.Empty;
+        var ratingCount = productElement.GetInt32OrNull("rating", "count") ?? 0;
 
         var summary = new ProductSummaryDto
         {
@@ -29,10 +33,12 @@ public sealed class ProductMapper
                                   ? (int)Math.Round((originalPrice.Value - sellingPrice) * 100d / originalPrice.Value)
                                   : null),
             Rating = productElement.GetDoubleOrNull("rating", "rate"),
-            ReviewCount = productElement.GetInt32OrNull("rating", "count") ?? 0,
+            RatingCount = ratingCount,
+            ReviewCount = ratingCount,
             CategorySlug = productElement.GetStringOrNull("category", "code"),
             IsAvailable = JsonHelpers.IsAvailableStatus(productElement.GetStringOrNull("status")),
-            Url = productElement.GetUrl("url") ?? string.Empty,
+            Url = relativeUrl,
+            AbsoluteUrl = BuildAbsoluteUrl(relativeUrl),
         };
 
         return ProductSuitabilityAnalyzer.EnrichSummary(summary);
@@ -176,5 +182,22 @@ public sealed class ProductMapper
         }
 
         return null;
+    }
+
+    private static string BuildAbsoluteUrl(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            return string.Empty;
+        }
+
+        if (Uri.TryCreate(url, UriKind.Absolute, out var absoluteUri) &&
+            (absoluteUri.Scheme == Uri.UriSchemeHttp || absoluteUri.Scheme == Uri.UriSchemeHttps))
+        {
+            return absoluteUri.ToString();
+        }
+
+        var relativePath = url.StartsWith("/", StringComparison.Ordinal) ? url : $"/{url}";
+        return $"{DigikalaWebBaseUrl}{relativePath}";
     }
 }

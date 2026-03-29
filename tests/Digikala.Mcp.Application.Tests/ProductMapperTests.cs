@@ -43,10 +43,12 @@ public class ProductMapperTests
         Assert.Equal(125000, result.OriginalPriceRials);
         Assert.Equal(20, result.DiscountPercent);
         Assert.Equal(4.2, result.Rating);
+        Assert.Equal(12, result.RatingCount);
         Assert.Equal(12, result.ReviewCount);
         Assert.Equal("mobile-phone", result.CategorySlug);
         Assert.True(result.IsAvailable);
         Assert.Equal("/product/dkp-123", result.Url);
+        Assert.Equal("https://www.digikala.com/product/dkp-123", result.AbsoluteUrl);
     }
 
     [Fact]
