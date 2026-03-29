@@ -135,7 +135,11 @@ public sealed class DigikalaHttpClient(
     public async Task<JsonDocument> SearchCategoryAsync(string categorySlug, int page = 1, int? sort = null,
         Dictionary<string, string[]>? attributes = null, string? query = null, CancellationToken ct = default)
     {
-        var url = BuildUrl($"/v1/categories/{Uri.EscapeDataString(categorySlug)}/search/",
+        var normalizedCategorySlug = string.IsNullOrWhiteSpace(categorySlug) ? "search" : categorySlug.Trim();
+        var path = string.Equals(normalizedCategorySlug, "search", StringComparison.OrdinalIgnoreCase)
+            ? "/v1/categories/search/"
+            : $"/v1/categories/{Uri.EscapeDataString(normalizedCategorySlug)}/search/";
+        var url = BuildUrl(path,
             ("page", page.ToString()), ("sort", sort?.ToString()), ("q", query));
         if (attributes is not null)
         {

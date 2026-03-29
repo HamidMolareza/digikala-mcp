@@ -53,6 +53,42 @@ public class DigikalaHttpClientTests
         Assert.Equal(requestsBeforeFinalAttempt, requestCount);
     }
 
+    [Fact]
+    public async Task SearchCategoryAsync_ShouldUseGlobalSearchRoute_WhenSlugIsSearch()
+    {
+        var handler = new RecordingHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("{\"status\":200,\"data\":{}}", Encoding.UTF8, "application/json"),
+        });
+        var httpClient = new HttpClient(handler);
+        var client = CreateClient(httpClient);
+
+        await client.SearchCategoryAsync("search", query: "iphone");
+
+        Assert.NotNull(handler.LastRequestUri);
+        Assert.Equal(
+            "https://api.example.com/v1/categories/search/?page=1&q=iphone",
+            handler.LastRequestUri!.ToString());
+    }
+
+    [Fact]
+    public async Task SearchCategoryAsync_ShouldUseCategorySearchRoute_ForRealCategory()
+    {
+        var handler = new RecordingHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("{\"status\":200,\"data\":{}}", Encoding.UTF8, "application/json"),
+        });
+        var httpClient = new HttpClient(handler);
+        var client = CreateClient(httpClient);
+
+        await client.SearchCategoryAsync("mobile-phone", query: "iphone");
+
+        Assert.NotNull(handler.LastRequestUri);
+        Assert.Equal(
+            "https://api.example.com/v1/categories/mobile-phone/search/?page=1&q=iphone",
+            handler.LastRequestUri!.ToString());
+    }
+
     private static DigikalaHttpClient CreateClient(HttpClient httpClient)
     {
         var options = Options.Create(new DigikalaOptions
