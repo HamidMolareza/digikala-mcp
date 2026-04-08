@@ -88,6 +88,43 @@ public class GetProductFeedbackSummaryServiceTests
         Assert.Contains("gentle", result.Summary, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_ShouldReturnValidationError_ForInvalidInputs()
+    {
+        var apiClient = Substitute.For<IDigikalaApiClient>();
+        var cache = new NullCacheStore();
+        var detailService = new GetProductDetailService(apiClient, cache, new ProductMapper());
+        var reviewsService = new GetProductReviewsService(apiClient, cache, new ReviewMapper());
+        var service = new GetProductFeedbackSummaryService(detailService, reviewsService);
+
+        var result = await service.ExecuteAsync(0, maxPros: 0, maxCons: 0, maxThemes: 0, maxSnippets: 0);
+
+        Assert.NotNull(result.Error);
+        Assert.Equal("InvalidInput", result.Error!.Code);
+        Assert.Contains(result.Error.Diagnostics, item => item.Contains("`productId`", StringComparison.Ordinal));
+        Assert.Contains(result.Error.Diagnostics, item => item.Contains("`maxPros`", StringComparison.Ordinal));
+        await apiClient.DidNotReceiveWithAnyArgs().GetProductV2Async(default, default, default);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_ShouldClassifyRateLimiterFailures_AsRetryableRateLimited()
+    {
+        var apiClient = Substitute.For<IDigikalaApiClient>();
+        var cache = new NullCacheStore();
+        var detailService = new GetProductDetailService(apiClient, cache, new ProductMapper());
+        var reviewsService = new GetProductReviewsService(apiClient, cache, new ReviewMapper());
+        var service = new GetProductFeedbackSummaryService(detailService, reviewsService);
+
+        apiClient.GetProductV2Async(951998, null, Arg.Any<CancellationToken>())
+            .Returns<Task<JsonDocument>>(_ => throw new HttpRequestException("Client-side rate limiter rejected the request."));
+
+        var result = await service.ExecuteAsync(951998);
+
+        Assert.NotNull(result.Error);
+        Assert.Equal("RateLimited", result.Error!.Code);
+        Assert.True(result.Error.Retryable);
+    }
+
     private sealed class NullCacheStore : ICacheStore
     {
         public Task CleanupExpiredAsync(CancellationToken ct = default) => Task.CompletedTask;

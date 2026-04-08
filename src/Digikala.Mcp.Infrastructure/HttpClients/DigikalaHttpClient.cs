@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Collections.Concurrent;
+using System.Net;
 using Digikala.Mcp.Domain.Interfaces;
 using Digikala.Mcp.Infrastructure.Configuration;
 using Microsoft.Extensions.Logging;
@@ -287,6 +288,7 @@ public sealed class DigikalaHttpClient(
         var baseUrl = useFeatureHost ? _options.FeaturesBaseUrl : _options.BaseUrl;
         var requestUri = $"{baseUrl.TrimEnd('/')}{relativeUrl}";
         var host = new Uri(baseUrl).Host;
+        var failureAlreadyRegistered = false;
 
         EnsureCircuitClosed(host);
 
@@ -297,7 +299,16 @@ public sealed class DigikalaHttpClient(
             var response = await httpClient.GetAsync(requestUri, ct);
             if (!response.IsSuccessStatusCode)
             {
-                RegisterFailure(host);
+                if (ShouldRegisterFailure(response.StatusCode))
+                {
+                    RegisterFailure(host);
+                    failureAlreadyRegistered = true;
+                }
+                else
+                {
+                    ResetFailures(host);
+                }
+
                 var body = await response.Content.ReadAsStringAsync(ct);
                 throw new HttpRequestException(
                     $"Digikala API returned HTTP {(int)response.StatusCode} for {requestUri}. Body: {body}");
@@ -313,7 +324,7 @@ public sealed class DigikalaHttpClient(
             RegisterFailure(host);
             throw new TimeoutException($"Timed out calling {requestUri}");
         }
-        catch
+        catch (Exception exception) when (!failureAlreadyRegistered && ShouldRegisterFailure(exception))
         {
             RegisterFailure(host);
             throw;
@@ -383,6 +394,27 @@ public sealed class DigikalaHttpClient(
                 var openUntil = failureCount >= 5 ? now.AddSeconds(60) : current.OpenUntilUtc;
                 return new CircuitState(failureCount, firstFailureUtc, openUntil);
             });
+    }
+
+    private static bool ShouldRegisterFailure(HttpStatusCode statusCode) =>
+        statusCode == HttpStatusCode.RequestTimeout
+        || statusCode == HttpStatusCode.TooManyRequests
+        || (int)statusCode >= 500;
+
+    private static bool ShouldRegisterFailure(Exception exception)
+    {
+        if (exception is ArgumentException)
+        {
+            return false;
+        }
+
+        if (exception.Message.Contains("Circuit breaker is open", StringComparison.OrdinalIgnoreCase)
+            || exception.Message.Contains("Client-side rate limiter rejected", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        return exception is HttpRequestException || exception is JsonException;
     }
 
     private sealed record CircuitState(int FailureCount, DateTimeOffset FirstFailureUtc, DateTimeOffset? OpenUntilUtc);

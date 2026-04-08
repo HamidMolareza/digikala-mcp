@@ -41,6 +41,32 @@ Digikala MCP is a .NET 10 Model Context Protocol server for searching, comparing
 
 The result includes `BestMatch`, `FilteredCount`, `AppliedFilters`, and per-product `SearchScore`.
 
+## Category Resolution
+
+Digikala's documented public product search is category-scoped. This server therefore resolves categories before calling `search_products`:
+
+- Explicit `categorySlug` is used as-is.
+- Known shopping intents are mapped with alias rules, including `mobile-phone`, `hair-shampoo`, `power-bank`, and `cell-phone-data-cable`.
+- If no alias matches, the server uses `autocomplete` category hints as a fallback.
+- If the category still cannot be resolved, the tool returns a structured validation error instead of attempting a placeholder global search.
+
+This keeps MCP shopping flows inside Digikala data while still supporting natural-language requests such as `iphone`, `power bank 20000`, or `type-c cable`.
+
+The search and recommendation workflows also validate common bad inputs before hitting upstream:
+
+- empty query or need description
+- `page`/`limit` values below `1`
+- `minRating` outside `0..5`
+- negative count or price filters
+- `minPriceRials > maxPriceRials`
+
+## Resilience Notes
+
+- The HTTP client retries transient upstream failures once.
+- Stale cache can be served when fresh upstream requests fail.
+- The per-host circuit breaker now counts only transient failures such as timeout, `429`, and `5xx` responses.
+- Non-transient client errors like `404` do not open the circuit breaker, which prevents bad category guesses from poisoning later requests.
+
 ## Runtime Paths
 
 - Cache DB: `app-data/cache.db`

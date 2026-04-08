@@ -46,11 +46,37 @@ public class DigikalaHttpClientTests
             await Assert.ThrowsAsync<HttpRequestException>(() => client.GetAutocompleteAsync("iphone"));
         }
 
+        Assert.Equal(5, requestCount);
+
         var requestsBeforeFinalAttempt = requestCount;
         var exception = await Assert.ThrowsAsync<HttpRequestException>(() => client.GetAutocompleteAsync("iphone"));
 
         Assert.Contains("Circuit breaker is open", exception.Message, StringComparison.Ordinal);
         Assert.Equal(requestsBeforeFinalAttempt, requestCount);
+    }
+
+    [Fact]
+    public async Task RepeatedNotFoundResponses_ShouldNotOpenCircuit()
+    {
+        var requestCount = 0;
+        var handler = new RecordingHandler(_ =>
+        {
+            requestCount++;
+            return new HttpResponseMessage(HttpStatusCode.NotFound)
+            {
+                Content = new StringContent("{\"status\":404}", Encoding.UTF8, "application/json"),
+            };
+        });
+        var httpClient = new HttpClient(handler);
+        var client = CreateClient(httpClient);
+
+        for (var i = 0; i < 6; i++)
+        {
+            var exception = await Assert.ThrowsAsync<HttpRequestException>(() => client.GetAutocompleteAsync("powerbank"));
+            Assert.DoesNotContain("Circuit breaker is open", exception.Message, StringComparison.Ordinal);
+        }
+
+        Assert.Equal(6, requestCount);
     }
 
     [Fact]

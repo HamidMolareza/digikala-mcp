@@ -6,14 +6,12 @@ using Digikala.Mcp.Domain.Interfaces;
 
 namespace Digikala.Mcp.Application.Services;
 
-public sealed class SearchProductsService(IDigikalaApiClient apiClient, ICacheStore cache, ProductMapper mapper)
+public sealed class SearchProductsService(
+    IDigikalaApiClient apiClient,
+    ICacheStore cache,
+    ProductMapper mapper,
+    CategoryResolutionService categoryResolutionService)
 {
-    private static readonly (string CategorySlug, string[] Terms)[] CategoryInferenceRules =
-    [
-        ("hair-shampoo", ["شامپو", "shampoo"]),
-        ("mobile-phone", ["گوشی", "موبایل", "mobile", "phone", "iphone", "samsung", "xiaomi", "pixel"]),
-    ];
-
     public async Task<SearchResultDto> ExecuteAsync(
         string query,
         string? categorySlug = null,
@@ -36,48 +34,80 @@ public sealed class SearchProductsService(IDigikalaApiClient apiClient, ICacheSt
     {
         var normalizedQuery = NormalizeQuery(query);
         var normalizedCategorySlug = NormalizeCategorySlug(categorySlug);
-        var inferredCategorySlug = normalizedCategorySlug is null
-            ? TryInferCategorySlug(normalizedQuery)
-            : null;
-        var resolvedCategorySlug = inferredCategorySlug ?? normalizedCategorySlug;
         var normalizedPreferTerms = preferTerms?.Where(item => !string.IsNullOrWhiteSpace(item)).Select(item => item.Trim()).ToArray();
         var normalizedAvoidTerms = avoidTerms?.Where(item => !string.IsNullOrWhiteSpace(item)).Select(item => item.Trim()).ToArray();
-        var request = new Dictionary<string, string?>
-        {
-            ["query"] = normalizedQuery,
-            ["categorySlug"] = normalizedCategorySlug,
-            ["resolvedCategorySlug"] = resolvedCategorySlug,
-            ["page"] = page.ToString(),
-            ["sort"] = sort?.ToString(),
-            ["minRating"] = minRating?.ToString(),
-            ["minReviewCount"] = minReviewCount?.ToString(),
-            ["onlyAvailable"] = onlyAvailable?.ToString(),
-            ["minPriceRials"] = minPriceRials?.ToString(),
-            ["maxPriceRials"] = maxPriceRials?.ToString(),
-            ["limit"] = limit?.ToString(),
-            ["preferTerms"] = normalizedPreferTerms is null ? null : string.Join(", ", normalizedPreferTerms),
-            ["avoidTerms"] = normalizedAvoidTerms is null ? null : string.Join(", ", normalizedAvoidTerms),
-            ["includeAttributeHighlights"] = includeAttributeHighlights.ToString(),
-            ["includeAvailableFilters"] = includeAvailableFilters.ToString(),
-            ["preferBalancedMatches"] = preferBalancedMatches.ToString(),
-            ["prioritizeBestMatch"] = prioritizeBestMatch.ToString(),
-            ["skipCache"] = skipCache.ToString(),
-        };
+        var unvalidatedRequest = CreateRequest(
+            normalizedQuery,
+            normalizedCategorySlug,
+            resolvedCategorySlug: null,
+            resolutionSource: "unvalidated",
+            page,
+            sort,
+            minRating,
+            minReviewCount,
+            onlyAvailable,
+            minPriceRials,
+            maxPriceRials,
+            limit,
+            normalizedPreferTerms,
+            normalizedAvoidTerms,
+            includeAttributeHighlights,
+            includeAvailableFilters,
+            preferBalancedMatches,
+            prioritizeBestMatch,
+            skipCache);
 
         if (string.IsNullOrWhiteSpace(normalizedQuery))
         {
             return CreateValidationError(
                 "Search query is required.",
-                "Provide a non-empty query string before calling search_products.",
-                request);
+                unvalidatedRequest,
+                "Provide a non-empty query string before calling search_products.");
         }
+
+        var validationDiagnostics = ValidateInputs(page, minRating, minReviewCount, minPriceRials, maxPriceRials, limit);
+        if (validationDiagnostics.Count > 0)
+        {
+            return CreateValidationError(
+                "search_products received invalid filter or pagination inputs.",
+                unvalidatedRequest,
+                validationDiagnostics.ToArray());
+        }
+
+        var resolution = await categoryResolutionService.ResolveAsync(normalizedQuery, normalizedCategorySlug, skipCache, ct);
+        var resolvedCategorySlug = resolution.CategorySlug;
+        var request = CreateRequest(
+            normalizedQuery,
+            normalizedCategorySlug,
+            resolvedCategorySlug,
+            resolution.ResolutionSource,
+            page,
+            sort,
+            minRating,
+            minReviewCount,
+            onlyAvailable,
+            minPriceRials,
+            maxPriceRials,
+            limit,
+            normalizedPreferTerms,
+            normalizedAvoidTerms,
+            includeAttributeHighlights,
+            includeAvailableFilters,
+            preferBalancedMatches,
+            prioritizeBestMatch,
+            skipCache);
 
         if (resolvedCategorySlug is null)
         {
             return CreateValidationError(
                 "search_products requires categorySlug unless the query can be mapped to a known Digikala category.",
-                "Provide a category slug such as 'mobile-phone' or 'hair-shampoo', or use a clear query like 'iphone' or 'shampoo'.",
-                request);
+                request,
+                resolution.Diagnostics
+                    .Concat(
+                    [
+                        "Provide a category slug such as 'mobile-phone', 'power-bank', or 'cell-phone-data-cable', or use a query that clearly indicates one of those categories."
+                    ])
+                    .ToArray());
         }
 
         var cacheKey = ToolExecutionHelper.CreateCacheKey(
@@ -115,13 +145,12 @@ public sealed class SearchProductsService(IDigikalaApiClient apiClient, ICacheSt
                         ct: token);
 
                     var result = mapper.MapToSearchResult(response);
-                    if (inferredCategorySlug is not null)
+                    result = result with
                     {
-                        result = result with
-                        {
-                            Warning = $"Category inferred as `{inferredCategorySlug}` because Digikala's documented public search API is category-scoped.",
-                        };
-                    }
+                        Warning = CombineWarnings(
+                            result.Warning,
+                            resolution.WasInferred ? resolution.Diagnostics.FirstOrDefault() : null),
+                    };
 
                     return ApplyFilteringAndRanking(
                         result,
@@ -290,20 +319,64 @@ public sealed class SearchProductsService(IDigikalaApiClient apiClient, ICacheSt
             : normalized;
     }
 
-    private static string? TryInferCategorySlug(string query)
+    private static string? CombineWarnings(params string?[] warnings)
     {
-        foreach (var (categorySlug, terms) in CategoryInferenceRules)
-        {
-            if (terms.Any(term => query.Contains(term, StringComparison.OrdinalIgnoreCase)))
-            {
-                return categorySlug;
-            }
-        }
+        var materialized = warnings
+            .Where(item => !string.IsNullOrWhiteSpace(item))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
 
-        return null;
+        return materialized.Count == 0
+            ? null
+            : string.Join(" ", materialized);
     }
 
-    private static SearchResultDto CreateValidationError(string message, string diagnostic, Dictionary<string, string?> request)
+    private static Dictionary<string, string?> CreateRequest(
+        string normalizedQuery,
+        string? normalizedCategorySlug,
+        string? resolvedCategorySlug,
+        string resolutionSource,
+        int page,
+        int? sort,
+        double? minRating,
+        int? minReviewCount,
+        bool? onlyAvailable,
+        long? minPriceRials,
+        long? maxPriceRials,
+        int? limit,
+        IEnumerable<string>? normalizedPreferTerms,
+        IEnumerable<string>? normalizedAvoidTerms,
+        bool includeAttributeHighlights,
+        bool includeAvailableFilters,
+        bool preferBalancedMatches,
+        bool prioritizeBestMatch,
+        bool skipCache)
+    {
+        return new Dictionary<string, string?>
+        {
+            ["query"] = normalizedQuery,
+            ["categorySlug"] = normalizedCategorySlug,
+            ["resolvedCategorySlug"] = resolvedCategorySlug,
+            ["resolutionSource"] = resolutionSource,
+            ["page"] = page.ToString(),
+            ["sort"] = sort?.ToString(),
+            ["minRating"] = minRating?.ToString(),
+            ["minReviewCount"] = minReviewCount?.ToString(),
+            ["onlyAvailable"] = onlyAvailable?.ToString(),
+            ["minPriceRials"] = minPriceRials?.ToString(),
+            ["maxPriceRials"] = maxPriceRials?.ToString(),
+            ["limit"] = limit?.ToString(),
+            ["preferTerms"] = normalizedPreferTerms is null ? null : string.Join(", ", normalizedPreferTerms),
+            ["avoidTerms"] = normalizedAvoidTerms is null ? null : string.Join(", ", normalizedAvoidTerms),
+            ["includeAttributeHighlights"] = includeAttributeHighlights.ToString(),
+            ["includeAvailableFilters"] = includeAvailableFilters.ToString(),
+            ["preferBalancedMatches"] = preferBalancedMatches.ToString(),
+            ["prioritizeBestMatch"] = prioritizeBestMatch.ToString(),
+            ["skipCache"] = skipCache.ToString(),
+        };
+    }
+
+    private static SearchResultDto CreateValidationError(string message, Dictionary<string, string?> request, params string[] diagnostics)
     {
         return new SearchResultDto
         {
@@ -315,10 +388,61 @@ public sealed class SearchProductsService(IDigikalaApiClient apiClient, ICacheSt
                 Tool = "search_products",
                 Request = request,
                 Retryable = false,
-                Diagnostics = [diagnostic],
+                Diagnostics = diagnostics
+                    .Where(item => !string.IsNullOrWhiteSpace(item))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList(),
             },
             FilteredCount = 0,
             AppliedFilters = [],
         };
+    }
+
+    private static List<string> ValidateInputs(
+        int page,
+        double? minRating,
+        int? minReviewCount,
+        long? minPriceRials,
+        long? maxPriceRials,
+        int? limit)
+    {
+        var diagnostics = new List<string>();
+
+        if (page < 1)
+        {
+            diagnostics.Add("`page` must be greater than or equal to 1.");
+        }
+
+        if (minRating is < 0 or > 5)
+        {
+            diagnostics.Add("`minRating` must be between 0 and 5.");
+        }
+
+        if (minReviewCount is < 0)
+        {
+            diagnostics.Add("`minReviewCount` must be greater than or equal to 0.");
+        }
+
+        if (minPriceRials is < 0)
+        {
+            diagnostics.Add("`minPriceRials` must be greater than or equal to 0.");
+        }
+
+        if (maxPriceRials is < 0)
+        {
+            diagnostics.Add("`maxPriceRials` must be greater than or equal to 0.");
+        }
+
+        if (minPriceRials is not null && maxPriceRials is not null && minPriceRials > maxPriceRials)
+        {
+            diagnostics.Add("`minPriceRials` cannot be greater than `maxPriceRials`.");
+        }
+
+        if (limit is <= 0)
+        {
+            diagnostics.Add("`limit` must be greater than or equal to 1 when provided.");
+        }
+
+        return diagnostics;
     }
 }

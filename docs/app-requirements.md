@@ -25,7 +25,7 @@ Each tool is a single MCP callable exposed to the AI. The AI receives compact DT
 
 | # | Tool Name | Description | Upstream Endpoint(s) |
 |---|---|---|---|
-| T-01 | `search_products` | Search products by keyword within an optional category, with filters, sorting, and pagination. | `GET /v1/categories/{slug}/search/`, `GET /fresh/v1/categories/{slug}/search/` |
+| T-01 | `search_products` | Search products by keyword within an optional category, with filters, sorting, and pagination. Because Digikala search is category-scoped, the server should use an explicit category slug when provided, otherwise attempt server-side category resolution before calling upstream category search. | `GET /v1/categories/{slug}/search/`, `GET /fresh/v1/categories/{slug}/search/` |
 | T-02 | `get_product_detail` | Get full product information for a single product ID, including variants, images, price, seller, specs. | `GET /v2/product/{id}/`, `GET /fresh/v1/product/{id}/` |
 | T-03 | `get_product_price_chart` | Get historical price data for a product. | `GET /v1/product/{id}/price-chart/` |
 | T-04 | `get_product_reviews` | Get paginated user reviews/comments for a product. | `GET /v1/product/{id}/comments/`, `GET /v1/rate-review/products/{id}/` |
@@ -116,7 +116,9 @@ Cache design:
 
 - If upstream returns non-200, return a structured error to the AI with status code and message.
 - If cache is populated and upstream fails, serve stale cache with a warning flag in the DTO.
-- Circuit breaker: if 5 consecutive failures to the same host occur within 30 seconds, open the circuit for 60 seconds and serve cache-only.
+- Circuit breaker: if 5 consecutive transient failures to the same host occur within 30 seconds, open the circuit for 60 seconds and serve cache-only.
+- Transient failures include timeout, `429`, and `5xx` responses.
+- Non-transient client errors such as `400` and `404` should return structured errors but must not increment the circuit breaker failure count.
 
 ### 3.4 Performance
 
@@ -255,7 +257,7 @@ public record SearchProductsInput(
     [Description("Search keyword in Persian or English")]
     string Query,
 
-    [Description("Category slug, e.g. 'mobile-phone'. Null for all categories.")]
+    [Description("Category slug, e.g. 'mobile-phone'. Optional. When omitted, the server should try to resolve a Digikala category from aliases or autocomplete hints before rejecting the request.")]
     string? CategorySlug = null,
 
     [Description("Page number, starting from 1")]
@@ -274,6 +276,19 @@ public record SearchResultDto(
     List<string> AvailableFilters
 );
 ```
+
+### 5.1.1 Search Category Resolution
+
+`search_products` must not call a fake global-search category such as `search`. Instead:
+
+1. Use `CategorySlug` directly when it is present.
+2. Try server-maintained alias rules for common shopping intents.
+3. Fall back to `autocomplete` category hints when alias rules do not match.
+4. Return a structured validation error when no Digikala category can be resolved.
+
+The implementation should keep category resolution in the Application layer so MCP tools stay thin and reusable services can share the behavior.
+
+The same tool family should also reject obviously invalid numeric inputs before any upstream call, including page or limit values below `1`, negative count or price filters, ratings outside `0..5`, and inverted price ranges.
 
 ### 5.2 ProductSummaryDto (used across search, best-selling, recommendations, offers)
 

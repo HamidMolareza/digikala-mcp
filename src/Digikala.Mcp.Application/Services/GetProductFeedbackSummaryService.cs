@@ -45,6 +45,25 @@ public sealed class GetProductFeedbackSummaryService(
             ["skipCache"] = skipCache.ToString(),
         };
 
+        var validationDiagnostics = ValidateInputs(productId, maxPros, maxCons, maxThemes, maxSnippets);
+        if (validationDiagnostics.Count > 0)
+        {
+            return new ProductFeedbackSummaryDto
+            {
+                ProductId = productId,
+                Warning = "Structured validation blocked an invalid feedback summary request.",
+                Error = new ToolIssueDto
+                {
+                    Code = "InvalidInput",
+                    Message = "get_product_feedback_summary received invalid inputs.",
+                    Tool = "get_product_feedback_summary",
+                    Request = request,
+                    Retryable = false,
+                    Diagnostics = validationDiagnostics,
+                },
+            };
+        }
+
         try
         {
             var detailTask = detailService.ExecuteAsync(productId, null, skipCache, ct);
@@ -244,6 +263,38 @@ public sealed class GetProductFeedbackSummaryService(
     {
         var compact = Regex.Replace(value, @"\s+", " ").Trim();
         return compact.Length <= 180 ? compact : $"{compact[..177]}...";
+    }
+
+    private static List<string> ValidateInputs(long productId, int maxPros, int maxCons, int maxThemes, int maxSnippets)
+    {
+        var diagnostics = new List<string>();
+
+        if (productId <= 0)
+        {
+            diagnostics.Add("`productId` must be greater than 0.");
+        }
+
+        if (maxPros < 1)
+        {
+            diagnostics.Add("`maxPros` must be greater than or equal to 1.");
+        }
+
+        if (maxCons < 1)
+        {
+            diagnostics.Add("`maxCons` must be greater than or equal to 1.");
+        }
+
+        if (maxThemes < 1)
+        {
+            diagnostics.Add("`maxThemes` must be greater than or equal to 1.");
+        }
+
+        if (maxSnippets < 1)
+        {
+            diagnostics.Add("`maxSnippets` must be greater than or equal to 1.");
+        }
+
+        return diagnostics;
     }
 
     private sealed record ThemeDefinition(string Name, string[] PositiveTerms, string[] NegativeTerms);

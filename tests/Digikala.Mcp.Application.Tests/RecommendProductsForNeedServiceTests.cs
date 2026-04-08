@@ -17,7 +17,7 @@ public class RecommendProductsForNeedServiceTests
         var cache = new NullCacheStore();
         var productMapper = new ProductMapper();
         var reviewMapper = new ReviewMapper();
-        var searchService = new SearchProductsService(apiClient, cache, productMapper);
+        var searchService = CreateSearchService(apiClient, cache, productMapper);
         var detailService = new GetProductDetailService(apiClient, cache, productMapper);
         var reviewsService = new GetProductReviewsService(apiClient, cache, reviewMapper);
         var feedbackService = new GetProductFeedbackSummaryService(detailService, reviewsService);
@@ -173,7 +173,7 @@ public class RecommendProductsForNeedServiceTests
         var cache = new NullCacheStore();
         var productMapper = new ProductMapper();
         var reviewMapper = new ReviewMapper();
-        var searchService = new SearchProductsService(apiClient, cache, productMapper);
+        var searchService = CreateSearchService(apiClient, cache, productMapper);
         var detailService = new GetProductDetailService(apiClient, cache, productMapper);
         var reviewsService = new GetProductReviewsService(apiClient, cache, reviewMapper);
         var feedbackService = new GetProductFeedbackSummaryService(detailService, reviewsService);
@@ -187,6 +187,42 @@ public class RecommendProductsForNeedServiceTests
         Assert.NotNull(result.Error);
         Assert.Equal("search_products", result.Error!.Tool);
         Assert.Empty(result.Recommendations);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_ShouldReturnValidationError_ForInvalidRecommendationInputs()
+    {
+        var apiClient = Substitute.For<IDigikalaApiClient>();
+        var cache = new NullCacheStore();
+        var productMapper = new ProductMapper();
+        var reviewMapper = new ReviewMapper();
+        var searchService = CreateSearchService(apiClient, cache, productMapper);
+        var detailService = new GetProductDetailService(apiClient, cache, productMapper);
+        var reviewsService = new GetProductReviewsService(apiClient, cache, reviewMapper);
+        var feedbackService = new GetProductFeedbackSummaryService(detailService, reviewsService);
+        var service = new RecommendProductsForNeedService(searchService, feedbackService);
+
+        var result = await service.ExecuteAsync(
+            string.Empty,
+            categorySlug: "hair-shampoo",
+            limit: 0,
+            minPriceRials: 2_000,
+            maxPriceRials: 1_000);
+
+        Assert.NotNull(result.Error);
+        Assert.Equal("InvalidInput", result.Error!.Code);
+        Assert.Contains(result.Error.Diagnostics, item => item.Contains("`needDescription`", StringComparison.Ordinal));
+        Assert.Contains(result.Error.Diagnostics, item => item.Contains("`limit`", StringComparison.Ordinal));
+        Assert.Contains(result.Error.Diagnostics, item => item.Contains("`minPriceRials` cannot be greater", StringComparison.Ordinal));
+        Assert.Empty(result.Recommendations);
+        await apiClient.DidNotReceiveWithAnyArgs().SearchCategoryAsync(default!, default, default, default, default, default);
+    }
+
+    private static SearchProductsService CreateSearchService(IDigikalaApiClient apiClient, ICacheStore cache, ProductMapper productMapper)
+    {
+        var autocompleteService = new AutocompleteService(apiClient, cache, new AutocompleteMapper());
+        var categoryResolutionService = new CategoryResolutionService(autocompleteService);
+        return new SearchProductsService(apiClient, cache, productMapper, categoryResolutionService);
     }
 
     private sealed class NullCacheStore : ICacheStore

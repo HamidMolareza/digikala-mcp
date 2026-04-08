@@ -60,6 +60,7 @@ builder.Services.AddSingleton<OfferMapper>();
 builder.Services.AddSingleton<AutocompleteMapper>();
 builder.Services.AddSingleton<BrandMapper>();
 
+builder.Services.AddSingleton<CategoryResolutionService>();
 builder.Services.AddSingleton<SearchProductsService>();
 builder.Services.AddSingleton<RankProductsService>();
 builder.Services.AddSingleton<RecommendProductsForNeedService>();

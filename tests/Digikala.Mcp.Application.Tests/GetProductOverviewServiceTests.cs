@@ -237,6 +237,32 @@ public class GetProductOverviewServiceTests
         Assert.NotNull(result.Detail.Warning);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_ShouldReturnValidationError_ForInvalidOverviewInputs()
+    {
+        var apiClient = Substitute.For<IDigikalaApiClient>();
+        var cache = new NullCacheStore();
+        var detailService = new GetProductDetailService(apiClient, cache, new ProductMapper());
+        var priceChartService = new GetProductPriceChartService(apiClient, cache, new PriceChartMapper());
+        var reviewsService = new GetProductReviewsService(apiClient, cache, new ReviewMapper());
+        var questionsService = new GetProductQuestionsService(apiClient, cache, new QuestionMapper());
+        var recommendationsService = new GetProductRecommendationsService(apiClient, cache, new ProductMapper());
+
+        var service = new GetProductOverviewService(
+            detailService,
+            priceChartService,
+            reviewsService,
+            questionsService,
+            recommendationsService);
+
+        var result = await service.ExecuteAsync(0, topReviewsCount: 0, topQuestionsCount: 0, topRecommendationsCount: 0);
+
+        Assert.True(result.HasError);
+        Assert.Contains("detail", result.SectionIssues.Keys);
+        Assert.Contains(result.SectionWarnings, item => item.Contains("`productId`", StringComparison.Ordinal));
+        await apiClient.DidNotReceiveWithAnyArgs().GetProductV2Async(default, default, default);
+    }
+
     private sealed class NullCacheStore : ICacheStore
     {
         public Task CleanupExpiredAsync(CancellationToken ct = default) => Task.CompletedTask;

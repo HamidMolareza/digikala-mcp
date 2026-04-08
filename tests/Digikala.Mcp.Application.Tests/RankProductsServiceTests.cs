@@ -15,7 +15,7 @@ public class RankProductsServiceTests
     {
         var apiClient = Substitute.For<IDigikalaApiClient>();
         var cache = new NullCacheStore();
-        var searchService = new SearchProductsService(apiClient, cache, new ProductMapper());
+        var searchService = CreateSearchService(apiClient, cache);
         var service = new RankProductsService(searchService);
 
         apiClient.SearchCategoryAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<Dictionary<string, string[]>?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
@@ -69,7 +69,7 @@ public class RankProductsServiceTests
     {
         var apiClient = Substitute.For<IDigikalaApiClient>();
         var cache = new NullCacheStore();
-        var searchService = new SearchProductsService(apiClient, cache, new ProductMapper());
+        var searchService = CreateSearchService(apiClient, cache);
         var service = new RankProductsService(searchService);
 
         var result = await service.ExecuteAsync(
@@ -80,6 +80,34 @@ public class RankProductsServiceTests
         Assert.Equal("InvalidInput", result.Error!.Code);
         Assert.Equal("rank_products", result.Error.Tool);
         await apiClient.DidNotReceiveWithAnyArgs().SearchCategoryAsync(default!, default, default, default, default, default);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_ShouldReturnValidationError_ForInvalidFilters()
+    {
+        var apiClient = Substitute.For<IDigikalaApiClient>();
+        var cache = new NullCacheStore();
+        var searchService = CreateSearchService(apiClient, cache);
+        var service = new RankProductsService(searchService);
+
+        var result = await service.ExecuteAsync(
+            query: "iphone",
+            limit: 0,
+            minPriceRials: 2_000,
+            maxPriceRials: 1_000);
+
+        Assert.NotNull(result.Error);
+        Assert.Equal("InvalidInput", result.Error!.Code);
+        Assert.Contains(result.Error.Diagnostics, item => item.Contains("`limit`", StringComparison.Ordinal));
+        Assert.Contains(result.Error.Diagnostics, item => item.Contains("`minPriceRials` cannot be greater", StringComparison.Ordinal));
+        await apiClient.DidNotReceiveWithAnyArgs().SearchCategoryAsync(default!, default, default, default, default, default);
+    }
+
+    private static SearchProductsService CreateSearchService(IDigikalaApiClient apiClient, ICacheStore cache)
+    {
+        var autocompleteService = new AutocompleteService(apiClient, cache, new AutocompleteMapper());
+        var categoryResolutionService = new CategoryResolutionService(autocompleteService);
+        return new SearchProductsService(apiClient, cache, new ProductMapper(), categoryResolutionService);
     }
 
     private sealed class NullCacheStore : ICacheStore

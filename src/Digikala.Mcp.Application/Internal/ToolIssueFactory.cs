@@ -26,9 +26,19 @@ internal static partial class ToolIssueFactory
 
     private static string GetCode(Exception exception, int? statusCode)
     {
+        if (exception is ArgumentException or ArgumentOutOfRangeException)
+        {
+            return "InvalidInput";
+        }
+
         if (exception is TimeoutException)
         {
             return "UpstreamTimeout";
+        }
+
+        if (exception.Message.Contains("Client-side rate limiter rejected", StringComparison.OrdinalIgnoreCase))
+        {
+            return "RateLimited";
         }
 
         if (exception.Message.Contains("Circuit breaker is open", StringComparison.OrdinalIgnoreCase))
@@ -40,6 +50,7 @@ internal static partial class ToolIssueFactory
         {
             404 => "NotFound",
             429 => "RateLimited",
+            >= 400 and < 500 => "InvalidInput",
             >= 500 => "UpstreamError",
             _ => "UpstreamError",
         };
@@ -47,7 +58,17 @@ internal static partial class ToolIssueFactory
 
     private static bool IsRetryable(Exception exception, int? statusCode)
     {
+        if (exception is ArgumentException or ArgumentOutOfRangeException)
+        {
+            return false;
+        }
+
         if (exception is TimeoutException)
+        {
+            return true;
+        }
+
+        if (exception.Message.Contains("Client-side rate limiter rejected", StringComparison.OrdinalIgnoreCase))
         {
             return true;
         }

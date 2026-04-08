@@ -41,6 +41,17 @@ public sealed class RankProductsService(SearchProductsService searchProductsServ
             normalizedRankingPriority = ["buyer_popularity", "rating", "rating_count"];
         }
 
+        var validationDiagnostics = ValidateInputs(limit, minRating, minReviewCount, minPriceRials, maxPriceRials);
+        if (validationDiagnostics.Count > 0)
+        {
+            return CreateValidationError(
+                query,
+                categorySlug,
+                normalizedRankingPriority,
+                "rank_products received invalid filter or pagination inputs.",
+                validationDiagnostics.ToArray());
+        }
+
         var invalidPriority = normalizedRankingPriority.FirstOrDefault(item => !SupportedRankingPriorities.Contains(item));
         if (invalidPriority is not null)
         {
@@ -49,7 +60,7 @@ public sealed class RankProductsService(SearchProductsService searchProductsServ
                 categorySlug,
                 normalizedRankingPriority,
                 $"Unsupported ranking priority `{invalidPriority}`.",
-                "Supported values: buyer_popularity, rating, rating_count, best_match, price_low, price_high, availability.");
+                ["Supported values: buyer_popularity, rating, rating_count, best_match, price_low, price_high, availability."]);
         }
 
         var searchResult = await searchProductsService.ExecuteAsync(
@@ -137,7 +148,7 @@ public sealed class RankProductsService(SearchProductsService searchProductsServ
         string? categorySlug,
         List<string> rankingPriority,
         string message,
-        string diagnostic)
+        params string[] diagnostics)
     {
         return new RankProductsResultDto
         {
@@ -154,12 +165,54 @@ public sealed class RankProductsService(SearchProductsService searchProductsServ
                     ["rankingPriority"] = string.Join(", ", rankingPriority),
                 },
                 Retryable = false,
-                Diagnostics = [diagnostic],
+                Diagnostics = diagnostics.ToList(),
             },
             SearchQuery = query,
             CategorySlug = categorySlug,
             AppliedRankingPriority = rankingPriority,
         };
+    }
+
+    private static List<string> ValidateInputs(
+        int limit,
+        double? minRating,
+        int? minReviewCount,
+        long? minPriceRials,
+        long? maxPriceRials)
+    {
+        var diagnostics = new List<string>();
+
+        if (limit < 1)
+        {
+            diagnostics.Add("`limit` must be greater than or equal to 1.");
+        }
+
+        if (minRating is < 0 or > 5)
+        {
+            diagnostics.Add("`minRating` must be between 0 and 5.");
+        }
+
+        if (minReviewCount is < 0)
+        {
+            diagnostics.Add("`minReviewCount` must be greater than or equal to 0.");
+        }
+
+        if (minPriceRials is < 0)
+        {
+            diagnostics.Add("`minPriceRials` must be greater than or equal to 0.");
+        }
+
+        if (maxPriceRials is < 0)
+        {
+            diagnostics.Add("`maxPriceRials` must be greater than or equal to 0.");
+        }
+
+        if (minPriceRials is not null && maxPriceRials is not null && minPriceRials > maxPriceRials)
+        {
+            diagnostics.Add("`minPriceRials` cannot be greater than `maxPriceRials`.");
+        }
+
+        return diagnostics;
     }
 
     private static List<string> NormalizeTerms(IEnumerable<string>? values) =>

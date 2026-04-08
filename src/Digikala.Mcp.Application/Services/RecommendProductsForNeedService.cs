@@ -54,6 +54,26 @@ public sealed class RecommendProductsForNeedService(
             ["skipCache"] = skipCache.ToString(),
         };
 
+        var validationDiagnostics = ValidateInputs(needDescription, limit, minRating, minReviewCount, minPriceRials, maxPriceRials);
+        if (validationDiagnostics.Count > 0)
+        {
+            return new ProductNeedRecommendationsDto
+            {
+                Warning = "Structured validation blocked an invalid recommendation request.",
+                Error = new ToolIssueDto
+                {
+                    Code = "InvalidInput",
+                    Message = "recommend_products_for_need received invalid filter or pagination inputs.",
+                    Tool = "recommend_products_for_need",
+                    Request = request,
+                    Retryable = false,
+                    Diagnostics = validationDiagnostics,
+                },
+                SearchQuery = understanding.SearchQuery,
+                QueryUnderstanding = understanding.ToDto(),
+            };
+        }
+
         try
         {
             var candidateLimit = Math.Clamp(Math.Max(limit * 3, 8), 3, 12);
@@ -443,6 +463,54 @@ public sealed class RecommendProductsForNeedService(
 
     private static bool ContainsAny(string value, params string[] candidates) =>
         candidates.Any(candidate => value.Contains(candidate, StringComparison.OrdinalIgnoreCase));
+
+    private static List<string> ValidateInputs(
+        string needDescription,
+        int limit,
+        double? minRating,
+        int? minReviewCount,
+        long? minPriceRials,
+        long? maxPriceRials)
+    {
+        var diagnostics = new List<string>();
+
+        if (string.IsNullOrWhiteSpace(needDescription))
+        {
+            diagnostics.Add("`needDescription` must be a non-empty string.");
+        }
+
+        if (limit < 1)
+        {
+            diagnostics.Add("`limit` must be greater than or equal to 1.");
+        }
+
+        if (minRating is < 0 or > 5)
+        {
+            diagnostics.Add("`minRating` must be between 0 and 5.");
+        }
+
+        if (minReviewCount is < 0)
+        {
+            diagnostics.Add("`minReviewCount` must be greater than or equal to 0.");
+        }
+
+        if (minPriceRials is < 0)
+        {
+            diagnostics.Add("`minPriceRials` must be greater than or equal to 0.");
+        }
+
+        if (maxPriceRials is < 0)
+        {
+            diagnostics.Add("`maxPriceRials` must be greater than or equal to 0.");
+        }
+
+        if (minPriceRials is not null && maxPriceRials is not null && minPriceRials > maxPriceRials)
+        {
+            diagnostics.Add("`minPriceRials` cannot be greater than `maxPriceRials`.");
+        }
+
+        return diagnostics;
+    }
 
     private static readonly string[] StopWords =
     [

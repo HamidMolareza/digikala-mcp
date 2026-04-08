@@ -19,6 +19,49 @@ public sealed class GetProductOverviewService(
         bool skipCache = false,
         CancellationToken ct = default)
     {
+        var validationDiagnostics = ValidateInputs(productId, topReviewsCount, topQuestionsCount, topRecommendationsCount);
+        if (validationDiagnostics.Count > 0)
+        {
+            return new ProductOverviewDto
+            {
+                HasError = true,
+                Warning = "Structured validation blocked an invalid product overview request.",
+                SectionWarnings = validationDiagnostics,
+                SectionStatus = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["detail"] = "failed",
+                    ["priceChart"] = "failed",
+                    ["reviews"] = "failed",
+                    ["questions"] = "failed",
+                    ["recommendations"] = "failed",
+                },
+                SectionIssues = new Dictionary<string, ToolIssueDto>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["detail"] = new()
+                    {
+                        Code = "InvalidInput",
+                        Message = "get_product_overview received invalid inputs.",
+                        Tool = "get_product_overview",
+                        Request = new Dictionary<string, string?>
+                        {
+                            ["productId"] = productId.ToString(),
+                            ["warehouseId"] = warehouseId?.ToString(),
+                            ["topReviewsCount"] = topReviewsCount.ToString(),
+                            ["topQuestionsCount"] = topQuestionsCount.ToString(),
+                            ["topRecommendationsCount"] = topRecommendationsCount.ToString(),
+                            ["skipCache"] = skipCache.ToString(),
+                        },
+                        Retryable = false,
+                        Diagnostics = validationDiagnostics,
+                    },
+                },
+                Detail = new ProductDetailDto
+                {
+                    Warning = "Product overview request was rejected before upstream calls.",
+                },
+            };
+        }
+
         var detailTask = FetchSection(
             "detail",
             () => detailService.ExecuteAsync(productId, warehouseId, skipCache, ct),
@@ -189,6 +232,33 @@ public sealed class GetProductOverviewService(
                !string.IsNullOrWhiteSpace(cacheStatus)
             ? cacheStatus
             : "unknown";
+    }
+
+    private static List<string> ValidateInputs(long productId, int topReviewsCount, int topQuestionsCount, int topRecommendationsCount)
+    {
+        var diagnostics = new List<string>();
+
+        if (productId <= 0)
+        {
+            diagnostics.Add("`productId` must be greater than 0.");
+        }
+
+        if (topReviewsCount < 1)
+        {
+            diagnostics.Add("`topReviewsCount` must be greater than or equal to 1.");
+        }
+
+        if (topQuestionsCount < 1)
+        {
+            diagnostics.Add("`topQuestionsCount` must be greater than or equal to 1.");
+        }
+
+        if (topRecommendationsCount < 1)
+        {
+            diagnostics.Add("`topRecommendationsCount` must be greater than or equal to 1.");
+        }
+
+        return diagnostics;
     }
 
     private sealed record SectionResult<T>(string Name, T? Value, bool IsStale, bool IsFromCache, string CacheStatus, ToolIssueDto? Issue);

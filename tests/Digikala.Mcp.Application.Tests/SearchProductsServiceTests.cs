@@ -16,7 +16,7 @@ public class SearchProductsServiceTests
 
     public SearchProductsServiceTests()
     {
-        _service = new SearchProductsService(_apiClient, _cacheStore, new ProductMapper());
+        _service = CreateService(_apiClient, _cacheStore);
     }
 
     [Fact]
@@ -35,7 +35,7 @@ public class SearchProductsServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_ShouldInferCategorySlug_ForRecognizedQueries()
+    public async Task ExecuteAsync_ShouldInferCategorySlug_ForRecognizedPhoneQueries()
     {
         using var document = JsonDocument.Parse("""
             {
@@ -78,15 +78,207 @@ public class SearchProductsServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_ShouldReturnStructuredValidationError_WhenCategoryCannotBeResolved()
+    public async Task ExecuteAsync_ShouldInferPowerBankCategorySlug_ForRecognizedQueries()
     {
+        using var document = JsonDocument.Parse("""
+            {
+              "status": 200,
+              "data": {
+                "products": [
+                  {
+                    "id": 10,
+                    "title_fa": "پاوربانک",
+                    "status": "marketable",
+                    "rating": { "rate": 4.8, "count": 220 },
+                    "default_variant": { "price": { "selling_price": 60000000 } },
+                    "url": { "uri": "/pb" },
+                    "images": []
+                  }
+                ],
+                "pager": { "current_page": 1, "total_pages": 1, "total_items": 1 },
+                "filters": [],
+                "sort_options": []
+              }
+            }
+            """);
+
+        _cacheStore.GetAsync<SearchResultDto>(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns((SearchResultDto?)null);
+        _apiClient.SearchCategoryAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<Dictionary<string, string[]>?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(document);
+
+        var result = await _service.ExecuteAsync("شارژر همراه 20000");
+
+        Assert.Single(result.Products);
+        Assert.Contains("Category inferred as `power-bank`", result.Warning);
+        await _apiClient.Received(1).SearchCategoryAsync(
+            "power-bank",
+            Arg.Any<int>(),
+            Arg.Any<int?>(),
+            Arg.Any<Dictionary<string, string[]>?>(),
+            "شارژر همراه 20000",
+            Arg.Any<CancellationToken>());
+        await _apiClient.DidNotReceiveWithAnyArgs().GetAutocompleteAsync(default!, default);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_ShouldInferCableCategorySlug_ForRecognizedQueries()
+    {
+        using var document = JsonDocument.Parse("""
+            {
+              "status": 200,
+              "data": {
+                "products": [
+                  {
+                    "id": 11,
+                    "title_fa": "کابل شارژ",
+                    "status": "marketable",
+                    "rating": { "rate": 4.6, "count": 420 },
+                    "default_variant": { "price": { "selling_price": 3500000 } },
+                    "url": { "uri": "/cable" },
+                    "images": []
+                  }
+                ],
+                "pager": { "current_page": 1, "total_pages": 1, "total_items": 1 },
+                "filters": [],
+                "sort_options": []
+              }
+            }
+            """);
+
+        _cacheStore.GetAsync<SearchResultDto>(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns((SearchResultDto?)null);
+        _apiClient.SearchCategoryAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<Dictionary<string, string[]>?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(document);
+
+        var result = await _service.ExecuteAsync("type-c cable");
+
+        Assert.Single(result.Products);
+        Assert.Contains("Category inferred as `cell-phone-data-cable`", result.Warning);
+        await _apiClient.Received(1).SearchCategoryAsync(
+            "cell-phone-data-cable",
+            Arg.Any<int>(),
+            Arg.Any<int?>(),
+            Arg.Any<Dictionary<string, string[]>?>(),
+            "type-c cable",
+            Arg.Any<CancellationToken>());
+        await _apiClient.DidNotReceiveWithAnyArgs().GetAutocompleteAsync(default!, default);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_ShouldInferCategorySlug_FromAutocompleteHints()
+    {
+        using var autocomplete = JsonDocument.Parse("""
+            {
+              "status": 200,
+              "data": {
+                "suggestions": [
+                  {
+                    "title": "Baseus Cafule",
+                    "category": { "code": "cell-phone-data-cable" }
+                  },
+                  {
+                    "title": "Baseus Fast Charging",
+                    "category": { "code": "cell-phone-data-cable" }
+                  }
+                ],
+                "trends": []
+              }
+            }
+            """);
+        using var search = JsonDocument.Parse("""
+            {
+              "status": 200,
+              "data": {
+                "products": [
+                  {
+                    "id": 12,
+                    "title_fa": "Baseus Cafule",
+                    "status": "marketable",
+                    "rating": { "rate": 4.8, "count": 950 },
+                    "default_variant": { "price": { "selling_price": 4500000 } },
+                    "url": { "uri": "/cafule" },
+                    "images": []
+                  }
+                ],
+                "pager": { "current_page": 1, "total_pages": 1, "total_items": 1 },
+                "filters": [],
+                "sort_options": []
+              }
+            }
+            """);
+
+        _cacheStore.GetAsync<SearchResultDto>(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns((SearchResultDto?)null);
+        _cacheStore.GetAsync<AutocompleteDto>(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns((AutocompleteDto?)null);
+        _apiClient.GetAutocompleteAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(autocomplete);
+        _apiClient.SearchCategoryAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<Dictionary<string, string[]>?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(search);
+
+        var result = await _service.ExecuteAsync("cafule baseus");
+
+        Assert.Single(result.Products);
+        Assert.Contains("Category inferred as `cell-phone-data-cable`", result.Warning);
+        await _apiClient.Received(1).GetAutocompleteAsync("cafule baseus", Arg.Any<CancellationToken>());
+        await _apiClient.Received(1).SearchCategoryAsync(
+            "cell-phone-data-cable",
+            Arg.Any<int>(),
+            Arg.Any<int?>(),
+            Arg.Any<Dictionary<string, string[]>?>(),
+            "cafule baseus",
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_ShouldUseAutocompleteBeforeReturningValidationError_WhenCategoryCannotBeResolved()
+    {
+        using var autocomplete = JsonDocument.Parse("""
+            {
+              "status": 200,
+              "data": {
+                "suggestions": [],
+                "trends": []
+              }
+            }
+            """);
+
+        _cacheStore.GetAsync<AutocompleteDto>(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns((AutocompleteDto?)null);
+        _apiClient.GetAutocompleteAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(autocomplete);
+
         var result = await _service.ExecuteAsync("random obscure query");
 
         Assert.NotNull(result.Error);
         Assert.Equal("InvalidInput", result.Error!.Code);
         Assert.Contains("requires categorySlug", result.Error.Message, StringComparison.Ordinal);
+        Assert.Contains(
+            result.Error.Diagnostics,
+            item => item.Contains("autocomplete returned no category hints", StringComparison.OrdinalIgnoreCase));
         Assert.False(result.Error.Retryable);
         Assert.Equal(0, result.FilteredCount);
+        await _apiClient.Received(1).GetAutocompleteAsync("random obscure query", Arg.Any<CancellationToken>());
+        await _apiClient.DidNotReceiveWithAnyArgs().SearchCategoryAsync(default!, default, default, default, default, default);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_ShouldReturnValidationError_ForInvalidPaginationAndPriceRange()
+    {
+        var result = await _service.ExecuteAsync(
+            "iphone",
+            categorySlug: "mobile-phone",
+            page: 0,
+            minPriceRials: 2_000,
+            maxPriceRials: 1_000,
+            limit: 0);
+
+        Assert.NotNull(result.Error);
+        Assert.Equal("InvalidInput", result.Error!.Code);
+        Assert.Contains(result.Error.Diagnostics, item => item.Contains("`page`", StringComparison.Ordinal));
+        Assert.Contains(result.Error.Diagnostics, item => item.Contains("`minPriceRials` cannot be greater", StringComparison.Ordinal));
+        Assert.Contains(result.Error.Diagnostics, item => item.Contains("`limit`", StringComparison.Ordinal));
         await _apiClient.DidNotReceiveWithAnyArgs().SearchCategoryAsync(default!, default, default, default, default, default);
     }
 
@@ -344,7 +536,7 @@ public class SearchProductsServiceTests
     public async Task ExecuteAsync_ShouldReuseCacheKey_WhenPreferredTermsOrderDiffers()
     {
         var cache = new MemoryCacheStore();
-        var service = new SearchProductsService(_apiClient, cache, new ProductMapper());
+        var service = CreateService(_apiClient, cache);
         using var document = JsonDocument.Parse("""
             {
               "status": 200,
@@ -427,6 +619,13 @@ public class SearchProductsServiceTests
             Arg.Any<Dictionary<string, string[]>?>(),
             "شامپو",
             Arg.Any<CancellationToken>());
+    }
+
+    private static SearchProductsService CreateService(IDigikalaApiClient apiClient, ICacheStore cacheStore)
+    {
+        var autocompleteService = new AutocompleteService(apiClient, cacheStore, new AutocompleteMapper());
+        var categoryResolutionService = new CategoryResolutionService(autocompleteService);
+        return new SearchProductsService(apiClient, cacheStore, new ProductMapper(), categoryResolutionService);
     }
 
     private sealed class MemoryCacheStore : ICacheStore
