@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Collections.Generic;
 using Digikala.Mcp.Application.Dtos;
 using Digikala.Mcp.Application.Internal;
 
@@ -89,7 +90,8 @@ public sealed class ProductMapper
             Brand = productElement.GetStringOrNull("brand", "title_fa") ?? productElement.GetStringOrNull("brand", "title_en"),
             BrandSlug = productElement.GetStringOrNull("brand", "code"),
             Seller = productElement.GetStringOrNull("default_variant", "seller", "title"),
-            SellerRating = productElement.GetDoubleOrNull("default_variant", "seller", "rating"),
+            SellerRating = productElement.GetDoubleOrNull("default_variant", "seller", "rating") ??
+                           productElement.GetDoubleOrNull("default_variant", "seller", "rating", "total_rate"),
             Warranty = productElement.GetStringOrNull("default_variant", "warranty", "title_fa"),
             Specifications = productElement.EnumerateArrayOrEmpty("specifications")
                 .SelectMany(group => group.EnumerateArrayOrEmpty("attributes")
@@ -101,19 +103,7 @@ public sealed class ProductMapper
                             .Where(item => !string.IsNullOrWhiteSpace(item))))))
                 .Where(item => !string.IsNullOrWhiteSpace(item.Title) || !string.IsNullOrWhiteSpace(item.Value))
                 .ToList(),
-            ImageUrls = productElement.EnumerateArrayOrEmpty("images")
-                .SelectMany(image =>
-                {
-                    if (!image.TryGetNested(out var urlArray, "url") || urlArray.ValueKind != JsonValueKind.Array)
-                    {
-                        return Enumerable.Empty<string>();
-                    }
-
-                    return urlArray.EnumerateArray()
-                        .Select(item => item.GetString())
-                        .Where(item => !string.IsNullOrWhiteSpace(item))
-                        .Cast<string>();
-                })
+            ImageUrls = ExtractImageUrls(productElement)
                 .Distinct(StringComparer.Ordinal)
                 .ToList(),
             Variants = productElement.EnumerateArrayOrEmpty("variants")
@@ -146,20 +136,8 @@ public sealed class ProductMapper
             CurrentPage = data.GetInt32OrNull("pager", "current_page") ?? 1,
             TotalPages = data.GetInt32OrNull("pager", "total_pages") ?? 1,
             AvailableFilters = data.EnumerateArrayOrEmpty("filters")
-                .Select(group => new FilterGroupDto
-                {
-                    Title = group.GetStringOrNull("title_fa") ?? string.Empty,
-                    Code = group.GetStringOrNull("code") ?? string.Empty,
-                    Options = group.EnumerateArrayOrEmpty("options")
-                        .Select(option => new FilterOptionDto
-                        {
-                            Title = option.GetStringOrNull("title_fa") ?? option.GetStringOrNull("title") ?? string.Empty,
-                            Value = option.GetStringOrNull("id") ?? option.GetStringOrNull("value") ?? string.Empty,
-                            Count = option.GetInt32OrNull("count") ?? 0,
-                        })
-                        .Where(option => !string.IsNullOrWhiteSpace(option.Title))
-                        .ToList(),
-                })
+                .Select(group => MapFilterGroup(group))
+                .Concat(MapFilterGroupsFromObject(data))
                 .Where(group => !string.IsNullOrWhiteSpace(group.Title) || !string.IsNullOrWhiteSpace(group.Code))
                 .ToList(),
             AvailableSortOptions = data.EnumerateArrayOrEmpty("sort_options")
@@ -172,16 +150,71 @@ public sealed class ProductMapper
 
     private static string? ExtractFirstImageUrl(JsonElement productElement)
     {
-        foreach (var image in productElement.EnumerateArrayOrEmpty("images"))
+        return productElement.GetUrl("images");
+    }
+
+    private static IEnumerable<string> ExtractImageUrls(JsonElement productElement)
+    {
+        if (!productElement.TryGetNested(out var images, "images"))
         {
-            var url = image.GetUrl("url");
-            if (!string.IsNullOrWhiteSpace(url))
-            {
-                return url;
-            }
+            return [];
         }
 
-        return null;
+        return EnumerateUrls(images);
+    }
+
+    private static IEnumerable<string> EnumerateUrls(JsonElement value)
+    {
+        switch (value.ValueKind)
+        {
+            case JsonValueKind.String:
+                {
+                    var url = value.GetString();
+                    return string.IsNullOrWhiteSpace(url) ? [] : [url];
+                }
+
+            case JsonValueKind.Array:
+                return value.EnumerateArray().SelectMany(EnumerateUrls);
+
+            case JsonValueKind.Object:
+                if (value.TryGetProperty("url", out var nestedUrl))
+                {
+                    return EnumerateUrls(nestedUrl);
+                }
+
+                return value.EnumerateObject().SelectMany(property => EnumerateUrls(property.Value));
+
+            default:
+                return [];
+        }
+    }
+
+    private static IEnumerable<FilterGroupDto> MapFilterGroupsFromObject(JsonElement data)
+    {
+        if (!data.TryGetNested(out var filters, "filters") || filters.ValueKind != JsonValueKind.Object)
+        {
+            return [];
+        }
+
+        return filters.EnumerateObject().Select(property => MapFilterGroup(property.Value, property.Name));
+    }
+
+    private static FilterGroupDto MapFilterGroup(JsonElement group, string? fallbackCode = null)
+    {
+        return new FilterGroupDto
+        {
+            Title = group.GetStringOrNull("title_fa") ?? group.GetStringOrNull("title") ?? string.Empty,
+            Code = group.GetStringOrNull("code") ?? fallbackCode ?? string.Empty,
+            Options = group.EnumerateArrayOrEmpty("options")
+                .Select(option => new FilterOptionDto
+                {
+                    Title = option.GetStringOrNull("title_fa") ?? option.GetStringOrNull("title") ?? string.Empty,
+                    Value = option.GetStringOrNull("id") ?? option.GetStringOrNull("value") ?? option.GetStringOrNull("code") ?? string.Empty,
+                    Count = option.GetInt32OrNull("count") ?? 0,
+                })
+                .Where(option => !string.IsNullOrWhiteSpace(option.Title))
+                .ToList(),
+        };
     }
 
     private static string BuildAbsoluteUrl(string? url)

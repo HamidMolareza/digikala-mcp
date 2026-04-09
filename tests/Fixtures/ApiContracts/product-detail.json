@@ -1,0 +1,98 @@
+{
+  "status": 200,
+  "data": {
+    "product": {
+      "id": 651040,
+      "title_fa": "سوپ نیمه آماده ورمیشل و مرغ هاتی کارا مقدار 70 گرم",
+      "title_en": "Hoti Kara Vermicelli And Chicken Soup 70 gr",
+      "url": {
+        "uri": "/product/dkp-651040"
+      },
+      "images": [
+        {
+          "url": [
+            "https://example.com/soup-main.jpg"
+          ]
+        },
+        {
+          "url": [
+            "https://example.com/soup-alt.jpg"
+          ]
+        }
+      ],
+      "status": "marketable",
+      "rating": {
+        "rate": 4.3,
+        "count": 27
+      },
+      "default_variant": {
+        "price": {
+          "selling_price": 760000,
+          "rrp_price": 850000,
+          "discount_percent": 11
+        },
+        "seller": {
+          "title": "سوپرمارکت دیجی‌کالا",
+          "rating": 4.9
+        },
+        "warranty": {
+          "title_fa": "تضمین تازگی"
+        }
+      },
+      "variants": [
+        {
+          "id": 1001,
+          "price": {
+            "selling_price": 760000
+          },
+          "seller": {
+            "title": "سوپرمارکت دیجی‌کالا"
+          },
+          "color": {
+            "title": "قرمز",
+            "hex_code": "#ff0000"
+          }
+        }
+      ],
+      "brand": {
+        "id": 10,
+        "title_fa": "هاتی کارا",
+        "title_en": "Hoti Kara",
+        "code": "hoti-kara"
+      },
+      "category": {
+        "id": 77,
+        "code": "instant-soup",
+        "title_fa": "سوپ آماده"
+      },
+      "expert_reviews": {
+        "description": "سوپ آماده سبک و خوش طعم",
+        "advantages": [
+          "آماده سازی سریع"
+        ],
+        "disadvantages": [
+          "نمک بالا"
+        ]
+      },
+      "specifications": [
+        {
+          "title": "مشخصات",
+          "attributes": [
+            {
+              "title": "وزن",
+              "values": [
+                "70 گرم"
+              ]
+            },
+            {
+              "title": "نوع",
+              "values": [
+                "سوپ نیمه آماده"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

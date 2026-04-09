@@ -1,0 +1,52 @@
+{
+  "status": 200,
+  "data": {
+    "products": [
+      {
+        "id": 3001001,
+        "title_fa": "کفش فوتبال مردانه",
+        "title_en": "Mens Football Boots",
+        "url": {
+          "uri": "/product/dkp-3001001"
+        },
+        "images": [
+          {
+            "url": [
+              "https://example.com/football-boots.jpg"
+            ]
+          }
+        ],
+        "status": "marketable",
+        "rating": {
+          "rate": 4.4,
+          "count": 39
+        },
+        "category": {
+          "id": 901,
+          "code": "football-boots",
+          "title_fa": "کفش فوتبال"
+        },
+        "default_variant": {
+          "id": 301,
+          "price": {
+            "selling_price": 45000000,
+            "rrp_price": 50000000,
+            "discount_percent": 10
+          }
+        }
+      }
+    ],
+    "filters": [],
+    "sort_options": [
+      {
+        "title_fa": "جدیدترین",
+        "value": 27
+      }
+    ],
+    "pager": {
+      "current_page": 1,
+      "total_pages": 3,
+      "total_items": 55
+    }
+  }
+}

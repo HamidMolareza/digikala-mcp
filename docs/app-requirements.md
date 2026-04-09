@@ -155,6 +155,61 @@ All configurable via `appsettings.json` and/or environment variables:
 - Log levels: upstream HTTP calls at `Debug`, cache hits/misses at `Debug`, tool invocations at `Information`, errors at `Warning`/`Error`.
 - No Sentry integration (the upstream Sentry endpoint is not called).
 
+### 3.8 API Drift Detection and Regression Coverage
+
+Because Digikala can change public response shapes without notice, the project must keep an **offline API contract test layer** in addition to ordinary unit tests.
+
+- Store representative upstream JSON fixtures under `tests/Fixtures/ApiContracts/`.
+- Add fixture-backed tests that exercise the actual mapper/service seams the MCP tools depend on, not just raw JSON parsing.
+- Prefer assertions on **required response paths and mapped DTO fields** that would break functionality if removed, renamed, or type-shifted.
+- When a feature adds a new upstream endpoint, depends on a new response branch, or changes mapping behavior, the same change must add or update the corresponding offline contract fixtures/tests.
+- Keep the tests deterministic and offline: they must not call Digikala during normal test runs.
+- Favor stable structural assertions over volatile business values. For example, assert that `data.product.title_fa` maps to `ProductDetailDto.Title`, not that a live product price equals a specific amount forever.
+
+Minimum expected contract coverage:
+
+- Search/category list payloads
+- Product detail payloads
+- Reviews/questions payloads
+- Price chart payloads
+- Recommendation/trending payloads
+- Category/brand landing payloads
+- Offer/voucher payloads
+
+Recommended layout:
+
+```text
+tests/
+├── Fixtures/
+│   └── ApiContracts/
+│       ├── autocomplete.json
+│       ├── product-detail.json
+│       └── ...
+├── Digikala.Mcp.Application.Tests/
+│   └── OfflineApiContractTests.cs
+└── Digikala.Mcp.Infrastructure.Tests/
+```
+
+These tests are intended to provide early offline detection of upstream breaking changes once fixtures are refreshed, and to ensure that any new implementation work keeps explicit regression coverage for the Digikala payload shapes it relies on.
+
+In addition to offline fixtures, the project should maintain a **live contract/canary test layer** for selected stable endpoints:
+
+- Live tests must call real Digikala endpoints and verify that responses still deserialize into the current Infrastructure response models.
+- Live tests should be opt-in or scheduled, not required for every default local test run.
+- Live tests should use configurable canary inputs through environment variables so product IDs or category slugs can be rotated without code churn.
+- For upstream-facing changes, prefer updating both:
+  - offline fixture-based contract tests for deterministic regression coverage
+  - live canary tests when the endpoint is stable enough to probe regularly
+
+Recommended live-test controls:
+
+| Variable | Purpose | Example |
+|---|---|---|
+| `DIGIKALA_RUN_LIVE_CONTRACT_TESTS` | Enables live networked contract tests | `true` |
+| `DIGIKALA_LIVE_PRODUCT_ID` | Canary product ID for product sub-resource tests | `651040` |
+| `DIGIKALA_LIVE_CATEGORY_SLUG` | Canary category slug for category search tests | `hair-shampoo` |
+| `DIGIKALA_LIVE_SEARCH_QUERY` | Canary query for search tests | `شامپو` |
+
 ---
 
 ## 4. Software Architecture
@@ -171,6 +226,7 @@ Digikala.Mcp.sln
 │   └── Digikala.Mcp.Server/              # MCP server host, DI composition root, Program.cs
 │
 ├── tests/
+│   ├── Fixtures/                         # Offline API contract JSON snapshots
 │   ├── Digikala.Mcp.Application.Tests/
 │   └── Digikala.Mcp.Infrastructure.Tests/
 │

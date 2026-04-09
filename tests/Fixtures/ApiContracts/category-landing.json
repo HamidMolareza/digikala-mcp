@@ -1,0 +1,72 @@
+{
+  "status": 200,
+  "data": {
+    "category": {
+      "id": 6518,
+      "title_fa": "شامپو مو",
+      "title_en": "Hair Shampoo",
+      "code": "hair-shampoo",
+      "url": {
+        "uri": "/search/category-hair-shampoo"
+      }
+    },
+    "sub_categories": [
+      {
+        "id": 6519,
+        "title_fa": "ضد شوره",
+        "code": "anti-dandruff",
+        "url": {
+          "uri": "/search/category-anti-dandruff"
+        }
+      }
+    ],
+    "popular_brands": [
+      {
+        "id": 101,
+        "title_fa": "کلیر",
+        "title_en": "Clear",
+        "code": "clear",
+        "logo": {
+          "url": [
+            "https://example.com/clear.png"
+          ]
+        }
+      }
+    ],
+    "best_selling_products": [
+      {
+        "id": 93001,
+        "title_fa": "شامپو ضد شوره",
+        "title_en": "Anti Dandruff Shampoo",
+        "url": {
+          "uri": "/product/dkp-93001"
+        },
+        "images": [
+          {
+            "url": [
+              "https://example.com/anti-dandruff.jpg"
+            ]
+          }
+        ],
+        "status": "marketable",
+        "rating": {
+          "rate": 4.5,
+          "count": 231
+        },
+        "category": {
+          "id": 6518,
+          "code": "hair-shampoo",
+          "title_fa": "شامپو مو"
+        },
+        "default_variant": {
+          "id": 904,
+          "price": {
+            "selling_price": 1800000,
+            "rrp_price": 2100000,
+            "discount_percent": 14
+          }
+        }
+      }
+    ]
+  }
+}

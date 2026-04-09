@@ -1,0 +1,35 @@
+{
+  "status": 200,
+  "data": {
+    "products": [
+      {
+        "id": 71001,
+        "title_fa": "پنکه رومیزی",
+        "title_en": "Desk Fan",
+        "url": {
+          "uri": "/product/dkp-71001"
+        },
+        "images": [
+          {
+            "url": [
+              "https://example.com/fan.jpg"
+            ]
+          }
+        ],
+        "status": "marketable",
+        "default_variant": {
+          "price": {
+            "selling_price": 5400000,
+            "rrp_price": 6000000,
+            "discount_percent": 10
+          }
+        }
+      }
+    ],
+    "pager": {
+      "current_page": 2,
+      "total_pages": 4,
+      "total_items": 40
+    }
+  }
+}

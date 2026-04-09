@@ -1,0 +1,27 @@
+{
+  "status": 200,
+  "data": {
+    "trends": [
+      {
+        "keyword": "هفت سین",
+        "url": {
+          "uri": "/search/?q=%D9%87%D9%81%D8%AA+%D8%B3%DB%8C%D9%86"
+        }
+      }
+    ],
+    "suggestions": [
+      {
+        "keyword": "شامپو ضد شوره",
+        "category": {
+          "id": 6518,
+          "title_fa": "شامپو مو",
+          "title_en": "Hair Shampoo",
+          "code": "hair-shampoo"
+        },
+        "url": {
+          "uri": "/search/?q=%D8%B4%D8%A7%D9%85%D9%BE%D9%88+%D8%B6%D8%AF+%D8%B4%D9%88%D8%B1%D9%87"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "status": 200,
+  "data": {
+    "products": [
+      {
+        "id": 460390,
+        "title_fa": "کنسرو ماهی تن در روغن گالکسی - 180 گرم",
+        "title_en": "Galaxy Tuna Fish In Vegetable Oil 180gr",
+        "url": {
+          "uri": "/product/dkp-460390"
+        },
+        "images": [
+          {
+            "url": [
+              "https://example.com/tuna.jpg"
+            ]
+          }
+        ],
+        "status": "marketable",
+        "rating": {
+          "rate": 4.2,
+          "count": 510
+        },
+        "category": {
+          "id": 200,
+          "code": "canned-food",
+          "title_fa": "کنسرو"
+        },
+        "default_variant": {
+          "id": 903,
+          "price": {
+            "selling_price": 1250000,
+            "rrp_price": 1400000,
+            "discount_percent": 11
+          }
+        }
+      }
+    ],
+    "categories": [
+      {
+        "id": 1,
+        "code": "mobile",
+        "title_fa": "موبایل"
+      }
+    ]
+  }
+}

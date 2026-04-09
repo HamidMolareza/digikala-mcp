@@ -1,0 +1,41 @@
+{
+  "status": 200,
+  "data": {
+    "title": "ترندها",
+    "products": [
+      {
+        "id": 92001,
+        "title_fa": "گوشی موبایل سامسونگ",
+        "title_en": "Samsung Phone",
+        "url": {
+          "uri": "/product/dkp-92001"
+        },
+        "images": [
+          {
+            "url": [
+              "https://example.com/samsung-phone.jpg"
+            ]
+          }
+        ],
+        "status": "marketable",
+        "rating": {
+          "rate": 4.7,
+          "count": 840
+        },
+        "category": {
+          "id": 1,
+          "code": "mobile-phone",
+          "title_fa": "موبایل"
+        },
+        "default_variant": {
+          "id": 902,
+          "price": {
+            "selling_price": 156000000,
+            "rrp_price": 165000000,
+            "discount_percent": 5
+          }
+        }
+      }
+    ]
+  }
+}

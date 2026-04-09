@@ -35,7 +35,7 @@ public sealed class ProductFullModel
     public UrlModel? Url { get; set; }
 
     [JsonPropertyName("images")]
-    public List<ImageModel>? Images { get; set; }
+    public ImagesModel? Images { get; set; }
 
     [JsonPropertyName("status")]
     public string? Status { get; set; }

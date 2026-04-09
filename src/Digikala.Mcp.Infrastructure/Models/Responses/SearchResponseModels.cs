@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using System.Text.Json;
 using Digikala.Mcp.Infrastructure.Models.Common;
 
 namespace Digikala.Mcp.Infrastructure.Models.Responses;
@@ -9,10 +10,10 @@ public sealed class SearchResponseData
     public List<ProductListItem>? Products { get; set; }
 
     [JsonPropertyName("filters")]
-    public List<FilterGroup>? Filters { get; set; }
+    public Dictionary<string, JsonElement>? Filters { get; set; }
 
     [JsonPropertyName("sort")]
-    public int Sort { get; set; }
+    public Dictionary<string, JsonElement>? Sort { get; set; }
 
     [JsonPropertyName("sort_options")]
     public List<SortOptionItem>? SortOptions { get; set; }
@@ -39,7 +40,7 @@ public sealed class ProductListItem
     public UrlModel? Url { get; set; }
 
     [JsonPropertyName("images")]
-    public List<ImageModel>? Images { get; set; }
+    public ImagesModel? Images { get; set; }
 
     [JsonPropertyName("status")]
     public string? Status { get; set; }
@@ -64,6 +65,15 @@ public sealed class ImageModel
 {
     [JsonPropertyName("url")]
     public List<string>? Url { get; set; }
+}
+
+public sealed class ImagesModel
+{
+    [JsonPropertyName("main")]
+    public ImageModel? Main { get; set; }
+
+    [JsonPropertyName("list")]
+    public List<ImageModel>? List { get; set; }
 }
 
 public sealed class RatingModel
@@ -111,7 +121,25 @@ public sealed class SellerModel
     public string? Title { get; set; }
 
     [JsonPropertyName("rating")]
-    public double? Rating { get; set; }
+    public SellerRatingModel? Rating { get; set; }
+}
+
+public sealed class SellerRatingModel
+{
+    [JsonPropertyName("total_rate")]
+    public double? TotalRate { get; set; }
+
+    [JsonPropertyName("total_count")]
+    public int? TotalCount { get; set; }
+
+    [JsonPropertyName("commitment")]
+    public double? Commitment { get; set; }
+
+    [JsonPropertyName("no_return")]
+    public double? NoReturn { get; set; }
+
+    [JsonPropertyName("on_time_shipping")]
+    public double? OnTimeShipping { get; set; }
 }
 
 public sealed class WarrantyModel

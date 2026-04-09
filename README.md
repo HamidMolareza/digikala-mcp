@@ -67,6 +67,24 @@ The search and recommendation workflows also validate common bad inputs before h
 - The per-host circuit breaker now counts only transient failures such as timeout, `429`, and `5xx` responses.
 - Non-transient client errors like `404` do not open the circuit breaker, which prevents bad category guesses from poisoning later requests.
 
+## Offline API Contract Tests
+
+Digikala can change response shapes without notice, so this repo keeps offline contract tests to catch breaking payload drift before it reaches runtime code paths.
+
+- JSON fixtures live under `tests/Fixtures/ApiContracts/`.
+- Fixture-backed assertions live in `tests/Digikala.Mcp.Application.Tests/OfflineApiContractTests.cs`.
+- Changes that add a new upstream dependency, mapper path, or tool-facing field should add or update the matching offline contract fixture/test in the same PR.
+- These tests are intentionally offline and deterministic; they validate the response paths and mapped DTO fields we depend on most.
+
+## Live API Contract Tests
+
+The repo also supports opt-in live contract tests that call Digikala directly and verify that current responses still deserialize into the existing Infrastructure models.
+
+- Live tests live in `tests/Digikala.Mcp.Infrastructure.Tests/LiveDigikalaContractTests.cs`.
+- They are disabled by default and run only when `DIGIKALA_RUN_LIVE_CONTRACT_TESTS=true`.
+- Optional canary inputs can be overridden with `DIGIKALA_LIVE_PRODUCT_ID`, `DIGIKALA_LIVE_CATEGORY_SLUG`, and `DIGIKALA_LIVE_SEARCH_QUERY`.
+- Use them for CI schedules, release checks, or after suspected upstream API drift.
+
 ## Runtime Paths
 
 - Cache DB: `app-data/cache.db`

@@ -1,0 +1,23 @@
+{
+  "status": 200,
+  "data": {
+    "today": {
+      "selling_price": 760000,
+      "rrp_price": 850000
+    },
+    "price_chart": [
+      {
+        "date": "2026-03-25",
+        "price": 790000
+      },
+      {
+        "date": "2026-03-26",
+        "price": 780000
+      },
+      {
+        "date": "2026-03-27",
+        "price": 760000
+      }
+    ]
+  }
+}

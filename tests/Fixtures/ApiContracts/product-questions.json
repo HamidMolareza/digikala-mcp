@@ -1,0 +1,30 @@
+{
+  "status": 200,
+  "data": {
+    "questions": [
+      {
+        "id": 6001,
+        "body": "برای چند نفر کافی است؟",
+        "user_name": "مینا",
+        "created_at": "2026-03-28T10:31:42Z",
+        "answers": [
+          {
+            "id": 7001,
+            "body": "برای یک نفر",
+            "user_name": "فروشنده",
+            "created_at": "2026-03-29T10:31:42Z",
+            "reactions": {
+              "likes": 3,
+              "dislikes": 0
+            }
+          }
+        ]
+      }
+    ],
+    "pager": {
+      "current_page": 1,
+      "total_pages": 3,
+      "total_items": 14
+    }
+  }
+}

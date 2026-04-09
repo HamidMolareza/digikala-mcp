@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using System.Text.Json;
 using Digikala.Mcp.Infrastructure.Models.Common;
 
 namespace Digikala.Mcp.Infrastructure.Models.Responses;
@@ -12,7 +13,7 @@ public sealed class CommentsResponseData
     public List<CommentModel>? MediaComments { get; set; }
 
     [JsonPropertyName("sort")]
-    public int Sort { get; set; }
+    public Dictionary<string, JsonElement>? Sort { get; set; }
 
     [JsonPropertyName("sort_options")]
     public List<SortOptionItem>? SortOptions { get; set; }

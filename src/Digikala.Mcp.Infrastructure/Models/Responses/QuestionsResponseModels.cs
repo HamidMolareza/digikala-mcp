@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using System.Text.Json;
 using Digikala.Mcp.Infrastructure.Models.Common;
 
 namespace Digikala.Mcp.Infrastructure.Models.Responses;
@@ -9,7 +10,7 @@ public sealed class QuestionsResponseData
     public List<QuestionModel>? Questions { get; set; }
 
     [JsonPropertyName("sort")]
-    public string? Sort { get; set; }
+    public Dictionary<string, JsonElement>? Sort { get; set; }
 
     [JsonPropertyName("sort_options")]
     public List<SortOptionItem>? SortOptions { get; set; }

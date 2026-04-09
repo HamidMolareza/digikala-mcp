@@ -1,0 +1,35 @@
+{
+  "status": 200,
+  "data": {
+    "comments": [
+      {
+        "id": 5001,
+        "title": "خوب بود",
+        "body": "طعم خوبی داشت",
+        "rate": 4,
+        "user_name": "کاربر ۱",
+        "created_at": "2026-03-28T10:31:42Z",
+        "is_buyer": true,
+        "recommendation": "recommended",
+        "advantages": [
+          "طعم خوب"
+        ],
+        "disadvantages": [
+          "بسته بندی کوچک"
+        ],
+        "reactions": {
+          "likes": 5,
+          "dislikes": 1
+        }
+      }
+    ],
+    "pager": {
+      "current_page": 1,
+      "total_pages": 2,
+      "total_items": 12
+    },
+    "ratings": {
+      "average": 4.1
+    }
+  }
+}

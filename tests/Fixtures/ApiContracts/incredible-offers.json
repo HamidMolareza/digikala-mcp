@@ -1,0 +1,80 @@
+{
+  "status": 200,
+  "data": {
+    "incredible_products_list": [
+      {
+        "id": 70001,
+        "title_fa": "هدفون بی سیم",
+        "title_en": "Wireless Headphones",
+        "url": {
+          "uri": "/product/dkp-70001"
+        },
+        "images": [
+          {
+            "url": [
+              "https://example.com/headphones.jpg"
+            ]
+          }
+        ],
+        "status": "marketable",
+        "default_variant": {
+          "price": {
+            "selling_price": 8500000,
+            "rrp_price": 10000000,
+            "discount_percent": 15
+          }
+        }
+      }
+    ],
+    "deal_of_the_day_products": [
+      {
+        "id": 70002,
+        "title_fa": "اسپرسوساز خانگی",
+        "title_en": "Home Espresso Machine",
+        "url": {
+          "uri": "/product/dkp-70002"
+        },
+        "images": [
+          {
+            "url": [
+              "https://example.com/espresso.jpg"
+            ]
+          }
+        ],
+        "status": "marketable",
+        "default_variant": {
+          "price": {
+            "selling_price": 32000000,
+            "rrp_price": 40000000,
+            "discount_percent": 20
+          }
+        }
+      }
+    ],
+    "lightening_deal_products": [
+      {
+        "id": 70001,
+        "title_fa": "هدفون بی سیم",
+        "title_en": "Wireless Headphones",
+        "url": {
+          "uri": "/product/dkp-70001"
+        },
+        "images": [
+          {
+            "url": [
+              "https://example.com/headphones.jpg"
+            ]
+          }
+        ],
+        "status": "marketable",
+        "default_variant": {
+          "price": {
+            "selling_price": 8500000,
+            "rrp_price": 10000000,
+            "discount_percent": 15
+          }
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "status": 200,
+  "data": {
+    "products": [
+      {
+        "id": 8511704,
+        "title_fa": "روغن مایع سرخ کردنی بهار الماس - 900 میلی لیتر",
+        "title_en": "Bahar Almas Oil - Liquid - 900 ml",
+        "url": {
+          "uri": "/product/dkp-8511704"
+        },
+        "images": [
+          {
+            "url": [
+              "https://example.com/oil-main.jpg"
+            ]
+          }
+        ],
+        "status": "marketable",
+        "rating": {
+          "rate": 4.5,
+          "count": 87
+        },
+        "category": {
+          "id": 42,
+          "code": "oil",
+          "title_fa": "روغن"
+        },
+        "default_variant": {
+          "id": 201,
+          "price": {
+            "selling_price": 1890000,
+            "rrp_price": 2100000,
+            "discount_percent": 10
+          },
+          "seller": {
+            "title": "دیجی‌کالا",
+            "rating": 4.8
+          },
+          "warranty": {
+            "title_fa": "گارانتی اصالت"
+          }
+        }
+      }
+    ],
+    "filters": [
+      {
+        "title_fa": "برند",
+        "code": "brand",
+        "options": [
+          {
+            "title_fa": "بهار",
+            "id": "11355",
+            "count": 10
+          }
+        ]
+      }
+    ],
+    "sort_options": [
+      {
+        "title_fa": "مرتبط‌ترین",
+        "value": 22
+      }
+    ],
+    "pager": {
+      "current_page": 1,
+      "total_pages": 41,
+      "total_items": 806
+    }
+  }
+}

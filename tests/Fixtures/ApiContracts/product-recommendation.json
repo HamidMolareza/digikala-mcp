@@ -1,0 +1,44 @@
+{
+  "status": 200,
+  "data": {
+    "type": "similar_products",
+    "data": {
+      "title": "محصولات مشابه",
+      "products": [
+        {
+          "id": 91001,
+          "title_fa": "شامپو روزانه",
+          "title_en": "Daily Shampoo",
+          "url": {
+            "uri": "/product/dkp-91001"
+          },
+          "images": [
+            {
+              "url": [
+                "https://example.com/daily-shampoo.jpg"
+              ]
+            }
+          ],
+          "status": "marketable",
+          "rating": {
+            "rate": 4.6,
+            "count": 118
+          },
+          "category": {
+            "id": 6518,
+            "code": "hair-shampoo",
+            "title_fa": "شامپو مو"
+          },
+          "default_variant": {
+            "id": 901,
+            "price": {
+              "selling_price": 2200000,
+              "rrp_price": 2500000,
+              "discount_percent": 12
+            }
+          }
+        }
+      ]
+    }
+  }
+}

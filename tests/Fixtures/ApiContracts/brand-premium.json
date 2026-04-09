@@ -1,0 +1,86 @@
+{
+  "status": 200,
+  "data": {
+    "brand": {
+      "id": 2449,
+      "code": "persil",
+      "title_fa": "پرسیل",
+      "title_en": "Persil",
+      "logo": {
+        "url": [
+          "https://example.com/persil.png"
+        ]
+      }
+    },
+    "newest_products": [
+      {
+        "id": 94001,
+        "title_fa": "پودر ماشین لباسشویی پرسیل",
+        "title_en": "Persil Washing Powder",
+        "url": {
+          "uri": "/product/dkp-94001"
+        },
+        "images": [
+          {
+            "url": [
+              "https://example.com/persil-powder.jpg"
+            ]
+          }
+        ],
+        "status": "marketable",
+        "rating": {
+          "rate": 4.3,
+          "count": 120
+        },
+        "category": {
+          "id": 400,
+          "code": "washing-powder",
+          "title_fa": "پودر شوینده"
+        },
+        "default_variant": {
+          "id": 905,
+          "price": {
+            "selling_price": 3400000,
+            "rrp_price": 3600000,
+            "discount_percent": 6
+          }
+        }
+      }
+    ],
+    "best_selling_products": [
+      {
+        "id": 94002,
+        "title_fa": "مایع لباسشویی پرسیل",
+        "title_en": "Persil Laundry Liquid",
+        "url": {
+          "uri": "/product/dkp-94002"
+        },
+        "images": [
+          {
+            "url": [
+              "https://example.com/persil-liquid.jpg"
+            ]
+          }
+        ],
+        "status": "marketable",
+        "rating": {
+          "rate": 4.7,
+          "count": 340
+        },
+        "category": {
+          "id": 401,
+          "code": "laundry-liquid",
+          "title_fa": "مایع لباسشویی"
+        },
+        "default_variant": {
+          "id": 906,
+          "price": {
+            "selling_price": 4200000,
+            "rrp_price": 4600000,
+            "discount_percent": 9
+          }
+        }
+      }
+    ]
+  }
+}
