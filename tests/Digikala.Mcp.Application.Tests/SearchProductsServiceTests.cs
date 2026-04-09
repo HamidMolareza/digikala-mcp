@@ -166,6 +166,50 @@ public class SearchProductsServiceTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_ShouldPreferCableCategory_WhenAccessoryQueryAlsoMentionsPhoneBrand()
+    {
+        using var document = JsonDocument.Parse("""
+            {
+              "status": 200,
+              "data": {
+                "products": [
+                  {
+                    "id": 13,
+                    "title_fa": "کابل شارژ USB به USB-C",
+                    "status": "marketable",
+                    "rating": { "rate": 4.7, "count": 510 },
+                    "default_variant": { "price": { "selling_price": 3900000 } },
+                    "url": { "uri": "/usb-to-usbc" },
+                    "images": []
+                  }
+                ],
+                "pager": { "current_page": 1, "total_pages": 1, "total_items": 1 },
+                "filters": [],
+                "sort_options": []
+              }
+            }
+            """);
+
+        _cacheStore.GetAsync<SearchResultDto>(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns((SearchResultDto?)null);
+        _apiClient.SearchCategoryAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<Dictionary<string, string[]>?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(document);
+
+        var result = await _service.ExecuteAsync("کابل شارژ usb-c برای گوشی شیائومی ردمی نوت 10");
+
+        Assert.Single(result.Products);
+        Assert.Contains("Category inferred as `cell-phone-data-cable`", result.Warning);
+        await _apiClient.Received(1).SearchCategoryAsync(
+            "cell-phone-data-cable",
+            Arg.Any<int>(),
+            Arg.Any<int?>(),
+            Arg.Any<Dictionary<string, string[]>?>(),
+            "کابل شارژ usb-c برای گوشی شیائومی ردمی نوت 10",
+            Arg.Any<CancellationToken>());
+        await _apiClient.DidNotReceiveWithAnyArgs().GetAutocompleteAsync(default!, default);
+    }
+
+    [Fact]
     public async Task ExecuteAsync_ShouldInferCategorySlug_FromAutocompleteHints()
     {
         using var autocomplete = JsonDocument.Parse("""

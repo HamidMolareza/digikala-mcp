@@ -13,20 +13,6 @@ public sealed class CategoryResolutionService(AutocompleteService autocompleteSe
                 "shampoo",
             ]),
         new(
-            "mobile-phone",
-            [
-                "گوشی",
-                "موبایل",
-                "mobile",
-                "phone",
-                "iphone",
-                "samsung",
-                "xiaomi",
-                "pixel",
-                "redmi",
-                "poco",
-            ]),
-        new(
             "power-bank",
             [
                 "پاوربانک",
@@ -49,6 +35,26 @@ public sealed class CategoryResolutionService(AutocompleteService autocompleteSe
                 "تایپ سی",
                 "charging cable",
                 "data cable",
+            ]),
+        new(
+            "mobile-phone",
+            [
+                "گوشی",
+                "موبایل",
+                "mobile",
+                "phone",
+                "iphone",
+                "آیفون",
+                "samsung",
+                "سامسونگ",
+                "xiaomi",
+                "شیائومی",
+                "pixel",
+                "پیکسل",
+                "redmi",
+                "ردمی",
+                "poco",
+                "پوکو",
             ]),
     ];
 

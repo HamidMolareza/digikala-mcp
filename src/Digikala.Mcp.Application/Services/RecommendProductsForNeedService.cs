@@ -8,6 +8,75 @@ public sealed class RecommendProductsForNeedService(
     SearchProductsService searchProductsService,
     GetProductFeedbackSummaryService feedbackSummaryService)
 {
+    private static readonly string[] CableNeedTerms =
+    [
+        "کابل",
+        "کابل شارژ",
+        "charging cable",
+        "data cable",
+        "usb-c",
+        "usb c",
+        "type-c",
+        "type c",
+        "تایپ سی",
+    ];
+
+    private static readonly string[] UsbCConnectorTerms =
+    [
+        "usb-c",
+        "usb c",
+        "type-c",
+        "type c",
+        "تایپ سی",
+    ];
+
+    private static readonly string[] XiaomiPhoneTerms =
+    [
+        "xiaomi",
+        "شیائومی",
+        "redmi",
+        "ردمی",
+        "poco",
+        "پوکو",
+        "note 10",
+        "نوت 10",
+    ];
+
+    private static readonly string[] FastChargeTerms =
+    [
+        "fast charge",
+        "fast charging",
+        "quick charge",
+        "شارژ سریع",
+        "فست شارژ",
+        "3a",
+        "66w",
+        "67w",
+        "120w",
+    ];
+
+    private static readonly string[] DurableCableTerms =
+    [
+        "durable",
+        "sturdy",
+        "braided",
+        "دوام",
+        "دوام خوب",
+        "مقاوم",
+        "بادوام",
+        "کنفی",
+    ];
+
+    private static readonly string[] IncompatibleCableTerms =
+    [
+        "lightning",
+        "لایتنینگ",
+        "micro-usb",
+        "micro usb",
+        "microusb",
+        "میکرو usb",
+    ];
+
     private static readonly string[] PersianStrongOilControlTerms =
     [
         "کنترل کننده چربی قوی",
@@ -188,6 +257,7 @@ public sealed class RecommendProductsForNeedService(
         var avoidSignals = new List<string>();
         var normalizedNeed = needDescription.Trim();
         var isPersian = Regex.IsMatch(normalizedNeed, "[\\u0600-\\u06FF]");
+        var isCableNeed = ContainsAny(normalizedNeed, CableNeedTerms);
 
         if (ContainsAny(normalizedNeed, "شامپو", "shampoo"))
         {
@@ -237,6 +307,33 @@ public sealed class RecommendProductsForNeedService(
             preferredSignals.Add("daily use");
         }
 
+        if (isCableNeed)
+        {
+            requiredSignals.Add(isPersian ? "کابل شارژ" : "charging cable");
+
+            if (ContainsAny(normalizedNeed, UsbCConnectorTerms))
+            {
+                preferredSignals.Add(isPersian ? "USB-C" : "usb-c");
+            }
+
+            if (ContainsAny(normalizedNeed, XiaomiPhoneTerms))
+            {
+                preferredSignals.Add(isPersian ? "USB به USB-C" : "usb to usb-c");
+            }
+
+            if (ContainsAny(normalizedNeed, FastChargeTerms))
+            {
+                preferredSignals.AddRange(isPersian ? ["شارژ سریع", "3A"] : ["fast charge", "3a"]);
+            }
+
+            if (ContainsAny(normalizedNeed, DurableCableTerms))
+            {
+                preferredSignals.AddRange(isPersian ? ["بادوام", "مقاوم"] : ["durable", "braided"]);
+            }
+
+            avoidSignals.AddRange(IncompatibleCableTerms);
+        }
+
         var mergedPreferred = MergeTerms(preferredSignals, preferTerms);
         var mergedAvoid = MergeTerms(
             avoidSignals,
@@ -259,6 +356,13 @@ public sealed class RecommendProductsForNeedService(
 
     private static string BuildSearchQuery(string needDescription, List<string> requiredSignals, bool isPersian)
     {
+        if (ContainsAny(needDescription, CableNeedTerms))
+        {
+            return ContainsAny(needDescription, XiaomiPhoneTerms)
+                ? (isPersian ? "کابل شارژ USB به USB-C" : "usb to usb-c charging cable")
+                : (isPersian ? "کابل شارژ تایپ سی" : "usb-c charging cable");
+        }
+
         if (requiredSignals.Contains("oily hair", StringComparer.OrdinalIgnoreCase)
             && ContainsAny(needDescription, "شامپو", "shampoo"))
         {

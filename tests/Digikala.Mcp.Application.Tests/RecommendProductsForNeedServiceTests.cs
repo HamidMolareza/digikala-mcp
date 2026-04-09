@@ -167,6 +167,104 @@ public class RecommendProductsForNeedServiceTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_ShouldBuildCompactCableSearch_ForRedmiUsbCNeeds()
+    {
+        var apiClient = Substitute.For<IDigikalaApiClient>();
+        var cache = new NullCacheStore();
+        var productMapper = new ProductMapper();
+        var reviewMapper = new ReviewMapper();
+        var searchService = CreateSearchService(apiClient, cache, productMapper);
+        var detailService = new GetProductDetailService(apiClient, cache, productMapper);
+        var reviewsService = new GetProductReviewsService(apiClient, cache, reviewMapper);
+        var feedbackService = new GetProductFeedbackSummaryService(detailService, reviewsService);
+        var service = new RecommendProductsForNeedService(searchService, feedbackService);
+
+        apiClient.SearchCategoryAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<Dictionary<string, string[]>?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(JsonDocument.Parse("""
+                {
+                  "status": 200,
+                  "data": {
+                    "products": [
+                      {
+                        "id": 300,
+                        "title_fa": "کابل تبدیل USB به USB-C ریمکس مدل RC-C099 66W",
+                        "status": "marketable",
+                        "rating": { "rate": 4.5, "count": 320 },
+                        "default_variant": { "price": { "selling_price": 3950000 } },
+                        "url": { "uri": "/product/dkp-300" },
+                        "images": []
+                      }
+                    ],
+                    "pager": { "current_page": 1, "total_pages": 1, "total_items": 1 },
+                    "filters": [],
+                    "sort_options": []
+                  }
+                }
+                """));
+
+        apiClient.GetProductV2Async(300, null, Arg.Any<CancellationToken>())
+            .Returns(JsonDocument.Parse("""
+                {
+                  "data": {
+                    "product": {
+                      "id": 300,
+                      "title_fa": "کابل تبدیل USB به USB-C ریمکس مدل RC-C099 66W",
+                      "status": "marketable",
+                      "url": { "uri": "/product/dkp-300" },
+                      "images": [],
+                      "default_variant": { "price": { "selling_price": 3950000 } },
+                      "expert_reviews": {
+                        "description": "کابل مقاوم مناسب شارژ سریع",
+                        "advantages": ["شارژ سریع", "کیفیت ساخت خوب"],
+                        "disadvantages": []
+                      },
+                      "specifications": [
+                        {
+                          "title": "مشخصات",
+                          "attributes": [
+                            { "title": "نوع کابل", "values": ["USB Type-C", "USB"] }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+                """));
+
+        apiClient.GetProductCommentsAsync(300, 1, null, null, Arg.Any<CancellationToken>())
+            .Returns(JsonDocument.Parse("""
+                {
+                  "data": {
+                    "comments": [],
+                    "pager": { "current_page": 1, "total_pages": 1, "total_items": 0 }
+                  }
+                }
+                """));
+
+        var result = await service.ExecuteAsync(
+            "دنبال یه کابل خوب شارژ برای گوشی Redmi Note 10 میگردم که USB-C باشد، برای شارژ سریع مناسب باشد و دوام خوبی داشته باشد.",
+            limit: 1,
+            minRating: 4.0,
+            minReviewCount: 20,
+            includeEvidence: false);
+
+        Assert.Equal("کابل شارژ USB به USB-C", result.SearchQuery);
+        Assert.Contains("USB به USB-C", result.QueryUnderstanding.PreferredSignals);
+        Assert.Contains("شارژ سریع", result.QueryUnderstanding.PreferredSignals);
+        Assert.Contains("بادوام", result.QueryUnderstanding.PreferredSignals);
+        Assert.Contains("lightning", result.QueryUnderstanding.AvoidSignals);
+        Assert.Single(result.Recommendations);
+        Assert.Equal(300, result.Recommendations[0].Product.Id);
+        await apiClient.Received(1).SearchCategoryAsync(
+            "cell-phone-data-cable",
+            Arg.Any<int>(),
+            Arg.Any<int?>(),
+            Arg.Any<Dictionary<string, string[]>?>(),
+            "کابل شارژ USB به USB-C",
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task ExecuteAsync_ShouldReturnStructuredSearchError_WhenSearchFails()
     {
         var apiClient = Substitute.For<IDigikalaApiClient>();
