@@ -48,7 +48,7 @@ public sealed class LiveDigikalaContractTests(LiveDigikalaApiFixture fixture)
             return;
         }
 
-        using var response = await fixture.Client.GetProductV2Async(fixture.ProductId);
+        using var response = await fixture.Client.GetProductV2Async(fixture.ProductIdWithSummary, fixture.ProductVariantIdWithSummary);
 
         var envelope = DeserializeEnvelope<ProductDetailData>(response);
 
@@ -58,14 +58,48 @@ public sealed class LiveDigikalaContractTests(LiveDigikalaApiFixture fixture)
         Assert.False(string.IsNullOrWhiteSpace(envelope.Data.Product.TitleFa ?? envelope.Data.Product.TitleEn));
         Assert.NotNull(envelope.Data.Product.Url);
         Assert.NotNull(envelope.Data.Product.DefaultVariant);
+    }
 
-        if (envelope.Data.Product.CommentsOverview is not null)
+    [Fact]
+    public async Task GetProductV2Async_ShouldDeserializeCommentsOverview_WhenPresent()
+    {
+        if (!IsLiveTestsEnabled())
         {
-            Assert.True(envelope.Data.Product.CommentsOverview.Id > 0);
-            Assert.False(string.IsNullOrWhiteSpace(envelope.Data.Product.CommentsOverview.Overview));
-            Assert.NotNull(envelope.Data.Product.CommentsOverview.Advantages);
-            Assert.NotNull(envelope.Data.Product.CommentsOverview.Disadvantages);
+            return;
         }
+
+        using var response = await fixture.Client.GetProductV2Async(fixture.ProductIdWithSummary, fixture.ProductVariantIdWithSummary);
+
+        var envelope = DeserializeEnvelope<ProductDetailData>(response);
+        var overview = envelope.Data?.Product?.CommentsOverview;
+
+        Assert.NotNull(overview);
+        Assert.True(overview!.Id > 0);
+        Assert.False(string.IsNullOrWhiteSpace(overview.Overview));
+        Assert.NotNull(overview.Advantages);
+        Assert.NotNull(overview.Disadvantages);
+    }
+
+    [Fact]
+    public async Task GetProductV2Async_ShouldAllowMissingCommentsOverview_WhenAbsent()
+    {
+        if (!IsLiveTestsEnabled())
+        {
+            return;
+        }
+
+        using var response = await fixture.Client.GetProductV2Async(fixture.ProductIdWithoutSummary, fixture.ProductVariantIdWithoutSummary);
+
+        var envelope = DeserializeEnvelope<ProductDetailData>(response);
+        var overview = envelope.Data?.Product?.CommentsOverview;
+
+        Assert.NotNull(envelope.Data?.Product);
+        Assert.True(
+            overview is null ||
+            (overview.Id == 0 &&
+             string.IsNullOrWhiteSpace(overview.Overview) &&
+             (overview.Advantages is null || overview.Advantages.Count == 0) &&
+             (overview.Disadvantages is null || overview.Disadvantages.Count == 0)));
     }
 
     [Fact]
@@ -76,7 +110,7 @@ public sealed class LiveDigikalaContractTests(LiveDigikalaApiFixture fixture)
             return;
         }
 
-        using var response = await fixture.Client.GetProductCommentsAsync(fixture.ProductId);
+        using var response = await fixture.Client.GetProductCommentsAsync(fixture.ProductIdWithSummary);
 
         var envelope = DeserializeEnvelope<CommentsResponseData>(response);
 
@@ -95,7 +129,7 @@ public sealed class LiveDigikalaContractTests(LiveDigikalaApiFixture fixture)
             return;
         }
 
-        using var response = await fixture.Client.GetProductQuestionsAsync(fixture.ProductId);
+        using var response = await fixture.Client.GetProductQuestionsAsync(fixture.ProductIdWithSummary);
 
         var envelope = DeserializeEnvelope<QuestionsResponseData>(response);
 
@@ -114,7 +148,7 @@ public sealed class LiveDigikalaContractTests(LiveDigikalaApiFixture fixture)
             return;
         }
 
-        using var response = await fixture.Client.GetProductPriceChartAsync(fixture.ProductId);
+        using var response = await fixture.Client.GetProductPriceChartAsync(fixture.ProductIdWithSummary);
 
         var envelope = DeserializeEnvelope<PriceChartResponseData>(response);
 
@@ -162,7 +196,13 @@ public sealed class LiveDigikalaApiFixture : IDisposable
 
     public IDigikalaApiClient Client { get; }
 
-    public long ProductId { get; } = GetInt64EnvironmentVariable("DIGIKALA_LIVE_PRODUCT_ID", 651040);
+    public long ProductIdWithSummary { get; } = GetInt64EnvironmentVariable("DIGIKALA_LIVE_PRODUCT_WITH_SUMMARY_ID", 20491421);
+
+    public long? ProductVariantIdWithSummary { get; } = GetNullableInt64EnvironmentVariable("DIGIKALA_LIVE_PRODUCT_WITH_SUMMARY_VARIANT_ID", 77683588);
+
+    public long ProductIdWithoutSummary { get; } = GetInt64EnvironmentVariable("DIGIKALA_LIVE_PRODUCT_WITHOUT_SUMMARY_ID", 21569108);
+
+    public long? ProductVariantIdWithoutSummary { get; } = GetNullableInt64EnvironmentVariable("DIGIKALA_LIVE_PRODUCT_WITHOUT_SUMMARY_VARIANT_ID", 78141200);
 
     public string CategorySlug { get; } = GetStringEnvironmentVariable("DIGIKALA_LIVE_CATEGORY_SLUG", "hair-shampoo");
 
@@ -216,6 +256,12 @@ public sealed class LiveDigikalaApiFixture : IDisposable
     }
 
     private static long GetInt64EnvironmentVariable(string name, long fallback)
+    {
+        var value = Environment.GetEnvironmentVariable(name);
+        return long.TryParse(value, out var parsed) ? parsed : fallback;
+    }
+
+    private static long? GetNullableInt64EnvironmentVariable(string name, long? fallback = null)
     {
         var value = Environment.GetEnvironmentVariable(name);
         return long.TryParse(value, out var parsed) ? parsed : fallback;
