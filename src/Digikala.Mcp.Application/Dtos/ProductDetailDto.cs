@@ -12,6 +12,7 @@ public sealed record ProductDetailDto : ProductSummaryDto
     public List<string> ImageUrls { get; init; } = [];
     public List<VariantDto> Variants { get; init; } = [];
     public ProsConsDto? ProsCons { get; init; }
+    public BuyerCommentsSummaryDto? BuyerCommentsSummary { get; init; }
 }
 
 public sealed record SpecDto(string GroupTitle, string Title, string Value);
@@ -26,3 +27,11 @@ public sealed record VariantDto
 }
 
 public sealed record ProsConsDto(List<string> Pros, List<string> Cons);
+
+public sealed record BuyerCommentsSummaryDto
+{
+    public long Id { get; init; }
+    public string Summary { get; init; } = string.Empty;
+    public List<string> Pros { get; init; } = [];
+    public List<string> Cons { get; init; } = [];
+}

@@ -71,6 +71,18 @@ public sealed class ProductMapper
             .Where(item => !string.IsNullOrWhiteSpace(item))
             .Cast<string>()
             .ToList();
+        var buyerSummaryPros = productElement.EnumerateArrayOrEmpty("comments_overview", "advantages")
+            .Select(item => item.GetString())
+            .Where(item => !string.IsNullOrWhiteSpace(item))
+            .Cast<string>()
+            .ToList();
+        var buyerSummaryCons = productElement.EnumerateArrayOrEmpty("comments_overview", "disadvantages")
+            .Select(item => item.GetString())
+            .Where(item => !string.IsNullOrWhiteSpace(item))
+            .Cast<string>()
+            .ToList();
+        var buyerSummaryText = productElement.GetStringOrNull("comments_overview", "overview");
+        var buyerSummaryId = productElement.GetInt64OrNull("comments_overview", "id") ?? 0;
 
         var detail = new ProductDetailDto
         {
@@ -120,6 +132,18 @@ public sealed class ProductMapper
                 .Where(item => item.Id != 0)
                 .ToList(),
             ProsCons = pros.Count > 0 || cons.Count > 0 ? new ProsConsDto(pros, cons) : null,
+            BuyerCommentsSummary = buyerSummaryId != 0 ||
+                                   !string.IsNullOrWhiteSpace(buyerSummaryText) ||
+                                   buyerSummaryPros.Count > 0 ||
+                                   buyerSummaryCons.Count > 0
+                ? new BuyerCommentsSummaryDto
+                {
+                    Id = buyerSummaryId,
+                    Summary = buyerSummaryText ?? string.Empty,
+                    Pros = buyerSummaryPros,
+                    Cons = buyerSummaryCons,
+                }
+                : null,
         };
 
         return ProductSuitabilityAnalyzer.EnrichDetail(detail);

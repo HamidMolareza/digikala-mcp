@@ -58,6 +58,14 @@ public sealed class LiveDigikalaContractTests(LiveDigikalaApiFixture fixture)
         Assert.False(string.IsNullOrWhiteSpace(envelope.Data.Product.TitleFa ?? envelope.Data.Product.TitleEn));
         Assert.NotNull(envelope.Data.Product.Url);
         Assert.NotNull(envelope.Data.Product.DefaultVariant);
+
+        if (envelope.Data.Product.CommentsOverview is not null)
+        {
+            Assert.True(envelope.Data.Product.CommentsOverview.Id > 0);
+            Assert.False(string.IsNullOrWhiteSpace(envelope.Data.Product.CommentsOverview.Overview));
+            Assert.NotNull(envelope.Data.Product.CommentsOverview.Advantages);
+            Assert.NotNull(envelope.Data.Product.CommentsOverview.Disadvantages);
+        }
     }
 
     [Fact]

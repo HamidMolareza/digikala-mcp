@@ -98,6 +98,11 @@ public class OfflineApiContractTests
         Assert.Equal(1001, Assert.Single(result.Variants).Id);
         Assert.Equal("آماده سازی سریع", Assert.Single(result.ProsCons!.Pros));
         Assert.Equal("نمک بالا", Assert.Single(result.ProsCons.Cons));
+        Assert.NotNull(result.BuyerCommentsSummary);
+        Assert.Equal(433870, result.BuyerCommentsSummary!.Id);
+        Assert.Contains("سبک و خوش\u200cطعم", result.BuyerCommentsSummary.Summary, StringComparison.Ordinal);
+        Assert.Equal("طعم خوب", Assert.Single(result.BuyerCommentsSummary.Pros));
+        Assert.Equal("بسته\u200cبندی کوچک", Assert.Single(result.BuyerCommentsSummary.Cons));
     }
 
     [Fact]

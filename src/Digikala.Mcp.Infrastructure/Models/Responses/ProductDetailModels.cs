@@ -60,6 +60,9 @@ public sealed class ProductFullModel
 
     [JsonPropertyName("expert_reviews")]
     public ExpertReviewModel? ExpertReviews { get; set; }
+
+    [JsonPropertyName("comments_overview")]
+    public CommentsOverviewModel? CommentsOverview { get; set; }
 }
 
 public sealed class BrandModel
@@ -102,6 +105,21 @@ public sealed class ExpertReviewModel
 {
     [JsonPropertyName("description")]
     public string? Description { get; set; }
+
+    [JsonPropertyName("advantages")]
+    public List<string>? Advantages { get; set; }
+
+    [JsonPropertyName("disadvantages")]
+    public List<string>? Disadvantages { get; set; }
+}
+
+public sealed class CommentsOverviewModel
+{
+    [JsonPropertyName("id")]
+    public long Id { get; set; }
+
+    [JsonPropertyName("overview")]
+    public string? Overview { get; set; }
 
     [JsonPropertyName("advantages")]
     public List<string>? Advantages { get; set; }

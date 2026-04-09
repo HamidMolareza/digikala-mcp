@@ -89,6 +89,56 @@ public class GetProductFeedbackSummaryServiceTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_ShouldUseBuyerCommentsSummary_WhenNativeOverviewExists()
+    {
+        var apiClient = Substitute.For<IDigikalaApiClient>();
+        var cache = new NullCacheStore();
+        var detailService = new GetProductDetailService(apiClient, cache, new ProductMapper());
+        var reviewsService = new GetProductReviewsService(apiClient, cache, new ReviewMapper());
+
+        apiClient.GetProductV2Async(20491421, null, Arg.Any<CancellationToken>())
+            .Returns(JsonDocument.Parse("""
+                {
+                  "data": {
+                    "product": {
+                      "id": 20491421,
+                      "title_fa": "پاوربانک",
+                      "status": "marketable",
+                      "url": { "uri": "/product/dkp-20491421" },
+                      "images": [],
+                      "default_variant": { "price": { "selling_price": 1000 } },
+                      "comments_overview": {
+                        "id": 433870,
+                        "overview": "کیفیت ساخت بالا و شارژ سریع از نقاط قوت است، اما کابل کوتاه است.",
+                        "advantages": ["کیفیت ساخت بالا", "شارژ سریع"],
+                        "disadvantages": ["کابل کوتاه"]
+                      }
+                    }
+                  }
+                }
+                """));
+
+        apiClient.GetProductCommentsAsync(20491421, 1, null, null, Arg.Any<CancellationToken>())
+            .Returns(JsonDocument.Parse("""
+                {
+                  "data": {
+                    "comments": [],
+                    "pager": { "current_page": 1, "total_pages": 1, "total_items": 0 }
+                  }
+                }
+                """));
+
+        var service = new GetProductFeedbackSummaryService(detailService, reviewsService);
+        var result = await service.ExecuteAsync(20491421);
+
+        Assert.Equal(20491421, result.ProductId);
+        Assert.Contains(result.Pros, item => item.Label == "کیفیت ساخت بالا");
+        Assert.Contains(result.Pros, item => item.Label == "شارژ سریع");
+        Assert.Contains(result.Cons, item => item.Label == "کابل کوتاه");
+        Assert.NotEmpty(result.Summary);
+    }
+
+    [Fact]
     public async Task ExecuteAsync_ShouldReturnValidationError_ForInvalidInputs()
     {
         var apiClient = Substitute.For<IDigikalaApiClient>();

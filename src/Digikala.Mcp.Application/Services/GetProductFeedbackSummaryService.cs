@@ -73,9 +73,11 @@ public sealed class GetProductFeedbackSummaryService(
             var detail = await detailTask;
             var reviews = await reviewsTask;
             var evidenceTexts = BuildEvidenceTexts(detail, reviews);
+            var detailPros = (detail.ProsCons?.Pros ?? []).Concat(detail.BuyerCommentsSummary?.Pros ?? []);
+            var detailCons = (detail.ProsCons?.Cons ?? []).Concat(detail.BuyerCommentsSummary?.Cons ?? []);
 
-            var pros = AggregateCounts(detail.ProsCons?.Pros, reviews.Reviews.SelectMany(item => item.Pros), maxPros);
-            var cons = AggregateCounts(detail.ProsCons?.Cons, reviews.Reviews.SelectMany(item => item.Cons), maxCons);
+            var pros = AggregateCounts(detailPros, reviews.Reviews.SelectMany(item => item.Pros), maxPros);
+            var cons = AggregateCounts(detailCons, reviews.Reviews.SelectMany(item => item.Cons), maxCons);
             var themes = BuildThemes(evidenceTexts, includeReviewSnippets, maxThemes, maxSnippets);
 
             return new ProductFeedbackSummaryDto
@@ -150,6 +152,17 @@ public sealed class GetProductFeedbackSummaryService(
         {
             evidence.AddRange(detail.ProsCons.Pros.Select(item => new EvidenceText(item, "detail-pro")));
             evidence.AddRange(detail.ProsCons.Cons.Select(item => new EvidenceText(item, "detail-con")));
+        }
+
+        if (detail.BuyerCommentsSummary is not null)
+        {
+            if (!string.IsNullOrWhiteSpace(detail.BuyerCommentsSummary.Summary))
+            {
+                evidence.Add(new EvidenceText(detail.BuyerCommentsSummary.Summary, "buyer-summary"));
+            }
+
+            evidence.AddRange(detail.BuyerCommentsSummary.Pros.Select(item => new EvidenceText(item, "buyer-summary-pro")));
+            evidence.AddRange(detail.BuyerCommentsSummary.Cons.Select(item => new EvidenceText(item, "buyer-summary-con")));
         }
 
         evidence.AddRange(reviews.Reviews.Select(review => new EvidenceText(
