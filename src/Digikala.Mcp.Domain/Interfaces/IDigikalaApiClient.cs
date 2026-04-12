@@ -29,7 +29,6 @@ public interface IDigikalaApiClient
     Task<JsonDocument> GetProductCpcAsync(long productId, int? warehouseId = null, string? deviceId = null, CancellationToken ct = default);
     Task<JsonDocument> GetProductPindoAsync(long productId, int? warehouseId = null, CancellationToken ct = default);
     Task<JsonDocument> GetProductSellerVouchersAsync(long productId, CancellationToken ct = default);
-    Task<JsonDocument> GetProductDigipayCreditAsync(long productId, CancellationToken ct = default);
 
     // Rate & Review
     Task<JsonDocument> GetRateReviewAsync(long productId, int page = 1, CancellationToken ct = default);

@@ -2,6 +2,11 @@
 
 Digikala MCP is a .NET 10 Model Context Protocol server for searching, comparing, and inspecting Digikala products with AI-friendly tools and DTOs.
 
+Current working notes for the next implementation phase live in:
+
+- `docs/temp-review-notes.md`
+- `docs/implementation-checklist.md`
+
 ## Architecture
 
 - `src/Digikala.Mcp.Domain`: entities, enums, interfaces
@@ -91,6 +96,8 @@ The repo also supports opt-in live contract tests that call Digikala directly an
 - Audit logs: `app-data/logs/audit-<date>.clef`
 - Error logs: `app-data/logs/error-<date>.clef`
 
+Runtime logs are local artifacts. Clear old `app-data/logs/*.clef` files before handing work off or starting a fresh implementation pass.
+
 ## Commands
 
 ```bash
@@ -100,8 +107,15 @@ dotnet test Digikala.Mcp.slnx --no-build
 timeout 5s dotnet run --project src/Digikala.Mcp.Server --no-build
 ```
 
+If the local machine is low on file-watcher capacity, use:
+
+```bash
+DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE=false timeout 5s dotnet run --project src/Digikala.Mcp.Server --no-build
+```
+
 ## Notes
 
 - Logging uses Serilog and is configurable via `ServerLogging` settings or environment variables.
 - The local cache uses SQLite through Entity Framework Core.
 - Docs that drive the implementation live under `docs/`.
+- Digipay credit is out of scope for this server and should not be reintroduced unless requirements change.

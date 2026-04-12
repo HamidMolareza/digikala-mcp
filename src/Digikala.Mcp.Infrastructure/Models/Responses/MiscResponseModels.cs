@@ -56,27 +56,6 @@ public sealed class FreshInitData
     public string? MergeVersion { get; set; }
 }
 
-public sealed class DigipayCreditData
-{
-    [JsonPropertyName("url")]
-    public string? Url { get; set; }
-
-    [JsonPropertyName("items")]
-    public List<DigipayCreditItem>? Items { get; set; }
-}
-
-public sealed class DigipayCreditItem
-{
-    [JsonPropertyName("title")]
-    public string? Title { get; set; }
-
-    [JsonPropertyName("monthly_payment")]
-    public long MonthlyPayment { get; set; }
-
-    [JsonPropertyName("months")]
-    public int Months { get; set; }
-}
-
 public sealed class SellerVouchersData
 {
     [JsonPropertyName("vouchers")]

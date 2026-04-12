@@ -39,11 +39,10 @@ Each tool is a single MCP callable exposed to the AI. The AI receives compact DT
 | T-12 | `autocomplete` | Get search autocomplete suggestions and trends for a query prefix. | `GET /v1/autocomplete/` |
 | T-13 | `get_brand_page` | Get a premium brand landing page. | `GET /v1/brands/{slug}/premium/` |
 | T-14 | `get_seller_vouchers` | Get seller vouchers/promotions for a product. | `GET /v1/product/{id}/seller-vouchers/` |
-| T-15 | `get_digipay_credit` | Get Digipay credit/installment options for a product. | `GET /v1/product/{id}/digipay-credit/` |
 
 ### 2.2 Infrastructure-Layer API Coverage
 
-The infrastructure layer must provide a typed HTTP client that covers **all 40 observed endpoints** (see `request-response.api-summary.yaml`), including those not directly exposed as MCP tools:
+The infrastructure layer must provide a typed HTTP client that covers the observed endpoints documented in `request-response.api-summary.yaml`, including those not directly exposed as MCP tools:
 
 | Group | Endpoints |
 |---|---|
@@ -53,7 +52,7 @@ The infrastructure layer must provide a typed HTTP client that covers **all 40 o
 | **Dynamic Landing** | `GET /v1/dynamic-landing/mobile/`, `GET /v1/dynamic-landing/widget/{id}/` |
 | **Magnet / Content** | `GET /v1/magnet/home-page/`, `GET /v1/magnet/notification-center/announcement/message/`, `GET /v1/magnet/related-posts/{id}/` |
 | **Product (main)** | `GET /v2/product/{id}/`, `GET /fresh/v1/product/{id}/` |
-| **Product (sub-resources)** | comments, price-chart, questions, recommendation, cpc, pindo, seller-vouchers, digipay-credit |
+| **Product (sub-resources)** | comments, price-chart, questions, recommendation, cpc, pindo, seller-vouchers |
 | **Search / Browse** | category search (v1 + fresh), tags, providers-products, incredible-offers/products |
 | **Recommendations** | home, trending, selling-and-sales, personalized-category |
 | **Best Selling** | `GET /v1/best-selling/` |
@@ -425,7 +424,6 @@ Data that changes occasionally:
 - Best-selling product lists
 - Brand landing page content
 - Category landing page content (subcategories, popular brands)
-- Digipay credit terms
 - Editorial / magazine content
 
 ### 6.3 Short-Term Cache (5min)

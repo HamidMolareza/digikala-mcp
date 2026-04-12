@@ -119,11 +119,6 @@ public sealed class DigikalaHttpClient(
         return await GetJsonAsync($"/v1/product/{productId}/seller-vouchers/?productId={productId}", ct);
     }
 
-    public async Task<JsonDocument> GetProductDigipayCreditAsync(long productId, CancellationToken ct = default)
-    {
-        return await GetJsonAsync($"/v1/product/{productId}/digipay-credit/?productId={productId}", ct);
-    }
-
     // Rate & Review
 
     public async Task<JsonDocument> GetRateReviewAsync(long productId, int page = 1, CancellationToken ct = default)

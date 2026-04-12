@@ -16,7 +16,6 @@ public sealed record FreshProductRecommendationRequestOptions(long ProductId, in
 public sealed record ProductCpcRequestOptions(long ProductId, int? WarehouseId = null, string? DeviceId = null);
 public sealed record ProductPindoRequestOptions(long ProductId, int? WarehouseId = null);
 public sealed record SellerVouchersRequestOptions(long ProductId);
-public sealed record DigipayCreditRequestOptions(long ProductId);
 public sealed record RateReviewRequestOptions(long ProductId, int Page = 1);
 public sealed record SearchCategoryRequestOptions(
     string CategorySlug,
