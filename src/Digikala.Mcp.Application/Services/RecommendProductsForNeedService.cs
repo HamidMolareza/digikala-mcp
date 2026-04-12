@@ -145,7 +145,7 @@ public sealed class RecommendProductsForNeedService(
 
         try
         {
-            var candidateLimit = Math.Clamp(Math.Max(limit * 3, 8), 3, 12);
+            var candidateLimit = GetCandidateLimit(limit, includeEvidence);
             var searchResult = await searchProductsService.ExecuteAsync(
                 query: understanding.SearchQuery,
                 categorySlug: categorySlug,
@@ -181,19 +181,8 @@ public sealed class RecommendProductsForNeedService(
             }
 
             var candidates = searchResult.Products.Take(candidateLimit).ToList();
-            var feedbackTasks = candidates.Select(async product => new CandidateEvaluation(
-                product,
-                await feedbackSummaryService.ExecuteAsync(
-                    product.Id,
-                    maxPros: 4,
-                    maxCons: 4,
-                    maxThemes: 4,
-                    includeReviewSnippets: includeEvidence,
-                    maxSnippets: includeEvidence ? 3 : 1,
-                    skipCache: skipCache,
-                    ct: ct)));
-
-            var scoredCandidates = (await Task.WhenAll(feedbackTasks))
+            var candidateEvaluations = await EvaluateCandidatesAsync(candidates, includeEvidence, skipCache, ct);
+            var scoredCandidates = candidateEvaluations
                 .Select(item => BuildRecommendation(item, understanding, includeEvidence))
                 .OrderByDescending(item => item.RawScore)
                 .ToList();
@@ -201,13 +190,16 @@ public sealed class RecommendProductsForNeedService(
             var visibleCandidates = scoredCandidates.Take(Math.Max(1, limit)).ToList();
             var minScore = visibleCandidates.MinByOrDefault(item => item.RawScore)?.RawScore ?? 0d;
             var maxScore = visibleCandidates.MaxByOrDefault(item => item.RawScore)?.RawScore ?? minScore;
+            var candidateSelectionWarning = searchResult.TotalCount > candidateLimit
+                ? $"Feedback evidence was evaluated for the top {candidateLimit} ranked search matches to keep upstream fan-out bounded."
+                : null;
 
             return new ProductNeedRecommendationsDto
             {
                 IsStale = searchResult.IsStale || visibleCandidates.Any(item => item.Feedback.IsStale),
                 IsFromCache = searchResult.IsFromCache || visibleCandidates.Any(item => item.Feedback.IsFromCache),
                 CacheStatus = BuildRecommendationCacheStatus(searchResult.CacheStatus, visibleCandidates.Select(item => item.Feedback.CacheStatus)),
-                Warning = searchResult.Warning,
+                Warning = CombineWarnings(searchResult.Warning, candidateSelectionWarning),
                 SearchQuery = understanding.SearchQuery,
                 QueryUnderstanding = understanding.ToDto(),
                 Recommendations = visibleCandidates
@@ -231,6 +223,47 @@ public sealed class RecommendProductsForNeedService(
         }
     }
 
+    private async Task<List<CandidateEvaluation>> EvaluateCandidatesAsync(
+        IEnumerable<ProductSummaryDto> candidates,
+        bool includeEvidence,
+        bool skipCache,
+        CancellationToken ct)
+    {
+        const int maxConcurrentCandidates = 2;
+        using var throttler = new SemaphoreSlim(maxConcurrentCandidates);
+
+        var tasks = candidates.Select(async product =>
+        {
+            await throttler.WaitAsync(ct);
+            try
+            {
+                return new CandidateEvaluation(
+                    product,
+                    await feedbackSummaryService.ExecuteAsync(
+                        product.Id,
+                        maxPros: 4,
+                        maxCons: 4,
+                        maxThemes: 4,
+                        includeReviewSnippets: includeEvidence,
+                        maxSnippets: includeEvidence ? 3 : 1,
+                        skipCache: skipCache,
+                        ct: ct));
+            }
+            finally
+            {
+                throttler.Release();
+            }
+        });
+
+        return (await Task.WhenAll(tasks)).ToList();
+    }
+
+    private static int GetCandidateLimit(int limit, bool includeEvidence)
+    {
+        var buffer = includeEvidence ? 2 : 1;
+        return Math.Clamp(Math.Max(limit + buffer, 3), 3, 6);
+    }
+
     private static string BuildRecommendationCacheStatus(string primaryStatus, IEnumerable<string> candidateStatuses)
     {
         var distinct = new[] { primaryStatus }
@@ -245,6 +278,17 @@ public sealed class RecommendProductsForNeedService(
             1 => distinct[0],
             _ => string.Join('+', distinct.OrderBy(item => item, StringComparer.OrdinalIgnoreCase)),
         };
+    }
+
+    private static string? CombineWarnings(params string?[] warnings)
+    {
+        var parts = warnings
+            .Where(item => !string.IsNullOrWhiteSpace(item))
+            .Select(item => item!.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        return parts.Length == 0 ? null : string.Join(" ", parts);
     }
 
     private static RecommendationUnderstanding BuildUnderstanding(

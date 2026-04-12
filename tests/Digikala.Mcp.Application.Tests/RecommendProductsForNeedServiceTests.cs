@@ -288,6 +288,100 @@ public class RecommendProductsForNeedServiceTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_ShouldLimitFeedbackFanOut_ToTopShortlistCandidates()
+    {
+        var apiClient = Substitute.For<IDigikalaApiClient>();
+        var cache = new NullCacheStore();
+        var productMapper = new ProductMapper();
+        var reviewMapper = new ReviewMapper();
+        var searchService = CreateSearchService(apiClient, cache, productMapper);
+        var detailService = new GetProductDetailService(apiClient, cache, productMapper);
+        var reviewsService = new GetProductReviewsService(apiClient, cache, reviewMapper);
+        var feedbackService = new GetProductFeedbackSummaryService(detailService, reviewsService);
+        var service = new RecommendProductsForNeedService(searchService, feedbackService);
+
+        apiClient.SearchCategoryAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<Dictionary<string, string[]>?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(JsonDocument.Parse("""
+                {
+                  "status": 200,
+                  "data": {
+                    "products": [
+                      { "id": 101, "title_fa": "شامپو 101", "status": "marketable", "rating": { "rate": 4.9, "count": 1000 }, "default_variant": { "price": { "selling_price": 1000 } }, "url": { "uri": "/product/101" }, "images": [] },
+                      { "id": 102, "title_fa": "شامپو 102", "status": "marketable", "rating": { "rate": 4.8, "count": 900 }, "default_variant": { "price": { "selling_price": 1100 } }, "url": { "uri": "/product/102" }, "images": [] },
+                      { "id": 103, "title_fa": "شامپو 103", "status": "marketable", "rating": { "rate": 4.7, "count": 800 }, "default_variant": { "price": { "selling_price": 1200 } }, "url": { "uri": "/product/103" }, "images": [] },
+                      { "id": 104, "title_fa": "شامپو 104", "status": "marketable", "rating": { "rate": 4.6, "count": 700 }, "default_variant": { "price": { "selling_price": 1300 } }, "url": { "uri": "/product/104" }, "images": [] },
+                      { "id": 105, "title_fa": "شامپو 105", "status": "marketable", "rating": { "rate": 4.5, "count": 600 }, "default_variant": { "price": { "selling_price": 1400 } }, "url": { "uri": "/product/105" }, "images": [] }
+                    ],
+                    "pager": { "current_page": 1, "total_pages": 1, "total_items": 5 },
+                    "filters": [],
+                    "sort_options": []
+                  }
+                }
+                """));
+
+        foreach (var productId in new long[] { 101, 102, 103 })
+        {
+            apiClient.GetProductV2Async(productId, null, Arg.Any<CancellationToken>())
+                .Returns(JsonDocument.Parse($$"""
+                    {
+                      "data": {
+                        "product": {
+                          "id": {{productId}},
+                          "title_fa": "شامپو {{productId}}",
+                          "status": "marketable",
+                          "url": { "uri": "/product/{{productId}}" },
+                          "images": [],
+                          "default_variant": { "price": { "selling_price": 1000 } },
+                          "expert_reviews": {
+                            "description": "فرمول ملایم برای مصرف روزانه",
+                            "advantages": ["ملایم"],
+                            "disadvantages": []
+                          }
+                        }
+                      }
+                    }
+                    """));
+
+            apiClient.GetProductCommentsAsync(productId, 1, null, null, Arg.Any<CancellationToken>())
+                .Returns(JsonDocument.Parse($$"""
+                    {
+                      "data": {
+                        "comments": [
+                          {
+                            "id": {{productId}},
+                            "title": "نظر",
+                            "body": "برای استفاده روزانه مناسب است",
+                            "rate": 5,
+                            "created_at": "2026-03-29T00:00:00Z",
+                            "reactions": { "likes": 5, "dislikes": 0 },
+                            "advantages": ["ملایم"],
+                            "disadvantages": []
+                          }
+                        ],
+                        "pager": { "current_page": 1, "total_pages": 1, "total_items": 1 }
+                      }
+                    }
+                    """));
+        }
+
+        var result = await service.ExecuteAsync(
+            "Need a gentle shampoo for oily hair.",
+            categorySlug: "hair-shampoo",
+            limit: 1,
+            includeEvidence: true);
+
+        Assert.Single(result.Recommendations);
+        Assert.Contains("top 3 ranked search matches", result.Warning, StringComparison.OrdinalIgnoreCase);
+        await apiClient.Received(1).GetProductV2Async(101, null, Arg.Any<CancellationToken>());
+        await apiClient.Received(1).GetProductV2Async(102, null, Arg.Any<CancellationToken>());
+        await apiClient.Received(1).GetProductV2Async(103, null, Arg.Any<CancellationToken>());
+        await apiClient.DidNotReceive().GetProductV2Async(104, null, Arg.Any<CancellationToken>());
+        await apiClient.DidNotReceive().GetProductV2Async(105, null, Arg.Any<CancellationToken>());
+        await apiClient.DidNotReceive().GetProductCommentsAsync(104, 1, null, null, Arg.Any<CancellationToken>());
+        await apiClient.DidNotReceive().GetProductCommentsAsync(105, 1, null, null, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task ExecuteAsync_ShouldReturnValidationError_ForInvalidRecommendationInputs()
     {
         var apiClient = Substitute.For<IDigikalaApiClient>();
