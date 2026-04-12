@@ -50,25 +50,28 @@ public sealed class SearchProductsTool(SearchProductsService service, ILogger<Se
             prioritizeBestMatch,
             skipCache);
 
-        return service.ExecuteAsync(
-            query,
-            categorySlug,
-            page,
-            sort,
-            minRating,
-            minReviewCount,
-            onlyAvailable,
-            minPriceRials,
-            maxPriceRials,
-            limit,
-            preferTerms,
-            avoidTerms,
-            includeAttributeHighlights,
-            includeAvailableFilters,
-            preferBalancedMatches,
-            prioritizeBestMatch,
-            skipCache,
-            ct);
+        return ToolOutcomeLogger.ExecuteAsync(
+            logger,
+            "search_products",
+            () => service.ExecuteAsync(
+                query,
+                categorySlug,
+                page,
+                sort,
+                minRating,
+                minReviewCount,
+                onlyAvailable,
+                minPriceRials,
+                maxPriceRials,
+                limit,
+                preferTerms,
+                avoidTerms,
+                includeAttributeHighlights,
+                includeAvailableFilters,
+                preferBalancedMatches,
+                prioritizeBestMatch,
+                skipCache,
+                ct));
     }
 }
 
@@ -108,21 +111,24 @@ public sealed class RankProductsTool(RankProductsService service, ILogger<RankPr
             maxPriceRials,
             skipCache);
 
-        return service.ExecuteAsync(
-            query,
-            categorySlug,
-            onlyAvailable,
-            requiredTerms,
-            preferredTerms,
-            excludedTerms,
-            rankingPriority,
-            limit,
-            minRating,
-            minReviewCount,
-            minPriceRials,
-            maxPriceRials,
-            skipCache,
-            ct);
+        return ToolOutcomeLogger.ExecuteAsync(
+            logger,
+            "rank_products",
+            () => service.ExecuteAsync(
+                query,
+                categorySlug,
+                onlyAvailable,
+                requiredTerms,
+                preferredTerms,
+                excludedTerms,
+                rankingPriority,
+                limit,
+                minRating,
+                minReviewCount,
+                minPriceRials,
+                maxPriceRials,
+                skipCache,
+                ct));
     }
 }
 
@@ -162,20 +168,23 @@ public sealed class RecommendProductsForNeedTool(
             includeEvidence,
             skipCache);
 
-        return service.ExecuteAsync(
-            needDescription,
-            categorySlug,
-            limit,
-            onlyAvailable,
-            minRating,
-            minReviewCount,
-            minPriceRials,
-            maxPriceRials,
-            preferTerms,
-            avoidTerms,
-            includeEvidence,
-            skipCache,
-            ct);
+        return ToolOutcomeLogger.ExecuteAsync(
+            logger,
+            "recommend_products_for_need",
+            () => service.ExecuteAsync(
+                needDescription,
+                categorySlug,
+                limit,
+                onlyAvailable,
+                minRating,
+                minReviewCount,
+                minPriceRials,
+                maxPriceRials,
+                preferTerms,
+                avoidTerms,
+                includeEvidence,
+                skipCache,
+                ct));
     }
 }
 
@@ -203,7 +212,10 @@ public sealed class GetProductFeedbackSummaryTool(GetProductFeedbackSummaryServi
             maxSnippets,
             skipCache);
 
-        return service.ExecuteAsync(productId, maxPros, maxCons, maxThemes, includeReviewSnippets, maxSnippets, skipCache, ct);
+        return ToolOutcomeLogger.ExecuteAsync(
+            logger,
+            "get_product_feedback_summary",
+            () => service.ExecuteAsync(productId, maxPros, maxCons, maxThemes, includeReviewSnippets, maxSnippets, skipCache, ct));
     }
 }
 
@@ -218,7 +230,10 @@ public sealed class GetProductDetailTool(GetProductDetailService service, ILogge
         CancellationToken ct = default)
     {
         logger.LogInformation("Tool get_product_detail invoked: productId={ProductId}, warehouseId={WarehouseId}, skipCache={SkipCache}", productId, warehouseId, skipCache);
-        return service.ExecuteAsync(productId, warehouseId, skipCache, ct);
+        return ToolOutcomeLogger.ExecuteAsync(
+            logger,
+            "get_product_detail",
+            () => service.ExecuteAsync(productId, warehouseId, skipCache, ct));
     }
 }
 
@@ -244,7 +259,10 @@ public sealed class GetProductOverviewTool(GetProductOverviewService service, IL
             topRecommendationsCount,
             skipCache);
 
-        return service.ExecuteAsync(productId, warehouseId, topReviewsCount, topQuestionsCount, topRecommendationsCount, skipCache, ct);
+        return ToolOutcomeLogger.ExecuteAsync(
+            logger,
+            "get_product_overview",
+            () => service.ExecuteAsync(productId, warehouseId, topReviewsCount, topQuestionsCount, topRecommendationsCount, skipCache, ct));
     }
 }
 
@@ -258,7 +276,10 @@ public sealed class GetProductPriceChartTool(GetProductPriceChartService service
         CancellationToken ct = default)
     {
         logger.LogInformation("Tool get_product_price_chart invoked: productId={ProductId}, skipCache={SkipCache}", productId, skipCache);
-        return service.ExecuteAsync(productId, skipCache, ct);
+        return ToolOutcomeLogger.ExecuteAsync(
+            logger,
+            "get_product_price_chart",
+            () => service.ExecuteAsync(productId, skipCache, ct));
     }
 }
 
@@ -273,7 +294,10 @@ public sealed class GetProductReviewsTool(GetProductReviewsService service, ILog
         CancellationToken ct = default)
     {
         logger.LogInformation("Tool get_product_reviews invoked: productId={ProductId}, page={Page}, skipCache={SkipCache}", productId, page, skipCache);
-        return service.ExecuteAsync(productId, page, skipCache, ct);
+        return ToolOutcomeLogger.ExecuteAsync(
+            logger,
+            "get_product_reviews",
+            () => service.ExecuteAsync(productId, page, skipCache, ct));
     }
 }
 
@@ -288,7 +312,10 @@ public sealed class GetProductQuestionsTool(GetProductQuestionsService service, 
         CancellationToken ct = default)
     {
         logger.LogInformation("Tool get_product_questions invoked: productId={ProductId}, page={Page}, skipCache={SkipCache}", productId, page, skipCache);
-        return service.ExecuteAsync(productId, page, skipCache, ct);
+        return ToolOutcomeLogger.ExecuteAsync(
+            logger,
+            "get_product_questions",
+            () => service.ExecuteAsync(productId, page, skipCache, ct));
     }
 }
 
@@ -332,7 +359,10 @@ public sealed class GetIncredibleOffersTool(GetIncredibleOffersService service, 
         CancellationToken ct = default)
     {
         logger.LogInformation("Tool get_incredible_offers invoked: page={Page}, skipCache={SkipCache}", page, skipCache);
-        return service.ExecuteAsync(page, skipCache, ct);
+        return ToolOutcomeLogger.ExecuteAsync(
+            logger,
+            "get_incredible_offers",
+            () => service.ExecuteAsync(page, skipCache, ct));
     }
 }
 
@@ -359,7 +389,10 @@ public sealed class GetCategoryLandingTool(GetCategoryLandingService service, IL
         CancellationToken ct = default)
     {
         logger.LogInformation("Tool get_category_landing invoked: categorySlug={CategorySlug}, skipCache={SkipCache}", categorySlug, skipCache);
-        return service.ExecuteAsync(categorySlug, skipCache, ct);
+        return ToolOutcomeLogger.ExecuteAsync(
+            logger,
+            "get_category_landing",
+            () => service.ExecuteAsync(categorySlug, skipCache, ct));
     }
 }
 
@@ -374,7 +407,10 @@ public sealed class BrowseByTagTool(BrowseByTagService service, ILogger<BrowseBy
         CancellationToken ct = default)
     {
         logger.LogInformation("Tool browse_by_tag invoked: tagSlug={TagSlug}, page={Page}, skipCache={SkipCache}", tagSlug, page, skipCache);
-        return service.ExecuteAsync(tagSlug, page, skipCache, ct);
+        return ToolOutcomeLogger.ExecuteAsync(
+            logger,
+            "browse_by_tag",
+            () => service.ExecuteAsync(tagSlug, page, skipCache, ct));
     }
 }
 
@@ -388,7 +424,10 @@ public sealed class AutocompleteTool(AutocompleteService service, ILogger<Autoco
         CancellationToken ct = default)
     {
         logger.LogInformation("Tool autocomplete invoked: query={Query}, skipCache={SkipCache}", query, skipCache);
-        return service.ExecuteAsync(query, skipCache, ct);
+        return ToolOutcomeLogger.ExecuteAsync(
+            logger,
+            "autocomplete",
+            () => service.ExecuteAsync(query, skipCache, ct));
     }
 }
 
@@ -402,7 +441,10 @@ public sealed class GetBrandPageTool(GetBrandPageService service, ILogger<GetBra
         CancellationToken ct = default)
     {
         logger.LogInformation("Tool get_brand_page invoked: brandSlug={BrandSlug}, skipCache={SkipCache}", brandSlug, skipCache);
-        return service.ExecuteAsync(brandSlug, skipCache, ct);
+        return ToolOutcomeLogger.ExecuteAsync(
+            logger,
+            "get_brand_page",
+            () => service.ExecuteAsync(brandSlug, skipCache, ct));
     }
 }
 

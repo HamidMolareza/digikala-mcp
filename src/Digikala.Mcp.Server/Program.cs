@@ -25,6 +25,10 @@ builder.Services.AddSerilog((services, loggerConfiguration) =>
 {
     loggerConfiguration
         .MinimumLevel.Is(ParseLevel(loggingOptions.MinimumLevel))
+        .MinimumLevel.Override("Microsoft.Extensions.Http.Resilience", LogEventLevel.Warning)
+        .MinimumLevel.Override("Microsoft.Extensions.Resilience", LogEventLevel.Warning)
+        .MinimumLevel.Override("Polly", LogEventLevel.Warning)
+        .MinimumLevel.Override("System.Net.Http.HttpClient", LogEventLevel.Warning)
         .Enrich.FromLogContext();
 
     if (loggingOptions.EnableConsole)
@@ -42,6 +46,7 @@ builder.Services.AddSerilog((services, loggerConfiguration) =>
 
     loggerConfiguration.WriteTo.Logger(lc => lc
         .Filter.ByIncludingOnly(evt => evt.Level >= LogEventLevel.Error)
+        .Filter.ByExcluding(IsResilienceNoise)
         .WriteTo.File(
             formatter: new CompactJsonFormatter(),
             path: loggingOptions.ErrorLogPath,
@@ -108,3 +113,17 @@ static LogEventLevel ParseLevel(string? level) =>
     Enum.TryParse<LogEventLevel>(level, true, out var parsed)
         ? parsed
         : LogEventLevel.Information;
+
+static bool IsResilienceNoise(Serilog.Events.LogEvent logEvent)
+{
+    if (!logEvent.Properties.TryGetValue("SourceContext", out var sourceContextValue))
+    {
+        return false;
+    }
+
+    var sourceContext = sourceContextValue.ToString().Trim('"');
+    return sourceContext.StartsWith("Microsoft.Extensions.Http.Resilience", StringComparison.Ordinal)
+        || sourceContext.StartsWith("Microsoft.Extensions.Resilience", StringComparison.Ordinal)
+        || sourceContext.StartsWith("Polly", StringComparison.Ordinal)
+        || sourceContext.StartsWith("System.Net.Http.HttpClient", StringComparison.Ordinal);
+}
