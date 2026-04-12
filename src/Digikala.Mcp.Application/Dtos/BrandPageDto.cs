@@ -6,6 +6,7 @@ public sealed record BrandPageDto
     public bool IsFromCache { get; set; }
     public string CacheStatus { get; set; } = "unknown";
     public string? Warning { get; set; }
+    public ToolIssueDto? Error { get; set; }
     public int Id { get; init; }
     public string Title { get; init; } = string.Empty;
     public string Slug { get; init; } = string.Empty;

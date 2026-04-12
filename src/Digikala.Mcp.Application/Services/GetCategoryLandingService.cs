@@ -13,17 +13,37 @@ public sealed class GetCategoryLandingService(IDigikalaApiClient apiClient, ICac
         bool skipCache = false,
         CancellationToken ct = default)
     {
+        var request = new Dictionary<string, string?>
+        {
+            ["categorySlug"] = categorySlug,
+            ["skipCache"] = skipCache.ToString(),
+        };
         var cacheKey = ToolExecutionHelper.CreateCacheKey("get_category_landing", ("category", categorySlug));
-        return await ToolExecutionHelper.GetOrCreateWithStaleFallbackAsync(
-            cache,
-            cacheKey,
-            CacheTier.LongTerm,
-            async token =>
+        try
+        {
+            return await ToolExecutionHelper.GetOrCreateWithStaleFallbackAsync(
+                cache,
+                cacheKey,
+                CacheTier.LongTerm,
+                async token =>
+                {
+                    using var response = await apiClient.GetCategoryLandingAsync(categorySlug, token);
+                    return mapper.MapToCategory(response);
+                },
+                skipCache,
+                ct);
+        }
+        catch (Exception exception)
+        {
+            return new CategoryDto
             {
-                using var response = await apiClient.GetCategoryLandingAsync(categorySlug, token);
-                return mapper.MapToCategory(response);
-            },
-            skipCache,
-            ct);
+                Warning = "Digikala category landing request failed; returned structured diagnostics instead of an opaque tool failure.",
+                Error = ToolIssueFactory.Create(
+                    "get_category_landing",
+                    "Digikala category landing request failed.",
+                    exception,
+                    request),
+            };
+        }
     }
 }

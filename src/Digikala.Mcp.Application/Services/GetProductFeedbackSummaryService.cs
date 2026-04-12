@@ -75,6 +75,11 @@ public sealed class GetProductFeedbackSummaryService(
             var evidenceTexts = BuildEvidenceTexts(detail, reviews);
             var detailPros = (detail.ProsCons?.Pros ?? []).Concat(detail.BuyerCommentsSummary?.Pros ?? []);
             var detailCons = (detail.ProsCons?.Cons ?? []).Concat(detail.BuyerCommentsSummary?.Cons ?? []);
+            var error = detail.Error ?? reviews.Error;
+            var warning = CombineWarnings(
+                detail.Warning,
+                reviews.Warning,
+                error is null ? null : "Feedback summary uses partial evidence because one or more upstream sections failed.");
 
             var pros = AggregateCounts(detailPros, reviews.Reviews.SelectMany(item => item.Pros), maxPros);
             var cons = AggregateCounts(detailCons, reviews.Reviews.SelectMany(item => item.Cons), maxCons);
@@ -86,7 +91,8 @@ public sealed class GetProductFeedbackSummaryService(
                 IsStale = detail.IsStale || reviews.IsStale,
                 IsFromCache = detail.IsFromCache || reviews.IsFromCache,
                 CacheStatus = BuildCompositeCacheStatus(detail.CacheStatus, reviews.CacheStatus),
-                Warning = detail.Warning ?? reviews.Warning,
+                Warning = warning,
+                Error = error,
                 Pros = pros,
                 Cons = cons,
                 Themes = themes,
@@ -106,6 +112,17 @@ public sealed class GetProductFeedbackSummaryService(
                     request),
             };
         }
+    }
+
+    private static string? CombineWarnings(params string?[] warnings)
+    {
+        var parts = warnings
+            .Where(item => !string.IsNullOrWhiteSpace(item))
+            .Select(item => item!.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        return parts.Length == 0 ? null : string.Join(" ", parts);
     }
 
     private static string BuildCompositeCacheStatus(params string[] statuses)

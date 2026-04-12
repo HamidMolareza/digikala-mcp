@@ -179,7 +179,7 @@ public sealed class GetProductOverviewService(
         try
         {
             var value = await factory();
-            return new SectionResult<T>(name, value, IsStale(value), IsFromCache(value), GetCacheStatus(value), null);
+            return new SectionResult<T>(name, value, IsStale(value), IsFromCache(value), GetCacheStatus(value), GetToolIssue(value));
         }
         catch (Exception exception)
         {
@@ -232,6 +232,19 @@ public sealed class GetProductOverviewService(
                !string.IsNullOrWhiteSpace(cacheStatus)
             ? cacheStatus
             : "unknown";
+    }
+
+    private static ToolIssueDto? GetToolIssue<T>(T? value)
+    {
+        if (value is null)
+        {
+            return null;
+        }
+
+        var property = value.GetType().GetProperty("Error");
+        return property?.PropertyType == typeof(ToolIssueDto)
+            ? property.GetValue(value) as ToolIssueDto
+            : null;
     }
 
     private static List<string> ValidateInputs(long productId, int topReviewsCount, int topQuestionsCount, int topRecommendationsCount)

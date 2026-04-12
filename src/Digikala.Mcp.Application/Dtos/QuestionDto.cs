@@ -28,6 +28,7 @@ public sealed record QuestionListDto
     public bool IsFromCache { get; set; }
     public string CacheStatus { get; set; } = "unknown";
     public string? Warning { get; set; }
+    public ToolIssueDto? Error { get; set; }
     public List<QuestionDto> Questions { get; init; } = [];
     public int CurrentPage { get; init; }
     public int TotalPages { get; init; }

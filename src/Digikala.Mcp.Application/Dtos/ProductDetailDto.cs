@@ -2,6 +2,7 @@ namespace Digikala.Mcp.Application.Dtos;
 
 public sealed record ProductDetailDto : ProductSummaryDto
 {
+    public ToolIssueDto? Error { get; set; }
     public string? Description { get; init; }
     public string? Brand { get; init; }
     public string? BrandSlug { get; init; }

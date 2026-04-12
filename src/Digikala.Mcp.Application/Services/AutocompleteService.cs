@@ -13,17 +13,37 @@ public sealed class AutocompleteService(IDigikalaApiClient apiClient, ICacheStor
         bool skipCache = false,
         CancellationToken ct = default)
     {
+        var request = new Dictionary<string, string?>
+        {
+            ["q"] = query,
+            ["skipCache"] = skipCache.ToString(),
+        };
         var cacheKey = ToolExecutionHelper.CreateCacheKey("autocomplete", ("q", query));
-        return await ToolExecutionHelper.GetOrCreateWithStaleFallbackAsync(
-            cache,
-            cacheKey,
-            CacheTier.ShortTerm,
-            async token =>
+        try
+        {
+            return await ToolExecutionHelper.GetOrCreateWithStaleFallbackAsync(
+                cache,
+                cacheKey,
+                CacheTier.ShortTerm,
+                async token =>
+                {
+                    using var response = await apiClient.GetAutocompleteAsync(query, token);
+                    return mapper.MapToAutocomplete(response);
+                },
+                skipCache,
+                ct);
+        }
+        catch (Exception exception)
+        {
+            return new AutocompleteDto
             {
-                using var response = await apiClient.GetAutocompleteAsync(query, token);
-                return mapper.MapToAutocomplete(response);
-            },
-            skipCache,
-            ct);
+                Warning = "Digikala autocomplete request failed; returned structured diagnostics instead of an opaque tool failure.",
+                Error = ToolIssueFactory.Create(
+                    "autocomplete",
+                    "Digikala autocomplete request failed.",
+                    exception,
+                    request),
+            };
+        }
     }
 }

@@ -13,17 +13,37 @@ public sealed class GetBrandPageService(IDigikalaApiClient apiClient, ICacheStor
         bool skipCache = false,
         CancellationToken ct = default)
     {
+        var request = new Dictionary<string, string?>
+        {
+            ["brandSlug"] = brandSlug,
+            ["skipCache"] = skipCache.ToString(),
+        };
         var cacheKey = ToolExecutionHelper.CreateCacheKey("get_brand_page", ("brand", brandSlug));
-        return await ToolExecutionHelper.GetOrCreateWithStaleFallbackAsync(
-            cache,
-            cacheKey,
-            CacheTier.MediumTerm,
-            async token =>
+        try
+        {
+            return await ToolExecutionHelper.GetOrCreateWithStaleFallbackAsync(
+                cache,
+                cacheKey,
+                CacheTier.MediumTerm,
+                async token =>
+                {
+                    using var response = await apiClient.GetBrandPremiumAsync(brandSlug, token);
+                    return mapper.MapToBrandPage(response);
+                },
+                skipCache,
+                ct);
+        }
+        catch (Exception exception)
+        {
+            return new BrandPageDto
             {
-                using var response = await apiClient.GetBrandPremiumAsync(brandSlug, token);
-                return mapper.MapToBrandPage(response);
-            },
-            skipCache,
-            ct);
+                Warning = "Digikala brand page request failed; returned structured diagnostics instead of an opaque tool failure.",
+                Error = ToolIssueFactory.Create(
+                    "get_brand_page",
+                    "Digikala brand page request failed.",
+                    exception,
+                    request),
+            };
+        }
     }
 }

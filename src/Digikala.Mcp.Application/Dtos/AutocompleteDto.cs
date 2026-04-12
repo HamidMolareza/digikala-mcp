@@ -6,6 +6,7 @@ public sealed record AutocompleteDto
     public bool IsFromCache { get; set; }
     public string CacheStatus { get; set; } = "unknown";
     public string? Warning { get; set; }
+    public ToolIssueDto? Error { get; set; }
     public List<SuggestionDto> Suggestions { get; init; } = [];
     public List<string> TrendingSearches { get; init; } = [];
 }
