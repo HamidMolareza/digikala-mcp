@@ -56,6 +56,25 @@ public sealed class CategoryResolutionService(AutocompleteService autocompleteSe
                 "poco",
                 "پوکو",
             ]),
+        new(
+            "electronic-component",
+            [
+                "کلید گردان",
+                "چنج اور",
+                "چنجور",
+                "change over",
+                "changeover",
+                "rotary switch",
+                "انتقال برق",
+            ]),
+        new(
+            "power-strip",
+            [
+                "محافظ جان",
+                "محافظ ولتاژ",
+                "محافظ برق",
+                "residual current",
+            ]),
     ];
 
     public async Task<CategoryResolutionResult> ResolveAsync(

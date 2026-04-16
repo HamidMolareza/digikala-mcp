@@ -210,6 +210,94 @@ public class SearchProductsServiceTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_ShouldInferElectronicComponentCategorySlug_ForSwitchgearQueries()
+    {
+        using var document = JsonDocument.Parse("""
+            {
+              "status": 200,
+              "data": {
+                "products": [
+                  {
+                    "id": 14,
+                    "title_fa": "کلید گردان تکفاز دوطرفه",
+                    "status": "marketable",
+                    "rating": { "rate": 4.4, "count": 37 },
+                    "default_variant": { "price": { "selling_price": 18500000 } },
+                    "url": { "uri": "/rotary-switch" },
+                    "images": []
+                  }
+                ],
+                "pager": { "current_page": 1, "total_pages": 1, "total_items": 1 },
+                "filters": [],
+                "sort_options": []
+              }
+            }
+            """);
+
+        _cacheStore.GetAsync<SearchResultDto>(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns((SearchResultDto?)null);
+        _apiClient.SearchCategoryAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<Dictionary<string, string[]>?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(document);
+
+        var result = await _service.ExecuteAsync("کلید گردان I-0-II");
+
+        Assert.Single(result.Products);
+        Assert.Contains("Category inferred as `electronic-component`", result.Warning);
+        await _apiClient.Received(1).SearchCategoryAsync(
+            "electronic-component",
+            Arg.Any<int>(),
+            Arg.Any<int?>(),
+            Arg.Any<Dictionary<string, string[]>?>(),
+            "کلید گردان I-0-II",
+            Arg.Any<CancellationToken>());
+        await _apiClient.DidNotReceiveWithAnyArgs().GetAutocompleteAsync(default!, default);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_ShouldInferPowerStripCategorySlug_ForVoltageProtectionQueries()
+    {
+        using var document = JsonDocument.Parse("""
+            {
+              "status": 200,
+              "data": {
+                "products": [
+                  {
+                    "id": 15,
+                    "title_fa": "محافظ ولتاژ تکفاز",
+                    "status": "marketable",
+                    "rating": { "rate": 4.5, "count": 81 },
+                    "default_variant": { "price": { "selling_price": 39500000 } },
+                    "url": { "uri": "/voltage-protector" },
+                    "images": []
+                  }
+                ],
+                "pager": { "current_page": 1, "total_pages": 1, "total_items": 1 },
+                "filters": [],
+                "sort_options": []
+              }
+            }
+            """);
+
+        _cacheStore.GetAsync<SearchResultDto>(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns((SearchResultDto?)null);
+        _apiClient.SearchCategoryAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<Dictionary<string, string[]>?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(document);
+
+        var result = await _service.ExecuteAsync("محافظ جان تک فاز");
+
+        Assert.Single(result.Products);
+        Assert.Contains("Category inferred as `power-strip`", result.Warning);
+        await _apiClient.Received(1).SearchCategoryAsync(
+            "power-strip",
+            Arg.Any<int>(),
+            Arg.Any<int?>(),
+            Arg.Any<Dictionary<string, string[]>?>(),
+            "محافظ جان تک فاز",
+            Arg.Any<CancellationToken>());
+        await _apiClient.DidNotReceiveWithAnyArgs().GetAutocompleteAsync(default!, default);
+    }
+
+    [Fact]
     public async Task ExecuteAsync_ShouldInferCategorySlug_FromAutocompleteHints()
     {
         using var autocomplete = JsonDocument.Parse("""
