@@ -68,6 +68,14 @@ public sealed class CategoryResolutionService(AutocompleteService autocompleteSe
                 "انتقال برق",
             ]),
         new(
+            "power-supply",
+            [
+                "تبدیل برق شهر",
+                "برق شهر ژنراتور",
+                "مبدل برق",
+                "ترانس تبدیل",
+            ]),
+        new(
             "power-strip",
             [
                 "محافظ جان",

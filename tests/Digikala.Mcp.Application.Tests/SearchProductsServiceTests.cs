@@ -298,6 +298,50 @@ public class SearchProductsServiceTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_ShouldInferPowerSupplyCategorySlug_ForGeneratorTransferQueries()
+    {
+        using var document = JsonDocument.Parse("""
+            {
+              "status": 200,
+              "data": {
+                "products": [
+                  {
+                    "id": 16,
+                    "title_fa": "مبدل برق تایمردار",
+                    "status": "marketable",
+                    "rating": { "rate": 4.2, "count": 54 },
+                    "default_variant": { "price": { "selling_price": 27500000 } },
+                    "url": { "uri": "/power-supply" },
+                    "images": []
+                  }
+                ],
+                "pager": { "current_page": 1, "total_pages": 1, "total_items": 1 },
+                "filters": [],
+                "sort_options": []
+              }
+            }
+            """);
+
+        _cacheStore.GetAsync<SearchResultDto>(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns((SearchResultDto?)null);
+        _apiClient.SearchCategoryAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<Dictionary<string, string[]>?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(document);
+
+        var result = await _service.ExecuteAsync("کلید تبدیل برق شهر ژنراتور");
+
+        Assert.Single(result.Products);
+        Assert.Contains("Category inferred as `power-supply`", result.Warning);
+        await _apiClient.Received(1).SearchCategoryAsync(
+            "power-supply",
+            Arg.Any<int>(),
+            Arg.Any<int?>(),
+            Arg.Any<Dictionary<string, string[]>?>(),
+            "کلید تبدیل برق شهر ژنراتور",
+            Arg.Any<CancellationToken>());
+        await _apiClient.DidNotReceiveWithAnyArgs().GetAutocompleteAsync(default!, default);
+    }
+
+    [Fact]
     public async Task ExecuteAsync_ShouldInferCategorySlug_FromAutocompleteHints()
     {
         using var autocomplete = JsonDocument.Parse("""
