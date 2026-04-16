@@ -1,0 +1,72 @@
+{
+  "status": 200,
+  "data": {
+    "posts": [
+      {
+        "id": "84511336332",
+        "title": "ساخت میز سیمانی\nاین ...",
+        "caption": "ساخت میز سیمانی\nاین ویدیو در اصل به صورت افقی و برای یوتیوب ضبط شده بود.",
+        "type": "post",
+        "status": "verified",
+        "category_ids": [6318, 8397, 6173, 6148, 6660],
+        "tag_ids": [21533, 2659, 16196, 1893],
+        "user_setting_id": "5121180306",
+        "related_product_ids": [5215726, 9194602, 9797343],
+        "views_count": 155828,
+        "likes_count": 1333,
+        "comments_count": 74,
+        "created_at": "2026-02-01 19:29:23",
+        "author": {
+          "id": "5121180306",
+          "name": "احمدرضا انصاری",
+          "username": "191factory",
+          "photo": "https://dkstatics-public.digikala.com/digikala-content-x-profile/d4a3a39f0c36fd5f9878a7ff9c6c163a69b4846b_1712130761.jpg",
+          "badge": {
+            "id": 2,
+            "title": "blue tick",
+            "code": "1",
+            "logo": "https://dkstatics-public.digikala.com/digikala-content-x-profile/5bb3f6fe0399893a59bdec45e2ed6a7daf144585_1736177635.png"
+          }
+        },
+        "media": [
+          {
+            "id": 1302770,
+            "status": "verified",
+            "type": "video",
+            "url": "https://video.digikala.com/qwkg7wg610/0kDoBDEwN9/h_,360_800,480_1500,720_2500,k.mp4.list/master.m3u8",
+            "ratio": 0.5625,
+            "cover_small": "https://dkstatics-public.digikala.com/digikala-content-x-post-media/9b55ebe7eec8ed0e15fba57edf6fd8d9bcc606b5_1769961566.jpg?x-oss-process=image/resize,m_fill,h_64,w_64",
+            "cover_medium": "https://dkstatics-public.digikala.com/digikala-content-x-post-media/9b55ebe7eec8ed0e15fba57edf6fd8d9bcc606b5_1769961566.jpg?x-oss-process=image/resize,m_fill,h_115,w_115",
+            "cover_big": "https://dkstatics-public.digikala.com/digikala-content-x-post-media/9b55ebe7eec8ed0e15fba57edf6fd8d9bcc606b5_1769961566.jpg?x-oss-process=image/resize,w_600/quality,q_80"
+          }
+        ],
+        "tags": [
+          {
+            "id": 21533,
+            "title": "نجاری"
+          },
+          {
+            "id": 2659,
+            "title": "چوب"
+          }
+        ],
+        "products": [
+          {
+            "id": 5215726,
+            "title_fa": "سطل زباله ونوس پلاستیک مدل خورشید کد A101",
+            "images": {
+              "main": "https://dkstatics-public.digikala.com/digikala-products/f4863e9a066cfbae7abbddf1a8114d649b56932b_1621438770.jpg?x-oss-process=image/resize,m_lfit,h_115,w_115/quality,q_60"
+            },
+            "price": {
+              "selling_price": 1800000,
+              "rrp_price": 1800000,
+              "discount_percent": 0
+            }
+          }
+        ],
+        "share_url": "https://www.digikala.com/magnet/posts/84511336332/",
+        "circle_cover": "https://dkstatics-public.digikala.com/digikala-content-x-post-media/9b55ebe7eec8ed0e15fba57edf6fd8d9bcc606b5_1769961566.jpg?x-oss-process=image/resize,m_fill,h_115,w_115"
+      }
+    ]
+  }
+}

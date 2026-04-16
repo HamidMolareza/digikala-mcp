@@ -178,6 +178,58 @@ public sealed class LiveDigikalaContractTests(LiveDigikalaApiFixture fixture)
         Assert.NotNull(envelope.Data.Categories);
     }
 
+    [Fact]
+    public async Task GetDynamicLandingMobileAsync_ShouldDeserializeLandingEnvelope()
+    {
+        if (!IsLiveTestsEnabled())
+        {
+            return;
+        }
+
+        using var response = await fixture.Client.GetDynamicLandingMobileAsync();
+
+        var envelope = DeserializeEnvelope<DynamicLandingMobileData>(response);
+
+        Assert.Equal(200, envelope.Status);
+        Assert.NotNull(envelope.Data);
+        Assert.True(envelope.Data!.LandingId > 0);
+        Assert.NotNull(envelope.Data.Widgets);
+        Assert.NotEmpty(envelope.Data.Widgets!);
+    }
+
+    [Fact]
+    public async Task GetMagnetHomePageAsync_ShouldDeserializePostsEnvelope()
+    {
+        if (!IsLiveTestsEnabled())
+        {
+            return;
+        }
+
+        using var response = await fixture.Client.GetMagnetHomePageAsync();
+
+        var envelope = DeserializeEnvelope<MagnetHomePageData>(response);
+
+        Assert.Equal(200, envelope.Status);
+        Assert.NotNull(envelope.Data);
+        Assert.NotNull(envelope.Data!.Posts);
+        Assert.NotEmpty(envelope.Data.Posts!);
+    }
+
+    [Fact]
+    public async Task GetSuperAppPillarsAsync_ShouldReturnSuccessfulEnvelope()
+    {
+        if (!IsLiveTestsEnabled())
+        {
+            return;
+        }
+
+        using var response = await fixture.Client.GetSuperAppPillarsAsync();
+
+        Assert.True(response.RootElement.TryGetProperty("status", out var statusElement));
+        Assert.Equal(200, statusElement.GetInt32());
+        Assert.True(response.RootElement.TryGetProperty("data", out _));
+    }
+
     private static DigikalaApiResponse<T> DeserializeEnvelope<T>(JsonDocument response)
     {
         var envelope = JsonSerializer.Deserialize<DigikalaApiResponse<T>>(response.RootElement.GetRawText());

@@ -27,6 +27,17 @@ public class DigikalaHttpClientTests
     }
 
     [Fact]
+    public async Task GetSuperAppPillarsAsync_ShouldUseAnonymousSuperAppRoute()
+    {
+        var handler = CreateSuccessHandler();
+        var client = CreateClient(new HttpClient(handler));
+
+        await client.GetSuperAppPillarsAsync();
+
+        Assert.Equal("https://api.example.com/v1/super-app/pillars/", handler.LastRequestUri!.ToString());
+    }
+
+    [Fact]
     public async Task RepeatedFailures_ShouldOpenCircuit()
     {
         var requestCount = 0;
@@ -98,18 +109,142 @@ public class DigikalaHttpClientTests
     [Fact]
     public async Task SearchCategoryAsync_ShouldUseCategorySearchRoute_ForRealCategory()
     {
-        var handler = new RecordingHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
-        {
-            Content = new StringContent("{\"status\":200,\"data\":{}}", Encoding.UTF8, "application/json"),
-        });
-        var httpClient = new HttpClient(handler);
-        var client = CreateClient(httpClient);
+        var handler = CreateSuccessHandler();
+        var client = CreateClient(new HttpClient(handler));
 
         await client.SearchCategoryAsync("mobile-phone", query: "iphone");
 
         Assert.NotNull(handler.LastRequestUri);
         Assert.Equal(
             "https://api.example.com/v1/categories/mobile-phone/search/?page=1&q=iphone",
+            handler.LastRequestUri!.ToString());
+    }
+
+    [Fact]
+    public async Task GetHomepageV2Async_ShouldUseHomepageRoute()
+    {
+        var handler = CreateSuccessHandler();
+        var client = CreateClient(new HttpClient(handler));
+
+        await client.GetHomepageV2Async();
+
+        Assert.Equal("https://api.example.com/v2/", handler.LastRequestUri!.ToString());
+    }
+
+    [Fact]
+    public async Task GetProvidersProductsAsync_ShouldIncludeCategoryPageAndQuery()
+    {
+        var handler = CreateSuccessHandler();
+        var client = CreateClient(new HttpClient(handler));
+
+        await client.GetProvidersProductsAsync("mobile-phone", page: 3, query: "iphone");
+
+        Assert.Equal(
+            "https://api.example.com/v1/providers-products/?category_code=mobile-phone&page=3&q=iphone",
+            handler.LastRequestUri!.ToString());
+    }
+
+    [Fact]
+    public async Task GetHomeRecommendationAsync_ShouldIncludeWebPageParameter()
+    {
+        var handler = CreateSuccessHandler();
+        var client = CreateClient(new HttpClient(handler));
+
+        await client.GetHomeRecommendationAsync("superapp");
+
+        Assert.Equal(
+            "https://api.example.com/v1/recommendation/?web_page=superapp",
+            handler.LastRequestUri!.ToString());
+    }
+
+    [Fact]
+    public async Task GetPersonalizedCategoryRecommendationAsync_ShouldUseCategoryPathAndPage()
+    {
+        var handler = CreateSuccessHandler();
+        var client = CreateClient(new HttpClient(handler));
+
+        await client.GetPersonalizedCategoryRecommendationAsync("vitamins", page: 2);
+
+        Assert.Equal(
+            "https://api.example.com/v1/recommendation/personalized-category/vitamins/?page=2",
+            handler.LastRequestUri!.ToString());
+    }
+
+    [Fact]
+    public async Task GetDynamicLandingMobileAsync_ShouldUseDynamicLandingRoute()
+    {
+        var handler = CreateSuccessHandler();
+        var client = CreateClient(new HttpClient(handler));
+
+        await client.GetDynamicLandingMobileAsync();
+
+        Assert.Equal(
+            "https://api.example.com/v1/dynamic-landing/mobile/",
+            handler.LastRequestUri!.ToString());
+    }
+
+    [Fact]
+    public async Task GetDynamicLandingWidgetAsync_ShouldUseWidgetRoute()
+    {
+        var handler = CreateSuccessHandler();
+        var client = CreateClient(new HttpClient(handler));
+
+        await client.GetDynamicLandingWidgetAsync(9491);
+
+        Assert.Equal(
+            "https://api.example.com/v1/dynamic-landing/widget/9491/",
+            handler.LastRequestUri!.ToString());
+    }
+
+    [Fact]
+    public async Task GetMagnetHomePageAsync_ShouldUseMagnetHomePageRoute()
+    {
+        var handler = CreateSuccessHandler();
+        var client = CreateClient(new HttpClient(handler));
+
+        await client.GetMagnetHomePageAsync();
+
+        Assert.Equal(
+            "https://api.example.com/v1/magnet/home-page/",
+            handler.LastRequestUri!.ToString());
+    }
+
+    [Fact]
+    public async Task GetAnnouncementMessageAsync_ShouldIncludeClientPage()
+    {
+        var handler = CreateSuccessHandler();
+        var client = CreateClient(new HttpClient(handler));
+
+        await client.GetAnnouncementMessageAsync("super-app");
+
+        Assert.Equal(
+            "https://api.example.com/v1/magnet/notification-center/announcement/message/?clientPage=super-app",
+            handler.LastRequestUri!.ToString());
+    }
+
+    [Fact]
+    public async Task GetRelatedPostsAsync_ShouldIncludeProductIdAndWarehouse()
+    {
+        var handler = CreateSuccessHandler();
+        var client = CreateClient(new HttpClient(handler));
+
+        await client.GetRelatedPostsAsync(7158804, warehouseId: 29);
+
+        Assert.Equal(
+            "https://api.example.com/v1/magnet/related-posts/7158804/?_whid=29&productId=7158804",
+            handler.LastRequestUri!.ToString());
+    }
+
+    [Fact]
+    public async Task GetCommentsOverviewUserFeedbackAsync_ShouldIncludeOverviewIdInPathAndQuery()
+    {
+        var handler = CreateSuccessHandler();
+        var client = CreateClient(new HttpClient(handler));
+
+        await client.GetCommentsOverviewUserFeedbackAsync(20112);
+
+        Assert.Equal(
+            "https://api.example.com/v1/comments-overview/20112/user-feedback/?overviewId=20112",
             handler.LastRequestUri!.ToString());
     }
 
@@ -123,6 +258,12 @@ public class DigikalaHttpClientTests
 
         return new DigikalaHttpClient(httpClient, options, NullLogger<DigikalaHttpClient>.Instance);
     }
+
+    private static RecordingHandler CreateSuccessHandler() =>
+        new(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("{\"status\":200,\"data\":{}}", Encoding.UTF8, "application/json"),
+        });
 
     private sealed class RecordingHandler(Func<HttpRequestMessage, HttpResponseMessage> responder) : HttpMessageHandler
     {

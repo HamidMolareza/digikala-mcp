@@ -56,6 +56,11 @@ public sealed class DigikalaHttpClient(
         return await GetJsonAsync($"/api/features/{Uri.EscapeDataString(sdkKey)}", ct, useFeatureHost: true);
     }
 
+    public async Task<JsonDocument> GetSuperAppPillarsAsync(CancellationToken ct = default)
+    {
+        return await GetJsonAsync("/v1/super-app/pillars/", ct);
+    }
+
     // Product Detail
 
     public async Task<JsonDocument> GetProductV2Async(long productId, long? variantId = null, CancellationToken ct = default)

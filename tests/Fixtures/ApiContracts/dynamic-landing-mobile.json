@@ -1,0 +1,107 @@
+{
+  "status": 200,
+  "data": {
+    "landing_id": 1591,
+    "logged_in": false,
+    "seo": {
+      "description": "",
+      "header": {
+        "robots_meta": "noindex, nofollow"
+      }
+    },
+    "studio_signed": "Alt3 10011101001001001100 Alt3",
+    "widgets": [
+      {
+        "widget_type": "hero",
+        "widget_id": 9369,
+        "data": {
+          "type": "slider",
+          "home_page_slider": false,
+          "is_loop": false,
+          "is_auto_play": true,
+          "auto_play_delay": 0,
+          "is_full": false,
+          "mobile_slides": [
+            {
+              "url": {
+                "uri": "/product/dkp-21462684?camCode=1591"
+              },
+              "image": {
+                "id": 68763,
+                "alt": "",
+                "title": "",
+                "url": "https://dkstatics-public.digikala.com/digikala-admin-landing/45a899e80827df2b2fed367a485397f45c3577f9_1773734166.jpg",
+                "webp_url": "https://dkstatics-public.digikala.com/digikala-admin-landing/45a899e80827df2b2fed367a485397f45c3577f9_1773734166.jpg?x-oss-process=image/format,webp"
+              }
+            }
+          ],
+          "desktop_slides": [
+            {
+              "url": {
+                "uri": "/product/dkp-21462684?camCode=1591"
+              },
+              "image": {
+                "id": 68762,
+                "alt": "",
+                "title": "",
+                "url": "https://dkstatics-public.digikala.com/digikala-admin-landing/a3005606ec2961005baf7681e14148d45a07fb41_1773734162.jpg",
+                "webp_url": "https://dkstatics-public.digikala.com/digikala-admin-landing/a3005606ec2961005baf7681e14148d45a07fb41_1773734162.jpg?x-oss-process=image/format,webp"
+              }
+            }
+          ]
+        },
+        "sort": 1
+      },
+      {
+        "widget_type": "special_carousel",
+        "widget_id": 9370,
+        "data": {
+          "widget_url": "v1/dynamic-landing/widget/9370/",
+          "sort": 10
+        },
+        "sort": 10
+      },
+      {
+        "widget_type": "incredible_offer",
+        "widget_id": 9374,
+        "data": {
+          "title": "پیشنهاد شگفت انگیز",
+          "discount_percent": 75,
+          "see_more_url": {
+            "uri": "/incredible-offers/?category_id=11&camCode=1591"
+          },
+          "products": [
+            {
+              "id": 14423707,
+              "title_fa": "مانیتور 35 اینچ ایسوس مدل ROG Swift PG35VQ",
+              "url": {
+                "uri": "/product/dkp-14423707/مانیتور-35-اینچ-ایسوس-مدل-rog-swift-pg35vq"
+              },
+              "status": "marketable",
+              "rating": {
+                "rate": 90,
+                "count": 2
+              },
+              "images": {
+                "main": {
+                  "url": [
+                    "https://dkstatics-public.digikala.com/digikala-products/fdc020bc4317e4cbf8c39695b3c5a7e2fe59ae44_1707907682.jpg"
+                  ]
+                }
+              },
+              "default_variant": {
+                "id": 76570099,
+                "price": {
+                  "selling_price": 750000000,
+                  "rrp_price": 937289000,
+                  "discount_percent": 20
+                }
+              }
+            }
+          ]
+        },
+        "sort": 40
+      }
+    ]
+  }
+}

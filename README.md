@@ -6,6 +6,7 @@ Current working notes for the next implementation phase live in:
 
 - `docs/temp-review-notes.md`
 - `docs/implementation-checklist.md`
+- `docs/2026-04-16-android-apk-analysis.md`
 
 ## Architecture
 
@@ -89,6 +90,13 @@ The repo also supports opt-in live contract tests that call Digikala directly an
 - They are disabled by default and run only when `DIGIKALA_RUN_LIVE_CONTRACT_TESTS=true`.
 - Optional canary inputs can be overridden with `DIGIKALA_LIVE_PRODUCT_ID`, `DIGIKALA_LIVE_CATEGORY_SLUG`, and `DIGIKALA_LIVE_SEARCH_QUERY`.
 - Use them for CI schedules, release checks, or after suspected upstream API drift.
+- Some environments currently receive `403` HTML responses from Digikala edge even for anonymous read-only endpoints. Treat that as an egress/network constraint, not proof that the API requires login. Prefer running live probes from an allowed network path.
+
+## Android APK Notes
+
+- The analyzed Android APK (`Digikala.apk`, version `3.1.3-CB`) is a React Native app that embeds mobile host references such as `sirius.digikala.com` and `ravenclaw.digikala.com`.
+- This MCP server should stay on the documented anonymous web API surface (`api.digikala.com` and `api-zakaria.digikala.com`) unless a separate investigation proves stable anonymous mobile routes worth adding.
+- See `docs/2026-04-16-android-apk-analysis.md` for the evidence and scope decision.
 
 ## Runtime Paths
 

@@ -15,6 +15,7 @@ public interface IDigikalaApiClient
 
     // Feature Flags
     Task<JsonDocument> GetFeatureFlagsAsync(string sdkKey, CancellationToken ct = default);
+    Task<JsonDocument> GetSuperAppPillarsAsync(CancellationToken ct = default);
 
     // Product Detail
     Task<JsonDocument> GetProductV2Async(long productId, long? variantId = null, CancellationToken ct = default);
