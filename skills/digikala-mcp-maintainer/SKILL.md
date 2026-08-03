@@ -1,6 +1,6 @@
 ---
 name: digikala-mcp-maintainer
-description: Maintain the Digikala MCP .NET server in `/home/home/Desktop/temp/digikala/digikala-mcp`. Use when working on Digikala product/search MCP features, server configuration, logging, cache/database paths, tests, or docs-driven implementation against `docs/app-requirements.md` and `docs/request-response.api-summary.yaml`.
+description: Maintain the Digikala MCP .NET server in `/home/home/my-files/projects/releases/digikala-mcp/source`. Use when working on Digikala product/search MCP features, server configuration, logging, cache/database paths, tests, or docs-driven implementation against `docs/app-requirements.md` and `docs/request-response.api-summary.yaml`.
 ---
 
 # Digikala MCP Maintainer
@@ -20,7 +20,7 @@ description: Maintain the Digikala MCP .NET server in `/home/home/Desktop/temp/d
 - Mappers and DTOs: `src/Digikala.Mcp.Application/Mapping`, `src/Digikala.Mcp.Application/Dtos`
 - Infrastructure client/cache: `src/Digikala.Mcp.Infrastructure/HttpClients`, `src/Digikala.Mcp.Infrastructure/Cache`
 - Runtime data: `app-data/cache.db`, `app-data/logs/`
-- Codex config entry: `/home/home/.gapcodex/config.toml`
+- Codex config entry: `${CODEX_HOME:-$HOME/.codex}/config.toml`
 
 ## Workflow
 
