@@ -41,6 +41,57 @@ public class OfflineApiContractTests
     }
 
     [Fact]
+    public void DiscoveryAutocompleteFixture_ShouldMatchExpectedContract()
+    {
+        using var response = LoadFixture("autocomplete-discovery.json");
+
+        var result = _autocompleteMapper.MapToAutocomplete(response);
+
+        Assert.Equal(2, result.Suggestions.Count);
+        var category = result.Suggestions[0];
+        Assert.Equal("category", category.Type);
+        Assert.Equal("ماگ فانتزی", category.Text);
+        Assert.Equal("ماگ", category.CategoryTitle);
+        Assert.Equal("mug", category.CategorySlug);
+        Assert.Equal("query", result.Suggestions[1].Type);
+        Assert.Null(result.Suggestions[1].CategorySlug);
+        Assert.Single(result.TrendingSearches);
+    }
+
+    [Fact]
+    public void GlobalSearchFixture_ShouldMatchExpectedContract()
+    {
+        using var response = LoadFixture("search-global.json");
+
+        var result = _productMapper.MapToSearchResult(response);
+
+        Assert.Equal(2, result.Products.Count);
+        Assert.Equal(20315865, result.Products[0].Id);
+        Assert.Equal(12227415, result.Products[1].Id);
+        Assert.Equal(5250000, result.Products[0].PriceRials);
+        Assert.Equal(65, result.Products[0].Rating);
+        Assert.True(result.Products[0].IsAvailable);
+        Assert.Equal(950, result.TotalCount);
+        Assert.Equal(48, result.TotalPages);
+        Assert.Contains("22=مرتبط‌ترین", result.AvailableSortOptions);
+        Assert.Contains("20=ارزان‌ترین", result.AvailableSortOptions);
+    }
+
+    [Fact]
+    public void CategoryBestSellingSearchFixture_ShouldMapToCategoryLanding()
+    {
+        using var response = LoadFixture("category-search-best-selling.json");
+
+        var result = _categoryMapper.MapToCategoryFromSearch(response);
+
+        Assert.Equal(11, result.Id);
+        Assert.Equal("mobile-phone", result.Slug);
+        Assert.Equal("گوشی موبایل", result.Title);
+        Assert.Equal(4, result.BestSellingProducts.Count);
+        Assert.Equal(["اپل", "سامسونگ"], result.PopularBrands.Select(item => item.Title).ToArray());
+    }
+
+    [Fact]
     public void SearchCategoryFixture_ShouldMatchExpectedContract()
     {
         using var response = LoadFixture("search-category.json");

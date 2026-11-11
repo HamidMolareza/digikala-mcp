@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Collections.Concurrent;
 using System.Net;
 using Digikala.Mcp.Domain.Interfaces;
+using Digikala.Mcp.Domain.ValueObjects;
 using Digikala.Mcp.Infrastructure.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -133,6 +134,29 @@ public sealed class DigikalaHttpClient(
 
     // Search / Browse
 
+    // Digikala ignores a price range unless both bounds are sent.
+    private const long UnboundedMaxPriceRials = 999_999_999_999;
+
+    public async Task<JsonDocument> SearchProductsAsync(ProductSearchRequest request, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var categorySlug = string.IsNullOrWhiteSpace(request.CategorySlug) ? null : request.CategorySlug.Trim();
+        var path = categorySlug is null
+            ? "/discovery/api/v2/search"
+            : $"/v1/categories/{Uri.EscapeDataString(categorySlug)}/search/";
+        var hasPriceRange = request.MinPriceRials is not null || request.MaxPriceRials is not null;
+
+        var url = BuildUrl(path,
+            ("q", string.IsNullOrWhiteSpace(request.Query) ? null : request.Query.Trim()),
+            ("page", request.Page.ToString()),
+            ("sort", request.Sort?.ToString()),
+            ("has_selling_stock", request.OnlyAvailable ? "1" : null),
+            ("price[min]", hasPriceRange ? (request.MinPriceRials ?? 0).ToString() : null),
+            ("price[max]", hasPriceRange ? (request.MaxPriceRials ?? UnboundedMaxPriceRials).ToString() : null));
+        return await GetJsonAsync(url, ct);
+    }
+
     public async Task<JsonDocument> SearchCategoryAsync(string categorySlug, int page = 1, int? sort = null,
         Dictionary<string, string[]>? attributes = null, string? query = null, CancellationToken ct = default)
     {
@@ -211,7 +235,7 @@ public sealed class DigikalaHttpClient(
 
     public async Task<JsonDocument> GetAutocompleteAsync(string query, CancellationToken ct = default)
     {
-        return await GetJsonAsync($"/v1/autocomplete/?q={Uri.EscapeDataString(query)}", ct);
+        return await GetJsonAsync($"/discovery/api/v2/autocomplete?q={Uri.EscapeDataString(query)}", ct);
     }
 
     // Brand
@@ -337,7 +361,7 @@ public sealed class DigikalaHttpClient(
         if (filtered.Length == 0) return path;
 
         var separator = path.Contains('?') ? '&' : '?';
-        var query = string.Join('&', filtered.Select(p => $"{p.key}={Uri.EscapeDataString(p.value!)}"));
+        var query = string.Join('&', filtered.Select(p => $"{Uri.EscapeDataString(p.key)}={Uri.EscapeDataString(p.value!)}"));
         return $"{path}{separator}{query}";
     }
 

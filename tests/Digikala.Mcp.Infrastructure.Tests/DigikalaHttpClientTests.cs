@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using Digikala.Mcp.Domain.ValueObjects;
 using Digikala.Mcp.Infrastructure.Configuration;
 using Digikala.Mcp.Infrastructure.HttpClients;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -118,6 +119,50 @@ public class DigikalaHttpClientTests
         Assert.Equal(
             "https://api.example.com/v1/categories/mobile-phone/search/?page=1&q=iphone",
             handler.LastRequestUri!.ToString());
+    }
+
+    [Fact]
+    public async Task SearchProductsAsync_ShouldUseGlobalDiscoverySearch_WhenCategoryIsMissing()
+    {
+        var handler = CreateSuccessHandler();
+        var client = CreateClient(new HttpClient(handler));
+
+        await client.SearchProductsAsync(new ProductSearchRequest("iphone", Sort: 22));
+
+        Assert.Equal(
+            "https://api.example.com/discovery/api/v2/search?q=iphone&page=1&sort=22",
+            handler.LastRequestUri!.AbsoluteUri);
+    }
+
+    [Fact]
+    public async Task SearchProductsAsync_ShouldSendStockAndBothPriceBounds_ForCategorySearch()
+    {
+        var handler = CreateSuccessHandler();
+        var client = CreateClient(new HttpClient(handler));
+
+        await client.SearchProductsAsync(new ProductSearchRequest(
+            "mug",
+            CategorySlug: "mug",
+            Page: 2,
+            MaxPriceRials: 10_000_000,
+            OnlyAvailable: true));
+
+        Assert.Equal(
+            "https://api.example.com/v1/categories/mug/search/?q=mug&page=2&has_selling_stock=1&price%5Bmin%5D=0&price%5Bmax%5D=10000000",
+            handler.LastRequestUri!.AbsoluteUri);
+    }
+
+    [Fact]
+    public async Task GetAutocompleteAsync_ShouldUseDiscoveryAutocompleteRoute()
+    {
+        var handler = CreateSuccessHandler();
+        var client = CreateClient(new HttpClient(handler));
+
+        await client.GetAutocompleteAsync("iphone");
+
+        Assert.Equal(
+            "https://api.example.com/discovery/api/v2/autocomplete?q=iphone",
+            handler.LastRequestUri!.AbsoluteUri);
     }
 
     [Fact]
