@@ -3,6 +3,7 @@ using Digikala.Mcp.Application.Mapping;
 using Digikala.Mcp.Application.Services;
 using Digikala.Mcp.Domain.Enums;
 using Digikala.Mcp.Domain.Interfaces;
+using Digikala.Mcp.Domain.ValueObjects;
 using NSubstitute;
 using Xunit;
 
@@ -18,7 +19,7 @@ public class RankProductsServiceTests
         var searchService = CreateSearchService(apiClient, cache);
         var service = new RankProductsService(searchService);
 
-        apiClient.SearchCategoryAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<Dictionary<string, string[]>?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+        apiClient.SearchProductsAsync(Arg.Any<ProductSearchRequest>(), Arg.Any<CancellationToken>())
             .Returns(JsonDocument.Parse("""
                 {
                   "status": 200,
@@ -79,7 +80,7 @@ public class RankProductsServiceTests
         Assert.NotNull(result.Error);
         Assert.Equal("InvalidInput", result.Error!.Code);
         Assert.Equal("rank_products", result.Error.Tool);
-        await apiClient.DidNotReceiveWithAnyArgs().SearchCategoryAsync(default!, default, default, default, default, default);
+        await apiClient.DidNotReceiveWithAnyArgs().SearchProductsAsync(default!, default);
     }
 
     [Fact]
@@ -100,7 +101,7 @@ public class RankProductsServiceTests
         Assert.Equal("InvalidInput", result.Error!.Code);
         Assert.Contains(result.Error.Diagnostics, item => item.Contains("`limit`", StringComparison.Ordinal));
         Assert.Contains(result.Error.Diagnostics, item => item.Contains("`minPriceRials` cannot be greater", StringComparison.Ordinal));
-        await apiClient.DidNotReceiveWithAnyArgs().SearchCategoryAsync(default!, default, default, default, default, default);
+        await apiClient.DidNotReceiveWithAnyArgs().SearchProductsAsync(default!, default);
     }
 
     private static SearchProductsService CreateSearchService(IDigikalaApiClient apiClient, ICacheStore cache)

@@ -9,6 +9,9 @@ public sealed record SearchResultDto
     public ToolIssueDto? Error { get; set; }
     public List<ProductSummaryDto> Products { get; init; } = [];
     public ProductSummaryDto? BestMatch { get; set; }
+    /// <summary>Category the search ran in, or null for a global keyword search.</summary>
+    public string? SearchedCategorySlug { get; set; }
+    public int PagesFetched { get; set; } = 1;
     public int TotalCount { get; init; }
     public int FilteredCount { get; set; }
     public int CurrentPage { get; init; }

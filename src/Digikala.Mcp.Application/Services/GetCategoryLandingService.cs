@@ -3,11 +3,15 @@ using Digikala.Mcp.Application.Internal;
 using Digikala.Mcp.Application.Mapping;
 using Digikala.Mcp.Domain.Enums;
 using Digikala.Mcp.Domain.Interfaces;
+using Digikala.Mcp.Domain.ValueObjects;
 
 namespace Digikala.Mcp.Application.Services;
 
 public sealed class GetCategoryLandingService(IDigikalaApiClient apiClient, ICacheStore cache, CategoryMapper mapper)
 {
+    private const string SubCategoriesUnavailableWarning =
+        "Sub-categories are not available: Digikala retired the category landing endpoint, so this summary is built from the category's best sellers.";
+
     public async Task<CategoryDto> ExecuteAsync(
         string categorySlug,
         bool skipCache = false,
@@ -18,7 +22,7 @@ public sealed class GetCategoryLandingService(IDigikalaApiClient apiClient, ICac
             ["categorySlug"] = categorySlug,
             ["skipCache"] = skipCache.ToString(),
         };
-        var cacheKey = ToolExecutionHelper.CreateCacheKey("get_category_landing", ("category", categorySlug));
+        var cacheKey = ToolExecutionHelper.CreateCacheKey("get_category_landing", ("v", 2), ("category", categorySlug));
         try
         {
             return await ToolExecutionHelper.GetOrCreateWithStaleFallbackAsync(
@@ -27,8 +31,17 @@ public sealed class GetCategoryLandingService(IDigikalaApiClient apiClient, ICac
                 CacheTier.LongTerm,
                 async token =>
                 {
-                    using var response = await apiClient.GetCategoryLandingAsync(categorySlug, token);
-                    return mapper.MapToCategory(response);
+                    using var response = await apiClient.SearchProductsAsync(
+                        new ProductSearchRequest(
+                            Query: string.Empty,
+                            CategorySlug: categorySlug,
+                            Sort: (int)SortOption.BestSelling,
+                            OnlyAvailable: true),
+                        token);
+                    return mapper.MapToCategoryFromSearch(response) with
+                    {
+                        Warning = SubCategoriesUnavailableWarning,
+                    };
                 },
                 skipCache,
                 ct);

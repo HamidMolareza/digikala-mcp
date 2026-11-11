@@ -146,11 +146,11 @@ public sealed class RecommendProductsForNeedService(
         try
         {
             var candidateLimit = GetCandidateLimit(limit, includeEvidence);
-            var searchResult = await searchProductsService.ExecuteAsync(
-                query: understanding.SearchQuery,
+            Task<SearchResultDto> SearchAsync(string query) => searchProductsService.ExecuteAsync(
+                query: query,
                 categorySlug: categorySlug,
                 page: 1,
-                sort: 1,
+                sort: null,
                 minRating: minRating,
                 minReviewCount: minReviewCount,
                 onlyAvailable: onlyAvailable,
@@ -165,6 +165,15 @@ public sealed class RecommendProductsForNeedService(
                 prioritizeBestMatch: true,
                 skipCache: skipCache,
                 ct: ct);
+
+            var searchResult = await SearchAsync(understanding.SearchQuery);
+            string? broadenedQueryWarning = null;
+            var broaderQuery = BuildBroaderQuery(understanding.SearchQuery);
+            if (searchResult.Error is null && searchResult.Products.Count == 0 && broaderQuery is not null)
+            {
+                searchResult = await SearchAsync(broaderQuery);
+                broadenedQueryWarning = $"No products matched `{understanding.SearchQuery}`; retried with the broader query `{broaderQuery}`.";
+            }
 
             if (searchResult.Error is not null && searchResult.Products.Count == 0)
             {
@@ -199,7 +208,7 @@ public sealed class RecommendProductsForNeedService(
                 IsStale = searchResult.IsStale || visibleCandidates.Any(item => item.Feedback.IsStale),
                 IsFromCache = searchResult.IsFromCache || visibleCandidates.Any(item => item.Feedback.IsFromCache),
                 CacheStatus = BuildRecommendationCacheStatus(searchResult.CacheStatus, visibleCandidates.Select(item => item.Feedback.CacheStatus)),
-                Warning = CombineWarnings(searchResult.Warning, candidateSelectionWarning),
+                Warning = CombineWarnings(searchResult.Warning, broadenedQueryWarning, candidateSelectionWarning),
                 SearchQuery = understanding.SearchQuery,
                 QueryUnderstanding = understanding.ToDto(),
                 Recommendations = visibleCandidates
@@ -413,17 +422,37 @@ public sealed class RecommendProductsForNeedService(
             return isPersian ? "شامپو موهای چرب" : "shampoo oily hair";
         }
 
-        var keywords = Regex.Matches(needDescription, @"[\p{L}\p{N}]+")
-            .Select(match => match.Value.Trim())
-            .Where(token => token.Length > 1)
-            .Where(token => !StopWords.Contains(token, StringComparer.OrdinalIgnoreCase))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .Take(6)
-            .ToArray();
+        // The product itself is usually named before the first clause ("ماگ سرامیکی بزرگ با حجم ..."),
+        // and long constraint lists make Digikala's keyword search worse, not better.
+        var keywords = ExtractKeywords(TakeLeadingClause(needDescription)).Take(4).ToArray();
+        if (keywords.Length == 0)
+        {
+            keywords = ExtractKeywords(needDescription).Take(4).ToArray();
+        }
 
         return keywords.Length > 0
             ? string.Join(' ', keywords)
             : needDescription;
+    }
+
+    private static IEnumerable<string> ExtractKeywords(string text) =>
+        Regex.Matches(text, @"[\p{L}\p{N}]+")
+            .Select(match => match.Value.Trim())
+            .Where(token => token.Length > 1)
+            .Where(token => !StopWords.Contains(token, StringComparer.OrdinalIgnoreCase))
+            .Distinct(StringComparer.OrdinalIgnoreCase);
+
+    private static string TakeLeadingClause(string text)
+    {
+        var match = ClauseBoundaryRegex.Match(text);
+        return match.Success && match.Index > 0 ? text[..match.Index] : text;
+    }
+
+    // Keeps the first two keywords, which usually name the product type (e.g. "ماگ سرامیکی").
+    private static string? BuildBroaderQuery(string searchQuery)
+    {
+        var tokens = searchQuery.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return tokens.Length > 2 ? string.Join(' ', tokens.Take(2)) : null;
     }
 
     private static RecommendationCandidate BuildRecommendation(
@@ -660,8 +689,26 @@ public sealed class RecommendProductsForNeedService(
         return diagnostics;
     }
 
+    private static readonly Regex ClauseBoundaryRegex = new(
+        @"[،,;؛.:]|\s(?:با|برای|که|تا|with|for|that|which|under|below)\s",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
     private static readonly string[] StopWords =
     [
+        "need",
+        "looking",
+        "با",
+        "از",
+        "به",
+        "در",
+        "و",
+        "یا",
+        "یه",
+        "نیاز",
+        "دارم",
+        "میخوام",
+        "می‌خواهم",
+        "می‌خوام",
         "a",
         "an",
         "and",
