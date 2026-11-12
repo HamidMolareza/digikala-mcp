@@ -67,7 +67,7 @@ public sealed class RankProductsService(SearchProductsService searchProductsServ
             query: query,
             categorySlug: categorySlug,
             page: 1,
-            sort: 1,
+            sort: null,
             minRating: minRating,
             minReviewCount: minReviewCount,
             onlyAvailable: onlyAvailable,

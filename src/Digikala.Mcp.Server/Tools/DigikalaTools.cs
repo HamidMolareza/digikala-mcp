@@ -12,10 +12,10 @@ public sealed class SearchProductsTool(SearchProductsService service, ILogger<Se
     [McpServerTool, Description("Search products by keyword within an optional category, with filters, sorting, and pagination.")]
     public Task<SearchResultDto> search_products(
         [Description("Search keyword in Persian or English")] string query,
-        [Description("Category slug, e.g. 'mobile-phone'. When omitted, the tool returns a validation hint because no documented global product-search endpoint is available.")] string? categorySlug = null,
+        [Description("Optional category slug, e.g. 'mobile-phone' or 'mug'. When omitted, the category is inferred from the query or Digikala's global keyword search is used. A category gives exact upstream price filtering.")] string? categorySlug = null,
         [Description("Page number, starting from 1")] int page = 1,
-        [Description("Sort: 1=relevance, 4=popular, 7=cheapest, 8=expensive, 25=best-selling, 27=newest")] int? sort = null,
-        [Description("Optional minimum rating threshold, e.g. 4.5")] double? minRating = null,
+        [Description("Digikala sort id. Omit (or 22) for most relevant. 7=best-selling, 20=cheapest, 21=most expensive, 1=newest, 4=most viewed, 27=buyers' pick, 25=fastest shipping, 29=featured. A non-relevance sort keeps Digikala's order instead of re-ranking.")] int? sort = null,
+        [Description("Optional minimum rating on a 0-5 scale, e.g. 4.5 (Digikala's 0-100 ratings are converted).")] double? minRating = null,
         [Description("Optional minimum review count threshold, e.g. 500")] int? minReviewCount = null,
         [Description("Only return currently available products when true.")] bool? onlyAvailable = null,
         [Description("Optional minimum selling price in rials.")] long? minPriceRials = null,
@@ -81,14 +81,14 @@ public sealed class RankProductsTool(RankProductsService service, ILogger<RankPr
     [McpServerTool, Description("Rank structured product candidates using explicit filters and ranking priorities only.")]
     public Task<RankProductsResultDto> rank_products(
         [Description("Search keyword in Persian or English")] string query,
-        [Description("Category slug, e.g. 'mobile-phone'. When omitted, the tool may infer a known category from the query or return a validation hint.")] string? categorySlug = null,
+        [Description("Optional category slug, e.g. 'mobile-phone'. When omitted, the category is inferred from the query or Digikala's global keyword search is used.")] string? categorySlug = null,
         [Description("Only return currently available products when true.")] bool? onlyAvailable = true,
         [Description("Terms that every result should match.")] string[]? requiredTerms = null,
         [Description("Terms that should boost ranking when matched.")] string[]? preferredTerms = null,
         [Description("Terms that should exclude results when matched.")] string[]? excludedTerms = null,
         [Description("Ranking priority order. Supported values: buyer_popularity, rating, rating_count, best_match, price_low, price_high, availability")] string[]? rankingPriority = null,
         [Description("Maximum number of ranked products to return.")] int limit = 5,
-        [Description("Optional minimum rating threshold, e.g. 4.5")] double? minRating = null,
+        [Description("Optional minimum rating on a 0-5 scale, e.g. 4.5 (Digikala's 0-100 ratings are converted).")] double? minRating = null,
         [Description("Optional minimum rating count threshold, e.g. 500")] int? minReviewCount = null,
         [Description("Optional minimum selling price in rials.")] long? minPriceRials = null,
         [Description("Optional maximum selling price in rials.")] long? maxPriceRials = null,
@@ -140,10 +140,10 @@ public sealed class RecommendProductsForNeedTool(
     [McpServerTool, Description("Recommend products for a natural-language shopping need using Digikala data only, with transparent evidence.")]
     public Task<ProductNeedRecommendationsDto> recommend_products_for_need(
         [Description("Natural-language shopping need or constraint set.")] string needDescription,
-        [Description("Category slug, e.g. 'personal-care' or 'mobile-phone'. When omitted, recommendations may return a validation hint because no documented global product-search endpoint is available.")] string? categorySlug = null,
+        [Description("Optional category slug, e.g. 'hair-shampoo' or 'mug'. When omitted, the category is inferred from the need or Digikala's global keyword search is used.")] string? categorySlug = null,
         [Description("Maximum number of recommendations to return.")] int limit = 5,
         [Description("Only return currently available products when true.")] bool? onlyAvailable = true,
-        [Description("Optional minimum rating threshold, e.g. 4.0")] double? minRating = null,
+        [Description("Optional minimum rating on a 0-5 scale, e.g. 4.0 (Digikala's 0-100 ratings are converted).")] double? minRating = null,
         [Description("Optional minimum review count threshold, e.g. 30")] int? minReviewCount = null,
         [Description("Optional minimum selling price in rials.")] long? minPriceRials = null,
         [Description("Optional maximum selling price in rials.")] long? maxPriceRials = null,
@@ -382,9 +382,9 @@ public sealed class GetTrendingProductsTool(GetTrendingProductsService service, 
 [McpServerToolType]
 public sealed class GetCategoryLandingTool(GetCategoryLandingService service, ILogger<GetCategoryLandingTool> logger)
 {
-    [McpServerTool, Description("Get a category landing page with subcategories, popular brands, and highlights.")]
+    [McpServerTool, Description("Get a category summary: title, current best sellers, and the most common brands among them. Use a product category slug such as 'mug' or 'mobile-phone'.")]
     public Task<CategoryDto> get_category_landing(
-        [Description("Category slug, e.g. 'electronic-devices'")] string categorySlug,
+        [Description("Product category slug, e.g. 'mobile-phone' or 'mug'")] string categorySlug,
         [Description("When true, bypasses cache reads and writes and forces a live upstream fetch.")] bool skipCache = false,
         CancellationToken ct = default)
     {

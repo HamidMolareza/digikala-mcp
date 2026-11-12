@@ -37,24 +37,25 @@ Current working notes for the next implementation phase live in:
 
 `search_products` supports AI-oriented ranking and filtering:
 
-- `minRating`
+- `minRating` (0-5 scale; Digikala's 0-100 ratings are converted)
 - `minReviewCount`
-- `onlyAvailable`
-- `minPriceRials`
-- `maxPriceRials`
+- `onlyAvailable` and `minPriceRials`/`maxPriceRials` (also sent upstream; exact price filtering needs a category)
 - `limit`
+- `sort` (Digikala ids: omit or `22` = most relevant, `7` = best-selling, `20` = cheapest, `21` = most expensive, `1` = newest, `4` = most viewed, `27` = buyers' pick, `25` = fastest shipping, `29` = featured)
 - `prioritizeBestMatch`
 
-The result includes `BestMatch`, `FilteredCount`, `AppliedFilters`, and per-product `SearchScore`.
+Ranking keeps Digikala's relevance order as the base and weighs how many query words appear in each title above rating and review volume. An explicit non-relevance `sort` keeps Digikala's order. When rating, review-count or avoid-term filters leave too few products on one page, up to three upstream pages are read.
+
+The result includes `BestMatch`, `FilteredCount`, `AppliedFilters`, `SearchedCategorySlug`, `PagesFetched`, `AvailableSortOptions` as `id=title`, and per-product `SearchScore`.
 
 ## Category Resolution
 
-Digikala's documented public product search is category-scoped. This server therefore resolves categories before calling `search_products`:
+The server resolves a category before calling Digikala, and falls back to the global keyword search when none is found:
 
-- Explicit `categorySlug` is used as-is.
+- Explicit `categorySlug` is used as-is (`/v1/categories/{slug}/search/`).
 - Known shopping intents are mapped with alias rules, including `mobile-phone`, `hair-shampoo`, `power-bank`, and `cell-phone-data-cable`.
-- If no alias matches, the server uses `autocomplete` category hints as a fallback.
-- If the category still cannot be resolved, the tool returns a structured validation error instead of attempting a placeholder global search.
+- If no alias matches, the server uses `autocomplete` category hints (`/discovery/api/v2/autocomplete`).
+- If the category still cannot be resolved, the server uses Digikala's global search (`/discovery/api/v2/search`) and says so in `Warning`.
 
 This keeps MCP shopping flows inside Digikala data while still supporting natural-language requests such as `iphone`, `power bank 20000`, or `type-c cable`.
 

@@ -3,6 +3,7 @@ using Digikala.Mcp.Application.Internal;
 using Digikala.Mcp.Application.Mapping;
 using Digikala.Mcp.Domain.Enums;
 using Digikala.Mcp.Domain.Interfaces;
+using Digikala.Mcp.Domain.ValueObjects;
 
 namespace Digikala.Mcp.Application.Services;
 
@@ -12,6 +13,9 @@ public sealed class SearchProductsService(
     ProductMapper mapper,
     CategoryResolutionService categoryResolutionService)
 {
+    private const int MaxUpstreamPages = 3;
+    private const int DefaultResultTarget = 20;
+
     public async Task<SearchResultDto> ExecuteAsync(
         string query,
         string? categorySlug = null,
@@ -97,21 +101,13 @@ public sealed class SearchProductsService(
             prioritizeBestMatch,
             skipCache);
 
-        if (resolvedCategorySlug is null)
-        {
-            return CreateValidationError(
-                "search_products requires categorySlug unless the query can be mapped to a known Digikala category.",
-                request,
-                resolution.Diagnostics
-                    .Concat(
-                    [
-                        "Provide a category slug such as 'mobile-phone', 'power-bank', or 'cell-phone-data-cable', or use a query that clearly indicates one of those categories."
-                    ])
-                    .ToArray());
-        }
+        var resolutionWarning = resolvedCategorySlug is null
+            ? "No category was given or inferred; used Digikala's global keyword search. Pass categorySlug to narrow results and enable exact price filtering."
+            : resolution.WasInferred ? resolution.Diagnostics.FirstOrDefault() : null;
 
         var cacheKey = ToolExecutionHelper.CreateCacheKey(
             "search_products",
+            ("v", 2),
             ("query", normalizedQuery),
             ("category", resolvedCategorySlug),
             ("page", page),
@@ -137,23 +133,29 @@ public sealed class SearchProductsService(
                 CacheTier.ShortTerm,
                 async token =>
                 {
-                    using var response = await apiClient.SearchCategoryAsync(
+                    var result = await FetchCandidatesAsync(
+                        normalizedQuery,
                         resolvedCategorySlug,
                         page,
                         sort,
-                        query: normalizedQuery,
-                        ct: token);
+                        minRating,
+                        minReviewCount,
+                        onlyAvailable,
+                        minPriceRials,
+                        maxPriceRials,
+                        limit,
+                        normalizedAvoidTerms,
+                        token);
 
-                    var result = mapper.MapToSearchResult(response);
                     result = result with
                     {
-                        Warning = CombineWarnings(
-                            result.Warning,
-                            resolution.WasInferred ? resolution.Diagnostics.FirstOrDefault() : null),
+                        Warning = CombineWarnings(result.Warning, resolutionWarning),
                     };
 
                     return ApplyFilteringAndRanking(
                         result,
+                        normalizedQuery,
+                        sort,
                         minRating,
                         minReviewCount,
                         onlyAvailable,
@@ -186,8 +188,86 @@ public sealed class SearchProductsService(
         }
     }
 
+    private async Task<SearchResultDto> FetchCandidatesAsync(
+        string query,
+        string? categorySlug,
+        int page,
+        int? sort,
+        double? minRating,
+        int? minReviewCount,
+        bool? onlyAvailable,
+        long? minPriceRials,
+        long? maxPriceRials,
+        int? limit,
+        IReadOnlyCollection<string>? avoidTerms,
+        CancellationToken ct)
+    {
+        // Rating, review-count and avoid-term filters only run locally, so a single
+        // upstream page can shrink to a handful of products; read a few more pages.
+        var needsMorePages = minRating is not null || minReviewCount is not null || avoidTerms is { Count: > 0 };
+        var target = limit ?? DefaultResultTarget;
+        var products = new List<ProductSummaryDto>();
+        var seenIds = new HashSet<long>();
+        SearchResultDto? firstPage = null;
+        var pagesFetched = 0;
+        var currentPage = page;
+
+        while (true)
+        {
+            using var response = await apiClient.SearchProductsAsync(
+                new ProductSearchRequest(
+                    query,
+                    categorySlug,
+                    currentPage,
+                    sort,
+                    minPriceRials,
+                    maxPriceRials,
+                    OnlyAvailable: onlyAvailable == true),
+                ct);
+
+            var pageResult = mapper.MapToSearchResult(response);
+            firstPage ??= pageResult;
+            pagesFetched++;
+            products.AddRange(pageResult.Products.Where(item => item.Id == 0 || seenIds.Add(item.Id)));
+
+            var hasMorePages = currentPage < pageResult.TotalPages && pageResult.Products.Count > 0;
+            if (!needsMorePages
+                || !hasMorePages
+                || pagesFetched >= MaxUpstreamPages
+                || CountPassingFilters(products, minRating, minReviewCount, onlyAvailable, minPriceRials, maxPriceRials) >= target)
+            {
+                break;
+            }
+
+            currentPage++;
+        }
+
+        return firstPage with
+        {
+            Products = products,
+            SearchedCategorySlug = categorySlug,
+            PagesFetched = pagesFetched,
+        };
+    }
+
+    private static int CountPassingFilters(
+        IEnumerable<ProductSummaryDto> products,
+        double? minRating,
+        int? minReviewCount,
+        bool? onlyAvailable,
+        long? minPriceRials,
+        long? maxPriceRials) =>
+        products.Count(item =>
+            (minRating is null || (NormalizeRatingToFiveScale(item.Rating) ?? 0) >= minRating.Value)
+            && (minReviewCount is null || item.ReviewCount >= minReviewCount.Value)
+            && (onlyAvailable is null || item.IsAvailable == onlyAvailable.Value)
+            && (minPriceRials is null || item.PriceRials >= minPriceRials.Value)
+            && (maxPriceRials is null || item.PriceRials <= maxPriceRials.Value));
+
     private static SearchResultDto ApplyFilteringAndRanking(
         SearchResultDto result,
+        string query,
+        int? sort,
         double? minRating,
         int? minReviewCount,
         bool? onlyAvailable,
@@ -202,12 +282,20 @@ public sealed class SearchProductsService(
         bool prioritizeBestMatch)
     {
         var appliedFilters = new List<string>();
+        // Products are records with value equality, so positions are tracked by reference.
+        var upstreamPositions = new Dictionary<ProductSummaryDto, int>(ReferenceEqualityComparer.Instance);
+        for (var index = 0; index < result.Products.Count; index++)
+        {
+            upstreamPositions[result.Products[index]] = index;
+        }
+
+        var upstreamCount = result.Products.Count;
         IEnumerable<ProductSummaryDto> products = result.Products;
 
         if (minRating is not null)
         {
             appliedFilters.Add($"min_rating>={minRating:0.0}");
-            products = products.Where(item => (item.Rating ?? 0) >= minRating.Value);
+            products = products.Where(item => (NormalizeRatingToFiveScale(item.Rating) ?? 0) >= minRating.Value);
         }
 
         if (minReviewCount is not null)
@@ -234,15 +322,22 @@ public sealed class SearchProductsService(
             products = products.Where(item => item.PriceRials <= maxPriceRials.Value);
         }
 
+        var queryTokens = SearchTextMatcher.Tokenize(query);
         var rankedProducts = products
             .Select(item =>
             {
                 ProductSuitabilityAnalyzer.EnrichSummary(item, preferTerms, avoidTerms, includeAttributeHighlights, preferBalancedMatches);
-                item.SearchScore = CalculateSearchScore(item, preferBalancedMatches);
+                item.SearchScore = CalculateSearchScore(
+                    item,
+                    upstreamPositions[item],
+                    upstreamCount,
+                    queryTokens,
+                    preferBalancedMatches);
                 return item;
             });
 
-        if (prioritizeBestMatch)
+        // An explicit non-relevance sort (cheapest, newest, ...) is the caller's ranking; keep Digikala's order.
+        if (prioritizeBestMatch && IsRelevanceSort(sort))
         {
             appliedFilters.Add("prioritize_best_match=true");
             rankedProducts = rankedProducts
@@ -285,16 +380,32 @@ public sealed class SearchProductsService(
         };
     }
 
-    private static double CalculateSearchScore(ProductSummaryDto product, bool preferBalancedMatches)
+    // Keyword match outweighs everything else, then Digikala's own relevance order;
+    // rating and review volume only separate otherwise similar matches.
+    private static double CalculateSearchScore(
+        ProductSummaryDto product,
+        int upstreamIndex,
+        int upstreamCount,
+        IReadOnlyList<string> queryTokens,
+        bool preferBalancedMatches)
     {
-        var ratingComponent = (product.Rating ?? 0d) * 100d;
-        var reviewConfidence = Math.Log10(Math.Max(1, product.ReviewCount)) * 20d;
-        var availabilityBonus = product.IsAvailable ? 15d : 0d;
-        var pricePenalty = product.PriceRials > 0 ? Math.Min(product.PriceRials / 10_000_000d, 15d) : 0d;
+        var keywordComponent = SearchTextMatcher.MatchRatio(queryTokens, product.Title, product.EnglishTitle) * 120d;
+        var positionComponent = upstreamCount <= 1 ? 40d : 40d * (1d - (double)upstreamIndex / upstreamCount);
+        var ratingComponent = (NormalizeRatingToFiveScale(product.Rating) ?? 0d) * 6d;
+        var reviewConfidence = Math.Log10(Math.Max(1, product.ReviewCount)) * 5d;
+        var availabilityBonus = product.IsAvailable ? 10d : 0d;
         var signalScore = ProductSuitabilityAnalyzer.CalculateSignalScore(product, preferBalancedMatches);
 
-        return ratingComponent + reviewConfidence + availabilityBonus + signalScore - pricePenalty;
+        return Math.Round(
+            keywordComponent + positionComponent + ratingComponent + reviewConfidence + availabilityBonus + signalScore,
+            2);
     }
+
+    private static bool IsRelevanceSort(int? sort) => sort is null || sort == (int)SortOption.MostRelevant;
+
+    // Digikala now reports ratings as a 0-100 percentage; older payloads used 0-5.
+    internal static double? NormalizeRatingToFiveScale(double? rating) =>
+        rating is > 5 ? rating / 20d : rating;
 
     private static string NormalizeQuery(string query)
     {

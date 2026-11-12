@@ -1,0 +1,31 @@
+{
+  "status": 200,
+  "data": {
+    "auto_complete": [
+      {
+        "type": "category",
+        "id": 10707,
+        "title": "ماگ فانتزی",
+        "category_title": "ماگ",
+        "url": {
+          "url": "/search/category-mug/?q=%D9%85%D8%A7%DA%AF+%D9%81%D8%A7%D9%86%D8%AA%D8%B2%DB%8C"
+        }
+      },
+      {
+        "type": "query",
+        "title": "ماگ",
+        "url": {
+          "url": "/search/?q=%D9%85%D8%A7%DA%AF"
+        }
+      }
+    ],
+    "trends": [
+      {
+        "keyword": "ساعت مچی زنانه",
+        "url": {
+          "url": "https://www.digikala.com/search/?q=%D8%B3%D8%A7%D8%B9%D8%AA+%D9%85%DA%86%DB%8C+%D8%B2%D9%86%D8%A7%D9%86%D9%87"
+        }
+      }
+    ]
+  }
+}

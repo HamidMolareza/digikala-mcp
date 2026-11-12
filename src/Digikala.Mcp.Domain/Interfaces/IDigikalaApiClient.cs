@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Digikala.Mcp.Domain.ValueObjects;
 
 namespace Digikala.Mcp.Domain.Interfaces;
 
@@ -35,6 +36,7 @@ public interface IDigikalaApiClient
     Task<JsonDocument> GetRateReviewAsync(long productId, int page = 1, CancellationToken ct = default);
 
     // Search / Browse
+    Task<JsonDocument> SearchProductsAsync(ProductSearchRequest request, CancellationToken ct = default);
     Task<JsonDocument> SearchCategoryAsync(string categorySlug, int page = 1, int? sort = null, Dictionary<string, string[]>? attributes = null, string? query = null, CancellationToken ct = default);
     Task<JsonDocument> SearchFreshCategoryAsync(string categorySlug, int page = 1, int? sort = null, int warehouseId = 29, CancellationToken ct = default);
     Task<JsonDocument> GetTagProductsAsync(string tagSlug, int page = 1, CancellationToken ct = default);
