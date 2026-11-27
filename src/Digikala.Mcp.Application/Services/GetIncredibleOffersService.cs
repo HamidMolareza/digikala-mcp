@@ -18,7 +18,7 @@ public sealed class GetIncredibleOffersService(IDigikalaApiClient apiClient, ICa
             ["page"] = page.ToString(),
             ["skipCache"] = skipCache.ToString(),
         };
-        var cacheKey = ToolExecutionHelper.CreateCacheKey("get_incredible_offers", ("page", page));
+        var cacheKey = ToolExecutionHelper.CreateCacheKey("get_incredible_offers", ("v", 2), ("page", page));
         try
         {
             return await ToolExecutionHelper.GetOrCreateWithStaleFallbackAsync(
@@ -27,9 +27,8 @@ public sealed class GetIncredibleOffersService(IDigikalaApiClient apiClient, ICa
                 CacheTier.ShortTerm,
                 async token =>
                 {
-                    using var response = page <= 1
-                        ? await apiClient.GetIncredibleOffersAsync(token)
-                        : await apiClient.GetIncredibleOffersProductsAsync(page, ct: token);
+                    // /v1/incredible-offers/ now carries only a banner slider, so every page reads the product listing.
+                    using var response = await apiClient.GetIncredibleOffersProductsAsync(Math.Max(page, 1), ct: token);
                     return mapper.MapToOffersList(response);
                 },
                 skipCache,

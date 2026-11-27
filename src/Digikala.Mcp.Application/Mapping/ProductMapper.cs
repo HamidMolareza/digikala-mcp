@@ -151,23 +151,11 @@ public sealed class ProductMapper
 
     public SearchResultDto MapToSearchResult(JsonDocument response)
     {
-        var data = JsonHelpers.GetData(response);
-        var products = data.TryGetNested(out var categoryProducts, "products")
-            ? MapToSummaryList(categoryProducts)
-            : [];
-
-        // Global search (/discovery/api/v2/search) wraps the listing and each product in widgets.
-        var listing = data.EnumerateArrayOrEmpty("widgets")
-            .FirstOrDefault(widget => widget.GetStringOrNull("type") == "vertical_product_listing");
-        if (listing.ValueKind == JsonValueKind.Object && listing.TryGetNested(out var listingData, "data"))
-        {
-            data = listingData;
-            products = data.EnumerateArrayOrEmpty("widgets")
-                .Where(widget => widget.GetStringOrNull("type") == "product")
-                .Select(widget => widget.TryGetNested(out var product, "data") ? MapToSummary(product) : new ProductSummaryDto())
-                .Where(item => item.Id != 0 || !string.IsNullOrWhiteSpace(item.Title))
-                .ToList();
-        }
+        var (data, productElements) = ProductListing.Unwrap(JsonHelpers.GetData(response));
+        var products = productElements
+            .Select(MapToSummary)
+            .Where(item => item.Id != 0 || !string.IsNullOrWhiteSpace(item.Title))
+            .ToList();
 
         return new SearchResultDto
         {

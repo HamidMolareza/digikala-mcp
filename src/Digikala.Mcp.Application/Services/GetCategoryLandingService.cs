@@ -38,7 +38,7 @@ public sealed class GetCategoryLandingService(IDigikalaApiClient apiClient, ICac
                             Sort: (int)SortOption.BestSelling,
                             OnlyAvailable: true),
                         token);
-                    return mapper.MapToCategoryFromSearch(response) with
+                    return mapper.MapToCategoryFromSearch(response, categorySlug) with
                     {
                         Warning = SubCategoriesUnavailableWarning,
                     };

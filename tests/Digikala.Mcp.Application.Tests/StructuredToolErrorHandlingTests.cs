@@ -48,13 +48,13 @@ public class StructuredToolErrorHandlingTests
     public async Task GetBrandPageService_ShouldReturnStructuredError_WhenUpstreamFails()
     {
         var apiClient = Substitute.For<IDigikalaApiClient>();
-        apiClient.GetBrandPremiumAsync("persil", Arg.Any<CancellationToken>())
-            .Returns<Task<JsonDocument>>(_ => throw new HttpRequestException("Digikala API returned HTTP 404 for https://api.digikala.com/v1/brands/persil/"));
+        apiClient.GetBrandProductsAsync("persil", Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<CancellationToken>())
+            .Returns<Task<JsonDocument>>(_ => throw new HttpRequestException("Digikala API returned HTTP 404 for https://api.digikala.com/discovery/api/v1/brands/persil/products?page=1&sort=1"));
 
         var service = new GetBrandPageService(apiClient, NoCache, new BrandMapper(new ProductMapper()));
         var result = await service.ExecuteAsync("persil");
 
-        AssertStructuredError(result.Error, "get_brand_page", "NotFound", 404, "/v1/brands/persil/");
+        AssertStructuredError(result.Error, "get_brand_page", "NotFound", 404, "/discovery/api/v1/brands/persil/products?page=1&sort=1");
         Assert.Contains("structured diagnostics", result.Warning, StringComparison.OrdinalIgnoreCase);
         Assert.Empty(result.BestSellingProducts);
         Assert.Empty(result.NewestProducts);
@@ -65,12 +65,12 @@ public class StructuredToolErrorHandlingTests
     {
         var apiClient = Substitute.For<IDigikalaApiClient>();
         apiClient.SearchProductsAsync(Arg.Is<ProductSearchRequest>(r => r.CategorySlug == "mobile-phone"), Arg.Any<CancellationToken>())
-            .Returns<Task<JsonDocument>>(_ => throw new HttpRequestException("Digikala API returned HTTP 503 for https://api.digikala.com/v1/categories/mobile-phone/search/?page=1&sort=7"));
+            .Returns<Task<JsonDocument>>(_ => throw new HttpRequestException("Digikala API returned HTTP 503 for https://api.digikala.com/discovery/api/v2/categories/mobile-phone/products?page=1&sort=7"));
 
         var service = new GetCategoryLandingService(apiClient, NoCache, new CategoryMapper(new ProductMapper()));
         var result = await service.ExecuteAsync("mobile-phone");
 
-        AssertStructuredError(result.Error, "get_category_landing", "UpstreamError", 503, "/v1/categories/mobile-phone/search/?page=1&sort=7");
+        AssertStructuredError(result.Error, "get_category_landing", "UpstreamError", 503, "/discovery/api/v2/categories/mobile-phone/products?page=1&sort=7");
         Assert.Contains("structured diagnostics", result.Warning, StringComparison.OrdinalIgnoreCase);
         Assert.Empty(result.SubCategories);
     }
@@ -80,12 +80,12 @@ public class StructuredToolErrorHandlingTests
     {
         var apiClient = Substitute.For<IDigikalaApiClient>();
         apiClient.GetIncredibleOffersProductsAsync(3, null, Arg.Any<CancellationToken>())
-            .Returns<Task<JsonDocument>>(_ => throw new HttpRequestException("Digikala API returned HTTP 503 for https://api.digikala.com/v1/incredible-offers/products/?page=3"));
+            .Returns<Task<JsonDocument>>(_ => throw new HttpRequestException("Digikala API returned HTTP 503 for https://api.digikala.com/amazing/v1/page/0?no_widgets=1&page=3"));
 
         var service = new GetIncredibleOffersService(apiClient, NoCache, new OfferMapper());
         var result = await service.ExecuteAsync(page: 3);
 
-        AssertStructuredError(result.Error, "get_incredible_offers", "UpstreamError", 503, "/v1/incredible-offers/products/?page=3");
+        AssertStructuredError(result.Error, "get_incredible_offers", "UpstreamError", 503, "/amazing/v1/page/0?no_widgets=1&page=3");
         Assert.Contains("structured diagnostics", result.Warning, StringComparison.OrdinalIgnoreCase);
         Assert.Empty(result.Offers);
     }
@@ -95,12 +95,12 @@ public class StructuredToolErrorHandlingTests
     {
         var apiClient = Substitute.For<IDigikalaApiClient>();
         apiClient.GetProductV2Async(1001, null, Arg.Any<CancellationToken>())
-            .Returns<Task<JsonDocument>>(_ => throw new HttpRequestException("Digikala API returned HTTP 404 for https://api.digikala.com/v2/product/1001/"));
+            .Returns<Task<JsonDocument>>(_ => throw new HttpRequestException("Digikala API returned HTTP 404 for https://api.digikala.com/product/v1/products/1001/"));
 
         var service = new GetProductDetailService(apiClient, NoCache, new ProductMapper());
         var result = await service.ExecuteAsync(1001);
 
-        AssertStructuredError(result.Error, "get_product_detail", "NotFound", 404, "/v2/product/1001/");
+        AssertStructuredError(result.Error, "get_product_detail", "NotFound", 404, "/product/v1/products/1001/");
         Assert.Equal(1001, result.Id);
         Assert.Contains("structured diagnostics", result.Warning, StringComparison.OrdinalIgnoreCase);
     }

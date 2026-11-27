@@ -72,6 +72,14 @@ internal static class JsonHelpers
             return int32;
         }
 
+        // Some fields (e.g. discount_percent) arrive as decimals such as 0.0 or 12.0.
+        if (value.ValueKind == JsonValueKind.Number &&
+            value.TryGetDouble(out var number) &&
+            number is >= int.MinValue and <= int.MaxValue)
+        {
+            return (int)Math.Round(number);
+        }
+
         if (value.ValueKind == JsonValueKind.String && int.TryParse(value.GetString(), out int32))
         {
             return int32;

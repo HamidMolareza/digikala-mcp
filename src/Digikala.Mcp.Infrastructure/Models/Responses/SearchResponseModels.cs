@@ -105,14 +105,16 @@ public sealed class VariantModel
 
 public sealed class PriceModel
 {
+    // Null for unavailable products in Magnet posts.
     [JsonPropertyName("selling_price")]
-    public long SellingPrice { get; set; }
+    public long? SellingPrice { get; set; }
 
     [JsonPropertyName("rrp_price")]
     public long? RrpPrice { get; set; }
 
+    // Digikala sends this as a decimal on some surfaces (e.g. 0.0 on product detail).
     [JsonPropertyName("discount_percent")]
-    public int? DiscountPercent { get; set; }
+    public double? DiscountPercent { get; set; }
 }
 
 public sealed class SellerModel

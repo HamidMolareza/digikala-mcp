@@ -1,0 +1,795 @@
+{
+  "status": 200,
+  "data": {
+    "brand": {
+      "id": 18,
+      "code": "samsung",
+      "title_fa": "سامسونگ",
+      "title_en": "Samsung",
+      "url": {
+        "base": null,
+        "uri": "/brand/samsung/"
+      },
+      "visibility": true,
+      "logo": {
+        "storage_ids": [],
+        "url": [
+          "https://dkstatics-public.digikala.com/digikala-brands/08d96217ad4d3d5efc140029c0e02fa1c3f41865_1792311044.jpg?x-oss-process=image/resize,m_lfit,h_160,w_160/quality,q_80"
+        ],
+        "thumbnail_url": null,
+        "temporary_id": null,
+        "webp_url": null
+      },
+      "is_premium": false,
+      "is_miscellaneous": false,
+      "is_name_similar": false
+    },
+    "pager": {
+      "current_page": 1,
+      "total_pages": 255,
+      "total_items": 5090
+    },
+    "sort": {
+      "default": 7
+    },
+    "sort_options": [
+      {
+        "id": 4,
+        "title_fa": "پربازدیدترین"
+      },
+      {
+        "id": 1,
+        "title_fa": "جدیدترین"
+      },
+      {
+        "id": 7,
+        "title_fa": "پرفروش‌ترین"
+      },
+      {
+        "id": 20,
+        "title_fa": "ارزان‌ترین"
+      },
+      {
+        "id": 21,
+        "title_fa": "گران‌ترین"
+      },
+      {
+        "id": 26,
+        "title_fa": "بیشترین تخفیف"
+      },
+      {
+        "id": 25,
+        "title_fa": "سریع‌ترین ارسال"
+      },
+      {
+        "id": 27,
+        "title_fa": "پیشنهاد خریداران"
+      },
+      {
+        "id": 29,
+        "title_fa": "منتخب"
+      }
+    ],
+    "products": [
+      {
+        "id": 20109389,
+        "title_fa": "گوشی موبایل سامسونگ مدل Galaxy A07 دو سیم کارت ظرفیت 64 گیگابایت و رم 4 گیگابایت",
+        "title_en": "Samsung Galaxy A07 Dual SIM Storage 64GB And 4GB RAM Mobile Phone",
+        "test_title_fa": "",
+        "test_title_en": "",
+        "url": {
+          "base": null,
+          "uri": "/product/dkp-20109389/گوشی-موبایل-سامسونگ-مدل-galaxy-a07-دو-سیم-کارت-ظرفیت-64-گیگابایت-و-رم-4-گیگابایت",
+          "params": [
+            {
+              "product_id": 20109389,
+              "variant_id": 71571641
+            }
+          ]
+        },
+        "status": "marketable",
+        "has_quick_view": false,
+        "data_layer": {
+          "brand": "سامسونگ",
+          "category": "[MO,گوشی موبایل]",
+          "metric6": 2469,
+          "dimension2": 5,
+          "dimension6": 0,
+          "dimension7": "incredible",
+          "dimension9": 4.4,
+          "dimension11": 0,
+          "dimension20": "marketable",
+          "item_category2": "موبایل",
+          "item_category3": "گوشی موبایل",
+          "item_category4": "",
+          "item_category5": ""
+        },
+        "product_type": "product",
+        "images": {
+          "main": {
+            "url": [
+              "https://dkstatics-public.digikala.com/digikala-products/6e193ccbadf1dd14bc3f15df8050006e44c96846_1763385148.jpg?x-oss-process=image/resize,m_lfit,h_600,w_600/quality,q_90"
+            ],
+            "webp_url": [
+              "https://dkstatics-public.digikala.com/digikala-products/6e193ccbadf1dd14bc3f15df8050006e44c96846_1763385148.jpg?x-oss-process=image/resize,m_lfit,h_600,w_600/format,webp/quality,q_90"
+            ]
+          }
+        },
+        "rating": {
+          "rate": 87.31470230862698,
+          "count": 2469
+        },
+        "properties": {
+          "is_fast_shipping": false,
+          "is_ship_by_seller": false,
+          "free_shipping_badge": false,
+          "is_multi_warehouse": false,
+          "is_fake": false,
+          "has_gift": false,
+          "min_price_in_last_month": null,
+          "is_non_inventory": false,
+          "is_outlet": false,
+          "is_jet_eligible": true,
+          "is_ad": false
+        },
+        "badges": [],
+        "colors": [
+          {
+            "id": 1,
+            "title": "مشکی",
+            "code": "#000000",
+            "hex_code": "#000000"
+          },
+          {
+            "id": 6,
+            "title": "سبز",
+            "code": "#008000",
+            "hex_code": "#008000"
+          },
+          {
+            "id": 24,
+            "title": "یاسی",
+            "code": "#cfa2ff",
+            "hex_code": "#cfa2ff"
+          }
+        ],
+        "default_variant": {
+          "id": 71571641,
+          "title": "گوشی موبایل سامسونگ مدل Galaxy A07 دو سیم کارت ظرفیت 64 گیگابایت و رم 4 گیگابایت | مشکی | گارانتی 18 ماهه شرکتی",
+          "status": "marketable",
+          "rate": 90.2,
+          "lead_time": 0,
+          "rank": 0,
+          "order_limit": 1,
+          "marketable_stock": 2,
+          "statistics": {
+            "totally_satisfied": {
+              "rate_count": 294,
+              "rate": 71.36
+            },
+            "satisfied": {
+              "rate_count": 69,
+              "rate": 16.75
+            },
+            "neutral": {
+              "rate_count": 28,
+              "rate": 6.8
+            },
+            "dissatisfied": {
+              "rate_count": 9,
+              "rate": 2.18
+            },
+            "totally_dissatisfied": {
+              "rate_count": 12,
+              "rate": 2.91
+            },
+            "total_count": 412,
+            "total_rate": 90.2
+          },
+          "properties": {
+            "is_fast_shopping": false,
+            "is_ship_by_seller": false,
+            "is_multi_warehouse": false,
+            "has_similar_variants": true,
+            "is_rural": false,
+            "in_digikala_warehouse": true,
+            "is_ship_from_user_state": false,
+            "nearby_seller_shipment": false,
+            "support_nearby_shipping_for_user": false,
+            "is_ship_by_seller_restricted": false,
+            "has_nearby_shipment": false,
+            "is_eligible_for_jet_delivery": true
+          },
+          "warranty": {
+            "id": 9732,
+            "title_fa": "گارانتی 18 ماهه شرکتی",
+            "title_en": "گارانتی 18 ماهه شرکتی"
+          },
+          "themes": [
+            {
+              "value": {
+                "variant_id": 71571641,
+                "id": 1,
+                "title": "مشکی",
+                "code": "#000000",
+                "hex_code": "#000000",
+                "nature": "color"
+              },
+              "label": "رنگ",
+              "type": "colored",
+              "is_main": true
+            }
+          ],
+          "color": {
+            "id": 1,
+            "title": "مشکی",
+            "code": "#000000",
+            "hex_code": "#000000"
+          },
+          "seller": {
+            "id": 1,
+            "title": "دیجی‌کالا",
+            "code": "5A52N",
+            "url": "/seller/5A52N/",
+            "rating": {
+              "total_rate": 0,
+              "total_count": 0,
+              "commitment": 0,
+              "no_return": 0,
+              "on_time_shipping": 0
+            },
+            "properties": {
+              "is_trusted": false,
+              "is_official": false,
+              "is_roosta": false,
+              "is_new": false
+            },
+            "stars": null,
+            "grade": {
+              "label": "بدون عملکرد",
+              "color": "#81858B"
+            },
+            "registration_date": "",
+            "logo": "https://dkstatics-public.digikala.com/digikala-marketplace-seller-logo/002e77bfa27829e04cf9c78520c6e7c3cd3ad74d_1791965106.png"
+          },
+          "insurance": {
+            "title": "بیمه تجهیزات دیجیتال - بیمه سامان",
+            "subtitle": "با قابلیت جبران هزینه های تعمیر و تعویض یکساله",
+            "description": "با بیمه دیجی‌پی، بخش زیادی از خسارت‌های ناشی از حوادث زیر پوشش داده می‌شود (۲۰٪ فرانشیز بر عهده بیمه‌گذار است):",
+            "covers": [
+              {
+                "description": "جبران خسارات ناشی از انواع سرقت",
+                "maxCoverage": null,
+                "maxUseCount": 1
+              },
+              {
+                "description": "جبران خسارات فیزیکی مانند ضربه‌دیدگی، شکستگی و آب‌خوردگی غیرعمدی",
+                "maxCoverage": null,
+                "maxUseCount": null
+              },
+              {
+                "description": "جبران خسارات ناشی از آتش‌سوزی و انفجارهای غیرعمدی",
+                "maxCoverage": null,
+                "maxUseCount": null
+              },
+              {
+                "description": "جبران خسارات ناشی از سوختگی یا نیم‌سوز شدن، القای الکتریکی، اتصال کوتاه و نوسانات ولتاژ غیرعمدی",
+                "maxCoverage": null,
+                "maxUseCount": null
+              },
+              {
+                "description": "همچنین تمام فرایند‌های بیمه دیجی‌پی از خرید تا دریافت خسارت آنلاین است.",
+                "maxCoverage": null,
+                "maxUseCount": null
+              },
+              {
+                "description": "هزینه‌های دستگاه صدمه دیده حتی گوشی‌های آیفون در کمتر از ۴۸ ساعت بعد از اعلام خسارت پرداخت می‌شود.",
+                "maxCoverage": null,
+                "maxUseCount": null
+              },
+              {
+                "description": "تعمیرات توسط متخصصین دیجی‌کالا سرویس انجام می‌شود و هر تعمیر ۳ ماه و هر قطعه تعمیر شده ۶ ماه گارانتی دارد.",
+                "maxCoverage": null,
+                "maxUseCount": null
+              },
+              {
+                "description": "* توجه: برای استفاده از بیمه، بعد از دریافت کالای دیجیتال خود، به سایت دیجی‌پی، بخش بیمه تجهیزات و بعد پنل کاربری مراجعه کنید و بیمه خود را فعال کنید. در غیر این‌صورت امکان دانلود بیمه‌نامه و دریافت خسارت وجود ندارد.",
+                "maxCoverage": null,
+                "maxUseCount": null
+              },
+              {
+                "description": "برای اعلام خسارت وارد پنل کاربری خود در سایت دیجی‌پی شوید و اطلاعات خود را تکمیل کنید.",
+                "maxCoverage": null,
+                "maxUseCount": null
+              },
+              {
+                "description": "برای رفع مشکلات و سوالات خود می‌توانید در هفت روز هفته با شماره ۰۲۱۵۳۹۲۴۰۰۰ تماس بگیرید.",
+                "maxCoverage": null,
+                "maxUseCount": null
+              }
+            ],
+            "base_premium": 6730000,
+            "discount": 0,
+            "tax": 673000,
+            "total_premium": 7403000,
+            "terms_and_conditions": "بران خسارات ناشی از ضربه خوردگی، شکستگی، آبخوردگی، سرقت با شکست حرز و کلیه حوادث مرتبط با دستگاه خریداری شده با کسورات و فرانشیز حداقل، بدون هزینه استهلاک \r\nارائه خدمات ویژه VIP، بدون هر گونه مراجعه فیزیکی",
+            "before_discount": 14806000,
+            "discount_percent": 50
+          },
+          "price": {
+            "selling_price": 425990000,
+            "rrp_price": 448453000,
+            "order_limit": 1,
+            "is_incredible": true,
+            "is_promotion": true,
+            "is_locked_for_digiplus": false,
+            "bnpl_active": false,
+            "marketable_stock": 2,
+            "discount_percent": 5,
+            "exact_discount_percent": 5,
+            "min_order_limit": 1,
+            "badge": {
+              "title": "پیشنهاد شگفت انگیز"
+            },
+            "discount": 5,
+            "show_discount_badge": true,
+            "timer": 24293
+          },
+          "badges": [
+            {
+              "id": -1,
+              "type": "simple",
+              "slot": "pdp_above_add_to_cart",
+              "priority": 0,
+              "payload": {
+                "svg_icon": "https://dkstatics-public.digikala.com/digikala-static/54419b9303246cde131fcb5b251b86f2ab4aeb71_1716833765.svg",
+                "text": "تنها 2 عدد در انبار باقی مانده",
+                "text_color": "#d32f2f"
+              }
+            }
+          ],
+          "digiplus": {
+            "services": [
+              "۴ ارسال رایگان عادی",
+              "۲ ارسال سوپرمارکت",
+              "۴ ارسال رایگان ۴۵ دقیقه‌ای",
+              "پشتیبانی اختصاصی",
+              "ارسال سریع و رایگان دیجی‌کالا"
+            ],
+            "service_list": [
+              {
+                "title": "۴ ارسال رایگان عادی"
+              },
+              {
+                "title": "۲ ارسال سوپرمارکت"
+              },
+              {
+                "title": "۴ ارسال رایگان ۴۵ دقیقه‌ای"
+              },
+              {
+                "title": "پشتیبانی اختصاصی"
+              },
+              {
+                "title": "ارسال سریع و رایگان دیجی‌کالا"
+              }
+            ],
+            "services_summary": [
+              "ارسال رایگان"
+            ],
+            "is_jet_eligible": true,
+            "cash_back": 0,
+            "is_general_location_jet_eligible": false,
+            "fast_shipping_text": "ارسال سریع دیجی‌کالا"
+          },
+          "digiclub": {
+            "point": 150
+          },
+          "shipment_methods": {
+            "description": "",
+            "has_lead_time": false,
+            "icon": null,
+            "icon_color": null,
+            "providers": [
+              {
+                "has_lead_time": false,
+                "type": "jet",
+                "title": "ارسال جت",
+                "description": "",
+                "label": null,
+                "price": null,
+                "shipping_mode": "jet",
+                "delivery_day": "همان روز",
+                "delivery_day_offset": 0,
+                "image": null,
+                "svg_image": null
+              },
+              {
+                "has_lead_time": false,
+                "type": "digikala",
+                "title": "ارسال دیجی‌کالا",
+                "description": "",
+                "label": null,
+                "price": null,
+                "shipping_mode": "digikala",
+                "delivery_day": null,
+                "image": null,
+                "svg_image": null
+              }
+            ]
+          },
+          "variant_badges": [
+            {
+              "id": 0,
+              "type": "low_stock",
+              "slot": "buy_box",
+              "priority": 1,
+              "payload": {
+                "text": "تنها 2 عدد در انبار باقی مانده"
+              }
+            },
+            {
+              "id": -1,
+              "type": "simple",
+              "slot": "pdp_above_add_to_cart",
+              "priority": 0,
+              "payload": {
+                "svg_icon": "https://dkstatics-public.digikala.com/digikala-static/54419b9303246cde131fcb5b251b86f2ab4aeb71_1716833765.svg",
+                "text": "تنها 2 عدد در انبار باقی مانده",
+                "text_color": "#d32f2f"
+              }
+            }
+          ],
+          "buy_box_notices": [],
+          "has_importer_price": false,
+          "manufacture_price_not_exist": false,
+          "has_best_price_in_last_month": false
+        },
+        "platforms": [
+          "digikala"
+        ]
+      },
+      {
+        "id": 20490694,
+        "title_fa": "گوشی موبایل سامسونگ مدل Galaxy A17 4G دو سیم کارت ظرفیت 128 گیگابایت و رم 4 گیگابایت - ویتنام",
+        "title_en": "Samsung Galaxy A17 4G Dual SIM 128GB Storage And 4GB Ram Mobile Phone - Vietnam",
+        "test_title_fa": "",
+        "test_title_en": "",
+        "url": {
+          "base": null,
+          "uri": "/product/dkp-20490694/گوشی-موبایل-سامسونگ-مدل-galaxy-a17-4g-دو-سیم-کارت-ظرفیت-128-گیگابایت-و-رم-4-گیگابایت-ویتنام",
+          "params": [
+            {
+              "product_id": 20490694,
+              "variant_id": 90450221
+            }
+          ]
+        },
+        "status": "marketable",
+        "has_quick_view": false,
+        "data_layer": {
+          "brand": "سامسونگ",
+          "category": "[MO,گوشی موبایل]",
+          "metric6": 1338,
+          "dimension2": 3,
+          "dimension6": 0,
+          "dimension7": "incredible",
+          "dimension9": 4.5,
+          "dimension11": 0,
+          "dimension20": "marketable",
+          "item_category2": "موبایل",
+          "item_category3": "گوشی موبایل",
+          "item_category4": "",
+          "item_category5": ""
+        },
+        "product_type": "product",
+        "images": {
+          "main": {
+            "url": [
+              "https://dkstatics-public.digikala.com/digikala-products/874aae18f993ad077c32ebd9b5948797bcdde9b2_1765798798.jpg?x-oss-process=image/resize,m_lfit,h_600,w_600/quality,q_90"
+            ],
+            "webp_url": [
+              "https://dkstatics-public.digikala.com/digikala-products/874aae18f993ad077c32ebd9b5948797bcdde9b2_1765798798.jpg?x-oss-process=image/resize,m_lfit,h_600,w_600/format,webp/quality,q_90"
+            ]
+          }
+        },
+        "rating": {
+          "rate": 88.01195814648729,
+          "count": 1338
+        },
+        "properties": {
+          "is_fast_shipping": false,
+          "is_ship_by_seller": false,
+          "free_shipping_badge": false,
+          "is_multi_warehouse": false,
+          "is_fake": false,
+          "has_gift": false,
+          "min_price_in_last_month": null,
+          "is_non_inventory": false,
+          "is_outlet": false,
+          "is_jet_eligible": true,
+          "is_ad": false
+        },
+        "badges": [],
+        "colors": [
+          {
+            "id": 4,
+            "title": "آبی",
+            "code": "#0000FF",
+            "hex_code": "#0000FF"
+          },
+          {
+            "id": 1,
+            "title": "مشکی",
+            "code": "#000000",
+            "hex_code": "#000000"
+          },
+          {
+            "id": 11,
+            "title": "خاکستری",
+            "code": "#9E9E9E",
+            "hex_code": "#9E9E9E"
+          }
+        ],
+        "default_variant": {
+          "id": 90450221,
+          "title": "گوشی موبایل سامسونگ مدل Galaxy A17 4G دو سیم کارت ظرفیت 128 گیگابایت و رم 4 گیگابایت - ویتنام | آبی |  گارانتی 18 ماهه دیجی کالا سرویس",
+          "status": "marketable",
+          "rate": 95,
+          "lead_time": 0,
+          "rank": 0,
+          "order_limit": 1,
+          "marketable_stock": 5,
+          "statistics": {
+            "totally_satisfied": {
+              "rate_count": 3,
+              "rate": 75
+            },
+            "satisfied": {
+              "rate_count": 1,
+              "rate": 25
+            },
+            "neutral": {
+              "rate_count": 0,
+              "rate": 0
+            },
+            "dissatisfied": {
+              "rate_count": 0,
+              "rate": 0
+            },
+            "totally_dissatisfied": {
+              "rate_count": 0,
+              "rate": 0
+            },
+            "total_count": 4,
+            "total_rate": 95
+          },
+          "properties": {
+            "is_fast_shopping": false,
+            "is_ship_by_seller": false,
+            "is_multi_warehouse": false,
+            "has_similar_variants": true,
+            "is_rural": false,
+            "in_digikala_warehouse": true,
+            "is_ship_from_user_state": false,
+            "nearby_seller_shipment": false,
+            "support_nearby_shipping_for_user": false,
+            "is_ship_by_seller_restricted": false,
+            "has_nearby_shipment": false,
+            "is_eligible_for_jet_delivery": true
+          },
+          "warranty": {
+            "id": 4590,
+            "title_fa": " گارانتی 18 ماهه دیجی کالا سرویس",
+            "title_en": " گارانتی 18 ماهه دیجی کالا سرویس"
+          },
+          "themes": [
+            {
+              "value": {
+                "variant_id": 90450221,
+                "id": 4,
+                "title": "آبی",
+                "code": "#0000FF",
+                "hex_code": "#0000FF",
+                "nature": "color"
+              },
+              "label": "رنگ",
+              "type": "colored",
+              "is_main": true
+            }
+          ],
+          "color": {
+            "id": 4,
+            "title": "آبی",
+            "code": "#0000FF",
+            "hex_code": "#0000FF"
+          },
+          "seller": {
+            "id": 1,
+            "title": "دیجی‌کالا",
+            "code": "5A52N",
+            "url": "/seller/5A52N/",
+            "rating": {
+              "total_rate": 0,
+              "total_count": 0,
+              "commitment": 0,
+              "no_return": 0,
+              "on_time_shipping": 0
+            },
+            "properties": {
+              "is_trusted": false,
+              "is_official": false,
+              "is_roosta": false,
+              "is_new": false
+            },
+            "stars": null,
+            "grade": {
+              "label": "بدون عملکرد",
+              "color": "#81858B"
+            },
+            "registration_date": "",
+            "logo": "https://dkstatics-public.digikala.com/digikala-marketplace-seller-logo/002e77bfa27829e04cf9c78520c6e7c3cd3ad74d_1791965106.png"
+          },
+          "insurance": {
+            "title": "بیمه تجهیزات دیجیتال - بیمه سامان",
+            "subtitle": "با قابلیت جبران هزینه های تعمیر و تعویض یکساله",
+            "description": "با بیمه دیجی‌پی، بخش زیادی از خسارت‌های ناشی از حوادث زیر پوشش داده می‌شود (۲۰٪ فرانشیز بر عهده بیمه‌گذار است):",
+            "covers": [
+              {
+                "description": "جبران خسارات ناشی از انواع سرقت",
+                "maxCoverage": null,
+                "maxUseCount": 1
+              },
+              {
+                "description": "جبران خسارات فیزیکی مانند ضربه‌دیدگی، شکستگی و آب‌خوردگی غیرعمدی",
+                "maxCoverage": null,
+                "maxUseCount": null
+              },
+              {
+                "description": "جبران خسارات ناشی از آتش‌سوزی و انفجارهای غیرعمدی",
+                "maxCoverage": null,
+                "maxUseCount": null
+              },
+              {
+                "description": "جبران خسارات ناشی از سوختگی یا نیم‌سوز شدن، القای الکتریکی، اتصال کوتاه و نوسانات ولتاژ غیرعمدی",
+                "maxCoverage": null,
+                "maxUseCount": null
+              },
+              {
+                "description": "همچنین تمام فرایند‌های بیمه دیجی‌پی از خرید تا دریافت خسارت آنلاین است.",
+                "maxCoverage": null,
+                "maxUseCount": null
+              },
+              {
+                "description": "هزینه‌های دستگاه صدمه دیده حتی گوشی‌های آیفون در کمتر از ۴۸ ساعت بعد از اعلام خسارت پرداخت می‌شود.",
+                "maxCoverage": null,
+                "maxUseCount": null
+              },
+              {
+                "description": "تعمیرات توسط متخصصین دیجی‌کالا سرویس انجام می‌شود و هر تعمیر ۳ ماه و هر قطعه تعمیر شده ۶ ماه گارانتی دارد.",
+                "maxCoverage": null,
+                "maxUseCount": null
+              },
+              {
+                "description": "* توجه: برای استفاده از بیمه، بعد از دریافت کالای دیجیتال خود، به سایت دیجی‌پی، بخش بیمه تجهیزات و بعد پنل کاربری مراجعه کنید و بیمه خود را فعال کنید. در غیر این‌صورت امکان دانلود بیمه‌نامه و دریافت خسارت وجود ندارد.",
+                "maxCoverage": null,
+                "maxUseCount": null
+              },
+              {
+                "description": "برای اعلام خسارت وارد پنل کاربری خود در سایت دیجی‌پی شوید و اطلاعات خود را تکمیل کنید.",
+                "maxCoverage": null,
+                "maxUseCount": null
+              },
+              {
+                "description": "برای رفع مشکلات و سوالات خود می‌توانید در هفت روز هفته با شماره ۰۲۱۵۳۹۲۴۰۰۰ تماس بگیرید.",
+                "maxCoverage": null,
+                "maxUseCount": null
+              }
+            ],
+            "base_premium": 9530000,
+            "discount": 0,
+            "tax": 953000,
+            "total_premium": 10483000,
+            "terms_and_conditions": "بران خسارات ناشی از ضربه خوردگی، شکستگی، آبخوردگی، سرقت با شکست حرز و کلیه حوادث مرتبط با دستگاه خریداری شده با کسورات و فرانشیز حداقل، بدون هزینه استهلاک \r\nارائه خدمات ویژه VIP، بدون هر گونه مراجعه فیزیکی",
+            "before_discount": 20955000,
+            "discount_percent": 50
+          },
+          "price": {
+            "selling_price": 618990000,
+            "rrp_price": 635000000,
+            "order_limit": 1,
+            "is_incredible": true,
+            "is_promotion": true,
+            "is_locked_for_digiplus": false,
+            "bnpl_active": false,
+            "discount_percent": 3,
+            "exact_discount_percent": 3,
+            "min_order_limit": 1,
+            "badge": {
+              "title": "پیشنهاد شگفت انگیز"
+            },
+            "discount": 3,
+            "show_discount_badge": true,
+            "timer": 24293
+          },
+          "digiplus": {
+            "services": [
+              "۴ ارسال رایگان عادی",
+              "۲ ارسال سوپرمارکت",
+              "۴ ارسال رایگان ۴۵ دقیقه‌ای",
+              "پشتیبانی اختصاصی",
+              "ارسال سریع و رایگان دیجی‌کالا"
+            ],
+            "service_list": [
+              {
+                "title": "۴ ارسال رایگان عادی"
+              },
+              {
+                "title": "۲ ارسال سوپرمارکت"
+              },
+              {
+                "title": "۴ ارسال رایگان ۴۵ دقیقه‌ای"
+              },
+              {
+                "title": "پشتیبانی اختصاصی"
+              },
+              {
+                "title": "ارسال سریع و رایگان دیجی‌کالا"
+              }
+            ],
+            "services_summary": [
+              "ارسال رایگان"
+            ],
+            "is_jet_eligible": true,
+            "cash_back": 0,
+            "is_general_location_jet_eligible": false,
+            "fast_shipping_text": "ارسال سریع دیجی‌کالا"
+          },
+          "digiclub": {
+            "point": 150
+          },
+          "shipment_methods": {
+            "description": "",
+            "has_lead_time": false,
+            "icon": null,
+            "icon_color": null,
+            "providers": [
+              {
+                "has_lead_time": false,
+                "type": "jet",
+                "title": "ارسال جت",
+                "description": "",
+                "label": null,
+                "price": null,
+                "shipping_mode": "jet",
+                "delivery_day": "همان روز",
+                "delivery_day_offset": 0,
+                "image": null,
+                "svg_image": null
+              },
+              {
+                "has_lead_time": false,
+                "type": "digikala",
+                "title": "ارسال دیجی‌کالا",
+                "description": "",
+                "label": null,
+                "price": null,
+                "shipping_mode": "digikala",
+                "delivery_day": null,
+                "image": null,
+                "svg_image": null
+              }
+            ]
+          },
+          "variant_badges": [],
+          "buy_box_notices": [],
+          "has_importer_price": false,
+          "manufacture_price_not_exist": false,
+          "has_best_price_in_last_month": false
+        },
+        "platforms": [
+          "digikala"
+        ]
+      }
+    ]
+  }
+}

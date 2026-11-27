@@ -52,7 +52,7 @@ The result includes `BestMatch`, `FilteredCount`, `AppliedFilters`, `SearchedCat
 
 The server resolves a category before calling Digikala, and falls back to the global keyword search when none is found:
 
-- Explicit `categorySlug` is used as-is (`/v1/categories/{slug}/search/`).
+- Explicit `categorySlug` is used as-is (`/discovery/api/v2/categories/{slug}/products`).
 - Known shopping intents are mapped with alias rules, including `mobile-phone`, `hair-shampoo`, `power-bank`, and `cell-phone-data-cable`.
 - If no alias matches, the server uses `autocomplete` category hints (`/discovery/api/v2/autocomplete`).
 - If the category still cannot be resolved, the server uses Digikala's global search (`/discovery/api/v2/search`) and says so in `Warning`.
@@ -92,6 +92,7 @@ The repo also supports opt-in live contract tests that call Digikala directly an
 - Optional canary inputs can be overridden with `DIGIKALA_LIVE_PRODUCT_ID`, `DIGIKALA_LIVE_CATEGORY_SLUG`, and `DIGIKALA_LIVE_SEARCH_QUERY`.
 - Use them for CI schedules, release checks, or after suspected upstream API drift.
 - Some environments currently receive `403` HTML responses from Digikala edge even for anonymous read-only endpoints. Treat that as an egress/network constraint, not proof that the API requires login. Prefer running live probes from an allowed network path.
+- A `403` HTML page ("دسترسی شما محدود شده است") on one route while sibling routes return JSON usually means Digikala retired that route behind its WAF. See `docs/2026-11-27-endpoint-drift.md`.
 
 ## Android APK Notes
 

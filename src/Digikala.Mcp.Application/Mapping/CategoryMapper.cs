@@ -37,11 +37,11 @@ public sealed class CategoryMapper(ProductMapper productMapper)
     /// Builds a landing summary from a best-selling category search, since Digikala retired /v1/categories/{slug}/.
     /// Popular brands are counted from the best sellers because the search's brand filter lists unrelated brands.
     /// </summary>
-    public CategoryDto MapToCategoryFromSearch(JsonDocument response, int maxProducts = 10, int maxBrands = 8)
+    public CategoryDto MapToCategoryFromSearch(JsonDocument response, string? requestedSlug = null, int maxProducts = 10, int maxBrands = 8)
     {
-        var data = JsonHelpers.GetData(response);
-        var products = data.EnumerateArrayOrEmpty("products").ToList();
-        var slug = data.GetStringOrNull("category", "code") ?? string.Empty;
+        var (data, products) = ProductListing.Unwrap(JsonHelpers.GetData(response));
+        // The discovery listing's category object has no code, so fall back to the slug that was searched.
+        var slug = data.GetStringOrNull("category", "code") ?? requestedSlug?.Trim() ?? string.Empty;
 
         return new CategoryDto
         {

@@ -8,8 +8,8 @@ public sealed class OfferMapper
 {
     public OffersListDto MapToOffersList(JsonDocument response)
     {
-        var data = JsonHelpers.GetData(response);
-        var products = data.EnumerateArrayOrEmpty("products").ToList();
+        var (data, listedProducts) = ProductListing.Unwrap(JsonHelpers.GetData(response));
+        var products = listedProducts.ToList();
 
         if (products.Count == 0)
         {
@@ -31,8 +31,12 @@ public sealed class OfferMapper
 
     private static OfferDto MapOffer(JsonElement element)
     {
-        var sellingPrice = element.GetInt64OrNull("default_variant", "price", "selling_price") ?? 0;
-        var originalPrice = element.GetInt64OrNull("default_variant", "price", "rrp_price");
+        // Amazing listing items carry price at the top level instead of under default_variant.
+        var sellingPrice = element.GetInt64OrNull("default_variant", "price", "selling_price")
+                           ?? element.GetInt64OrNull("price", "selling_price")
+                           ?? 0;
+        var originalPrice = element.GetInt64OrNull("default_variant", "price", "rrp_price")
+                            ?? element.GetInt64OrNull("price", "rrp_price");
 
         return new OfferDto
         {
@@ -42,6 +46,7 @@ public sealed class OfferMapper
             SellingPriceRials = sellingPrice,
             OriginalPriceRials = originalPrice,
             DiscountPercent = element.GetInt32OrNull("default_variant", "price", "discount_percent") ??
+                              element.GetInt32OrNull("price", "discount_percent") ??
                               (sellingPrice > 0 && originalPrice > sellingPrice
                                   ? (int)Math.Round((originalPrice.Value - sellingPrice) * 100d / originalPrice.Value)
                                   : null),
@@ -60,6 +65,6 @@ public sealed class OfferMapper
             }
         }
 
-        return null;
+        return productElement.GetUrl("image");
     }
 }

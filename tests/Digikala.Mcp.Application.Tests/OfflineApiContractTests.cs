@@ -270,18 +270,77 @@ public class OfflineApiContractTests
     }
 
     [Fact]
-    public void BrandPremiumFixture_ShouldMatchExpectedContract()
+    public async Task BrandProductsFixture_ShouldBuildBrandPageFromNewestAndBestSellingListings()
     {
-        using var response = LoadFixture("brand-premium.json");
+        var apiClient = Substitute.For<IDigikalaApiClient>();
+        apiClient.GetBrandProductsAsync("samsung", Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<CancellationToken>())
+            .Returns(_ => LoadFixture("brand-products.json"));
+        var service = new GetBrandPageService(apiClient, NoCache, _brandMapper);
 
-        var result = _brandMapper.MapToBrandPage(response);
+        var result = await service.ExecuteAsync("samsung");
 
-        Assert.Equal(2449, result.Id);
-        Assert.Equal("پرسیل", result.Title);
-        Assert.Equal("persil", result.Slug);
-        Assert.Equal("https://example.com/persil.png", result.LogoUrl);
-        Assert.Equal("پودر ماشین لباسشویی پرسیل", Assert.Single(result.NewestProducts).Title);
-        Assert.Equal("مایع لباسشویی پرسیل", Assert.Single(result.BestSellingProducts).Title);
+        Assert.Null(result.Error);
+        Assert.Equal(18, result.Id);
+        Assert.Equal("سامسونگ", result.Title);
+        Assert.Equal("samsung", result.Slug);
+        Assert.StartsWith("https://dkstatics-public.digikala.com/digikala-brands/", result.LogoUrl);
+        Assert.Equal([20109389L, 20490694L], result.NewestProducts.Select(item => item.Id).ToArray());
+        Assert.Equal(2, result.BestSellingProducts.Count);
+        Assert.All(result.BestSellingProducts, item => Assert.True(item.PriceRials > 0));
+        await apiClient.Received(1).GetBrandProductsAsync("samsung", Arg.Any<int>(), (int)SortOption.Newest, Arg.Any<CancellationToken>());
+        await apiClient.Received(1).GetBrandProductsAsync("samsung", Arg.Any<int>(), (int)SortOption.BestSelling, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public void CategoryProductsDiscoveryFixture_ShouldMapToSearchResult()
+    {
+        using var response = LoadFixture("category-products-discovery.json");
+
+        var result = _productMapper.MapToSearchResult(response);
+
+        Assert.Equal([20109389L, 20490714L], result.Products.Select(item => item.Id).ToArray());
+        Assert.Equal(425990000, result.Products[0].PriceRials);
+        Assert.Equal(96, result.TotalCount);
+        Assert.Equal(5, result.TotalPages);
+        Assert.Contains("7=پرفروش‌ترین", result.AvailableSortOptions);
+        Assert.Contains(result.AvailableFilters, group => group.Code == "brands");
+    }
+
+    [Fact]
+    public void CategoryProductsDiscoveryFixture_ShouldMapToCategoryLanding()
+    {
+        using var response = LoadFixture("category-products-discovery.json");
+
+        var result = _categoryMapper.MapToCategoryFromSearch(response, "mobile-phone");
+
+        Assert.Equal(11, result.Id);
+        Assert.Equal("گوشی موبایل", result.Title);
+        Assert.Equal("mobile-phone", result.Slug);
+        Assert.Equal("/search/category-mobile-phone/", result.Url);
+        Assert.Equal(2, result.BestSellingProducts.Count);
+        Assert.Equal("سامسونگ", Assert.Single(result.PopularBrands).Title);
+    }
+
+    [Fact]
+    public async Task AmazingPageFixture_ShouldMapFirstPageOfIncredibleOffers()
+    {
+        var apiClient = Substitute.For<IDigikalaApiClient>();
+        apiClient.GetIncredibleOffersProductsAsync(1, Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(_ => LoadFixture("amazing-page.json"));
+        var service = new GetIncredibleOffersService(apiClient, NoCache, _offerMapper);
+
+        var result = await service.ExecuteAsync(page: 1);
+
+        Assert.Null(result.Error);
+        Assert.Equal(2, result.Offers.Count);
+        var first = result.Offers[0];
+        Assert.Equal(8423381, first.ProductId);
+        Assert.Equal(3960000, first.SellingPriceRials);
+        Assert.Equal(9900000, first.OriginalPriceRials);
+        Assert.Equal(60, first.DiscountPercent);
+        Assert.Equal("/product/dkp-8423381/", first.Url);
+        Assert.StartsWith("https://dkstatics-public.digikala.com/digikala-products/", first.MainImageUrl);
+        Assert.Equal(100, result.TotalPages);
     }
 
     [Fact]
