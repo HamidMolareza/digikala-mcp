@@ -4,6 +4,7 @@ using Digikala.Mcp.Application.Mapping;
 using Digikala.Mcp.Application.Services;
 using Digikala.Mcp.Domain.Enums;
 using Digikala.Mcp.Domain.Interfaces;
+using Digikala.Mcp.Domain.ValueObjects;
 using NSubstitute;
 using Xunit;
 
@@ -18,12 +19,12 @@ public class StructuredToolErrorHandlingTests
     {
         var apiClient = Substitute.For<IDigikalaApiClient>();
         apiClient.GetAutocompleteAsync("iphone", Arg.Any<CancellationToken>())
-            .Returns<Task<JsonDocument>>(_ => throw new HttpRequestException("Digikala API returned HTTP 503 for https://api.digikala.com/v1/autocomplete/?q=iphone"));
+            .Returns<Task<JsonDocument>>(_ => throw new HttpRequestException("Digikala API returned HTTP 503 for https://api.digikala.com/discovery/api/v2/autocomplete?q=iphone"));
 
         var service = new AutocompleteService(apiClient, NoCache, new AutocompleteMapper());
         var result = await service.ExecuteAsync("iphone");
 
-        AssertStructuredError(result.Error, "autocomplete", "UpstreamError", 503, "/v1/autocomplete/?q=iphone");
+        AssertStructuredError(result.Error, "autocomplete", "UpstreamError", 503, "/discovery/api/v2/autocomplete?q=iphone");
         Assert.Contains("structured diagnostics", result.Warning, StringComparison.OrdinalIgnoreCase);
         Assert.Empty(result.Suggestions);
     }
@@ -63,13 +64,13 @@ public class StructuredToolErrorHandlingTests
     public async Task GetCategoryLandingService_ShouldReturnStructuredError_WhenUpstreamFails()
     {
         var apiClient = Substitute.For<IDigikalaApiClient>();
-        apiClient.GetCategoryLandingAsync("mobile-phone", Arg.Any<CancellationToken>())
-            .Returns<Task<JsonDocument>>(_ => throw new HttpRequestException("Digikala API returned HTTP 503 for https://api.digikala.com/v1/categories/mobile-phone/"));
+        apiClient.SearchProductsAsync(Arg.Is<ProductSearchRequest>(r => r.CategorySlug == "mobile-phone"), Arg.Any<CancellationToken>())
+            .Returns<Task<JsonDocument>>(_ => throw new HttpRequestException("Digikala API returned HTTP 503 for https://api.digikala.com/v1/categories/mobile-phone/search/?page=1&sort=7"));
 
         var service = new GetCategoryLandingService(apiClient, NoCache, new CategoryMapper(new ProductMapper()));
         var result = await service.ExecuteAsync("mobile-phone");
 
-        AssertStructuredError(result.Error, "get_category_landing", "UpstreamError", 503, "/v1/categories/mobile-phone/");
+        AssertStructuredError(result.Error, "get_category_landing", "UpstreamError", 503, "/v1/categories/mobile-phone/search/?page=1&sort=7");
         Assert.Contains("structured diagnostics", result.Warning, StringComparison.OrdinalIgnoreCase);
         Assert.Empty(result.SubCategories);
     }

@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using Digikala.Mcp.Domain.Interfaces;
+using Digikala.Mcp.Domain.ValueObjects;
 using Digikala.Mcp.Infrastructure.Configuration;
 using Digikala.Mcp.Infrastructure.HttpClients;
 using Digikala.Mcp.Infrastructure.Models.Common;
@@ -38,6 +39,66 @@ public sealed class LiveDigikalaContractTests(LiveDigikalaApiFixture fixture)
         Assert.NotNull(envelope.Data.SortOptions);
         Assert.True(envelope.Data.Pager!.CurrentPage >= 1);
         Assert.True(envelope.Data.Pager.TotalPages >= 1);
+    }
+
+    [Fact]
+    public async Task SearchProductsAsync_ShouldReturnGlobalDiscoveryProductListing()
+    {
+        if (!IsLiveTestsEnabled())
+        {
+            return;
+        }
+
+        using var response = await fixture.Client.SearchProductsAsync(new ProductSearchRequest(fixture.SearchQuery));
+
+        var listing = response.RootElement.GetProperty("data").GetProperty("widgets").EnumerateArray()
+            .Single(widget => widget.GetProperty("type").GetString() == "vertical_product_listing")
+            .GetProperty("data");
+        Assert.True(listing.GetProperty("pager").GetProperty("total_items").GetInt32() > 0);
+        Assert.Contains(
+            listing.GetProperty("widgets").EnumerateArray(),
+            widget => widget.GetProperty("type").GetString() == "product"
+                && widget.GetProperty("data").GetProperty("id").GetInt64() > 0);
+        Assert.Contains(
+            listing.GetProperty("sort_options").EnumerateArray(),
+            option => option.GetProperty("id").GetInt32() == 22);
+    }
+
+    [Fact]
+    public async Task SearchProductsAsync_ShouldApplyCategoryPriceRange()
+    {
+        if (!IsLiveTestsEnabled())
+        {
+            return;
+        }
+
+        const long maxPriceRials = 50_000_000;
+        using var response = await fixture.Client.SearchProductsAsync(new ProductSearchRequest(
+            fixture.SearchQuery,
+            fixture.CategorySlug,
+            MaxPriceRials: maxPriceRials,
+            OnlyAvailable: true));
+
+        var prices = response.RootElement.GetProperty("data").GetProperty("products").EnumerateArray()
+            .Select(product => product.GetProperty("default_variant").GetProperty("price").GetProperty("selling_price").GetInt64())
+            .ToList();
+        Assert.NotEmpty(prices);
+        Assert.All(prices, price => Assert.True(price <= maxPriceRials));
+    }
+
+    [Fact]
+    public async Task GetAutocompleteAsync_ShouldReturnDiscoveryAutocomplete()
+    {
+        if (!IsLiveTestsEnabled())
+        {
+            return;
+        }
+
+        using var response = await fixture.Client.GetAutocompleteAsync(fixture.SearchQuery);
+
+        var suggestions = response.RootElement.GetProperty("data").GetProperty("auto_complete").EnumerateArray().ToList();
+        Assert.NotEmpty(suggestions);
+        Assert.All(suggestions, item => Assert.False(string.IsNullOrWhiteSpace(item.GetProperty("title").GetString())));
     }
 
     [Fact]
