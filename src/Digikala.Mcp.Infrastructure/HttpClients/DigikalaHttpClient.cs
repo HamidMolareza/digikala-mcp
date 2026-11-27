@@ -66,7 +66,8 @@ public sealed class DigikalaHttpClient(
 
     public async Task<JsonDocument> GetProductV2Async(long productId, long? variantId = null, CancellationToken ct = default)
     {
-        var url = BuildUrl($"/v2/product/{productId}/", ("variant_id", variantId?.ToString()));
+        // Digikala moved product detail from /v2/product/{id}/ (now a WAF 403) to the product service.
+        var url = BuildUrl($"/product/v1/products/{productId}/", ("variant_id", variantId?.ToString()));
         return await GetJsonAsync(url, ct);
     }
 
@@ -144,7 +145,7 @@ public sealed class DigikalaHttpClient(
         var categorySlug = string.IsNullOrWhiteSpace(request.CategorySlug) ? null : request.CategorySlug.Trim();
         var path = categorySlug is null
             ? "/discovery/api/v2/search"
-            : $"/v1/categories/{Uri.EscapeDataString(categorySlug)}/search/";
+            : CategoryProductsPath(categorySlug);
         var hasPriceRange = request.MinPriceRials is not null || request.MaxPriceRials is not null;
 
         var url = BuildUrl(path,
@@ -169,7 +170,7 @@ public sealed class DigikalaHttpClient(
         }
 
         var normalizedCategorySlug = categorySlug.Trim();
-        var path = $"/v1/categories/{Uri.EscapeDataString(normalizedCategorySlug)}/search/";
+        var path = CategoryProductsPath(normalizedCategorySlug);
         var url = BuildUrl(path,
             ("page", page.ToString()), ("sort", sort?.ToString()), ("q", query));
         if (attributes is not null)
@@ -183,6 +184,10 @@ public sealed class DigikalaHttpClient(
         return await GetJsonAsync(url, ct);
     }
 
+    // /v1/categories/{slug}/search/ was retired in favour of this discovery route (same widget envelope as global search).
+    private static string CategoryProductsPath(string categorySlug) =>
+        $"/discovery/api/v2/categories/{Uri.EscapeDataString(categorySlug)}/products";
+
     public async Task<JsonDocument> SearchFreshCategoryAsync(string categorySlug, int page = 1, int? sort = null,
         int warehouseId = 29, CancellationToken ct = default)
     {
@@ -193,7 +198,7 @@ public sealed class DigikalaHttpClient(
 
     public async Task<JsonDocument> GetTagProductsAsync(string tagSlug, int page = 1, CancellationToken ct = default)
     {
-        return await GetJsonAsync($"/v1/tags/{Uri.EscapeDataString(tagSlug)}/?page={page}", ct);
+        return await GetJsonAsync($"/discovery/api/v1/product-tags/{Uri.EscapeDataString(tagSlug)}/products?page={page}", ct);
     }
 
     public async Task<JsonDocument> GetProvidersProductsAsync(string categoryCode, int page = 1, string? query = null, CancellationToken ct = default)
@@ -205,7 +210,8 @@ public sealed class DigikalaHttpClient(
 
     public async Task<JsonDocument> GetIncredibleOffersProductsAsync(int page = 1, string? query = null, CancellationToken ct = default)
     {
-        var url = BuildUrl("/v1/incredible-offers/products/", ("page", page.ToString()), ("q", query));
+        var url = BuildUrl("/amazing/v1/page/0",
+            ("no_widgets", "1"), ("page", page.ToString()), ("q", query));
         return await GetJsonAsync(url, ct);
     }
 
@@ -240,9 +246,11 @@ public sealed class DigikalaHttpClient(
 
     // Brand
 
-    public async Task<JsonDocument> GetBrandPremiumAsync(string brandSlug, CancellationToken ct = default)
+    public async Task<JsonDocument> GetBrandProductsAsync(string brandSlug, int page = 1, int? sort = null, CancellationToken ct = default)
     {
-        return await GetJsonAsync($"/v1/brands/{Uri.EscapeDataString(brandSlug)}/premium/", ct);
+        var url = BuildUrl($"/discovery/api/v1/brands/{Uri.EscapeDataString(brandSlug)}/products",
+            ("page", page.ToString()), ("sort", sort?.ToString()));
+        return await GetJsonAsync(url, ct);
     }
 
     // Recommendations

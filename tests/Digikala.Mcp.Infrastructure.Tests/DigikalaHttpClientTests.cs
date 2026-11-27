@@ -117,7 +117,7 @@ public class DigikalaHttpClientTests
 
         Assert.NotNull(handler.LastRequestUri);
         Assert.Equal(
-            "https://api.example.com/v1/categories/mobile-phone/search/?page=1&q=iphone",
+            "https://api.example.com/discovery/api/v2/categories/mobile-phone/products?page=1&q=iphone",
             handler.LastRequestUri!.ToString());
     }
 
@@ -148,8 +148,52 @@ public class DigikalaHttpClientTests
             OnlyAvailable: true));
 
         Assert.Equal(
-            "https://api.example.com/v1/categories/mug/search/?q=mug&page=2&has_selling_stock=1&price%5Bmin%5D=0&price%5Bmax%5D=10000000",
+            "https://api.example.com/discovery/api/v2/categories/mug/products?q=mug&page=2&has_selling_stock=1&price%5Bmin%5D=0&price%5Bmax%5D=10000000",
             handler.LastRequestUri!.AbsoluteUri);
+    }
+
+    [Fact]
+    public async Task GetProductV2Async_ShouldUseProductServiceRoute()
+    {
+        var handler = CreateSuccessHandler();
+        var client = CreateClient(new HttpClient(handler));
+
+        await client.GetProductV2Async(20491421);
+
+        Assert.Equal("https://api.example.com/product/v1/products/20491421/", handler.LastRequestUri!.AbsoluteUri);
+    }
+
+    [Fact]
+    public async Task GetIncredibleOffersProductsAsync_ShouldUseAmazingListingRoute()
+    {
+        var handler = CreateSuccessHandler();
+        var client = CreateClient(new HttpClient(handler));
+
+        await client.GetIncredibleOffersProductsAsync(2);
+
+        Assert.Equal("https://api.example.com/amazing/v1/page/0?no_widgets=1&page=2", handler.LastRequestUri!.AbsoluteUri);
+    }
+
+    [Fact]
+    public async Task GetTagProductsAsync_ShouldUseDiscoveryProductTagsRoute()
+    {
+        var handler = CreateSuccessHandler();
+        var client = CreateClient(new HttpClient(handler));
+
+        await client.GetTagProductsAsync("iphone-16", 2);
+
+        Assert.Equal("https://api.example.com/discovery/api/v1/product-tags/iphone-16/products?page=2", handler.LastRequestUri!.AbsoluteUri);
+    }
+
+    [Fact]
+    public async Task GetBrandProductsAsync_ShouldUseDiscoveryBrandRoute()
+    {
+        var handler = CreateSuccessHandler();
+        var client = CreateClient(new HttpClient(handler));
+
+        await client.GetBrandProductsAsync("samsung", sort: 7);
+
+        Assert.Equal("https://api.example.com/discovery/api/v1/brands/samsung/products?page=1&sort=7", handler.LastRequestUri!.AbsoluteUri);
     }
 
     [Fact]

@@ -1,0 +1,245 @@
+{
+  "status": 200,
+  "data": {
+    "widgets": [
+      {
+        "utm": "vertical_product_list",
+        "data": {
+          "bigdata_tracker_data": {
+            "page_info": {
+              "category_id": 0
+            },
+            "page_name": "category"
+          },
+          "category": {
+            "id": 0,
+            "title_en": "",
+            "title_fa": ""
+          },
+          "filters": {},
+          "pager": {
+            "current_page": 1,
+            "total_items": 3490,
+            "total_pages": 100,
+            "total_slots": 20
+          },
+          "result_type": "no_change",
+          "search_phase": -10,
+          "sort": {
+            "default": 4
+          },
+          "sort_options": [
+            {
+              "id": 22,
+              "title_fa": "مرتبط‌ترین"
+            },
+            {
+              "id": 20,
+              "title_fa": "ارزان‌ترین"
+            },
+            {
+              "id": 21,
+              "title_fa": "گران‌ترین"
+            },
+            {
+              "id": 7,
+              "title_fa": "پربازدیدترین"
+            },
+            {
+              "id": 26,
+              "title_fa": "بیشترین تخفیف"
+            },
+            {
+              "id": 27,
+              "title_fa": "پیشنهاد خریداران"
+            },
+            {
+              "id": 4,
+              "title_fa": "پرفروش‌ترین‌"
+            },
+            {
+              "id": 1,
+              "title_fa": "جدیدترین"
+            },
+            {
+              "id": 29,
+              "title_fa": "منتخب"
+            },
+            {
+              "id": 25,
+              "title_fa": "سریع‌ترین ارسال"
+            }
+          ],
+          "text_lenz_eligibility": "nope",
+          "title": "همه شگفت‌انگیزها",
+          "total_hits": 3490,
+          "widgets": [
+            {
+              "data": {
+                "id": 8423381,
+                "title": "کپسول ژلاتینی امگا 3 یوروویتال بسته 30 عددی",
+                "title_fa": "کپسول ژلاتینی امگا 3 یوروویتال بسته 30 عددی",
+                "show_add_to_cart": true,
+                "default_variant_id": 84779686,
+                "image": {
+                  "url": "https://dkstatics-public.digikala.com/digikala-products/9d2f1dbce14414b9c17025b20acfcb1abf7f9f99_1651483015.jpg?x-oss-process=image/resize,m_lfit,h_600,w_600/quality,q_90"
+                },
+                "media": [
+                  {
+                    "src": "https://dkstatics-public.digikala.com/digikala-products/9d2f1dbce14414b9c17025b20acfcb1abf7f9f99_1651483015.jpg?x-oss-process=image/resize,m_lfit,h_600,w_600/quality,q_90",
+                    "type": "image"
+                  },
+                  {
+                    "src": "https://dkstatics-public.digikala.com/digikala-products/90a2f2ade85824590eb8097d3a0221951470b576_1651483016.jpg?x-oss-process=image/resize,m_lfit,h_600,w_600/quality,q_90",
+                    "type": "image"
+                  },
+                  {
+                    "src": "https://dkstatics-public.digikala.com/digikala-products/4d0c2c0f1566242f6a6a352943d444e34f5d65e3_1725807725.jpg?x-oss-process=image/resize,m_lfit,h_600,w_600/quality,q_90",
+                    "type": "image"
+                  }
+                ],
+                "price": {
+                  "selling_price": 3960000,
+                  "rrp_price": 9900000,
+                  "discount_percent": 60,
+                  "discount_timer": 24346,
+                  "is_incredible": true,
+                  "min_order_limit": 1,
+                  "order_limit": 200,
+                  "sold_percentage": 31
+                },
+                "status": "marketable",
+                "rating": {
+                  "rate": 90.79753116301586,
+                  "count": 8263
+                },
+                "properties": {
+                  "is_ship_by_seller": true
+                },
+                "main_badges": [
+                  {
+                    "title": "%۶۹ مانده تا ۶ ساعت",
+                    "type": "is_incredible",
+                    "soldPercentage": 31
+                  }
+                ],
+                "deep_link": {
+                  "page": "product_page",
+                  "params": {
+                    "product_id": 8423381,
+                    "variant_id": 84779686
+                  }
+                },
+                "url": {
+                  "uri": "/product/dkp-8423381/",
+                  "params": {
+                    "product_id": 8423381,
+                    "variant_id": 84779686
+                  }
+                }
+              },
+              "index": 0,
+              "type": "product"
+            },
+            {
+              "data": {
+                "id": 20270158,
+                "title": "کرم مرطوب کننده صورت و گردن کلامین مدل collagen bank مناسب انواع پوست حجم 125 میلی لیتر",
+                "title_fa": "کرم مرطوب کننده صورت و گردن کلامین مدل collagen bank مناسب انواع پوست حجم 125 میلی لیتر",
+                "show_add_to_cart": true,
+                "default_variant_id": 84411587,
+                "image": {
+                  "url": "https://dkstatics-public.digikala.com/digikala-products/e50c784329c3786a59c1e0a0914e43c2695b3aed_1760871822.jpg?x-oss-process=image/resize,m_lfit,h_600,w_600/quality,q_90"
+                },
+                "media": [
+                  {
+                    "src": "https://dkstatics-public.digikala.com/digikala-products/e50c784329c3786a59c1e0a0914e43c2695b3aed_1760871822.jpg?x-oss-process=image/resize,m_lfit,h_600,w_600/quality,q_90",
+                    "type": "image"
+                  },
+                  {
+                    "src": "https://dkstatics-public.digikala.com/digikala-products/f78945141d21aeed5c0e274abfc604a3735618df_1788953362.jpg?x-oss-process=image/resize,m_lfit,h_600,w_600/quality,q_90",
+                    "type": "image"
+                  },
+                  {
+                    "src": "https://dkstatics-public.digikala.com/digikala-products/d7c5847fb96506a7750952ffe8c6a2742acf9c11_1760871821.jpg?x-oss-process=image/resize,m_lfit,h_600,w_600/quality,q_90",
+                    "type": "image"
+                  },
+                  {
+                    "src": "https://dkstatics-public.digikala.com/digikala-products/02c25a94cc36c157350fdf8da4bf1948c0df8e20_1760871821.jpg?x-oss-process=image/resize,m_lfit,h_600,w_600/quality,q_90",
+                    "type": "image"
+                  },
+                  {
+                    "src": "https://dkstatics-public.digikala.com/digikala-products/4d318c7642b2b840a05c665d1b883371196948c6_1760871822.jpg?x-oss-process=image/resize,m_lfit,h_600,w_600/quality,q_90",
+                    "type": "image"
+                  },
+                  {
+                    "src": "https://dkstatics-public.digikala.com/digikala-products/ad5b0ae65eb3afcc4df5525c461caa352cf76246_1760871823.jpg?x-oss-process=image/resize,m_lfit,h_600,w_600/quality,q_90",
+                    "type": "image"
+                  },
+                  {
+                    "src": "https://dkstatics-public.digikala.com/digikala-products/90283807e7423d1bb4a60e9e4e8c52754e1118ea_1760871823.jpg?x-oss-process=image/resize,m_lfit,h_600,w_600/quality,q_90",
+                    "type": "image"
+                  },
+                  {
+                    "src": "https://dkstatics-public.digikala.com/digikala-products/f9dab0fe58f61e0a68a984fad6d7b3bb78d82ac1_1760871823.jpg?x-oss-process=image/resize,m_lfit,h_600,w_600/quality,q_90",
+                    "type": "image"
+                  },
+                  {
+                    "src": "https://dkstatics-public.digikala.com/digikala-products/513abd21ee3ce369d38d69feb6e20948acc39108_1760871824.jpg?x-oss-process=image/resize,m_lfit,h_600,w_600/quality,q_90",
+                    "type": "image"
+                  }
+                ],
+                "price": {
+                  "selling_price": 4785000,
+                  "rrp_price": 8700000,
+                  "discount_percent": 45,
+                  "discount_timer": 24346,
+                  "is_incredible": true,
+                  "min_order_limit": 1,
+                  "order_limit": 5,
+                  "sold_percentage": 65
+                },
+                "status": "marketable",
+                "rating": {
+                  "rate": 86.86072423398329,
+                  "count": 7180
+                },
+                "main_badges": [
+                  {
+                    "title": "%۳۵ مانده تا ۶ ساعت",
+                    "type": "is_incredible",
+                    "soldPercentage": 65
+                  }
+                ],
+                "sub_badges": [
+                  {
+                    "image": "https://dkstatics-public.digikala.com/digikala-static/169e0c18019ceadf022b72c5248fe9a4ed3c68fb_1748679177.svg",
+                    "title": "ارسال سریع دیجی‌کالا",
+                    "type": "is_fast_shipping"
+                  }
+                ],
+                "deep_link": {
+                  "page": "product_page",
+                  "params": {
+                    "product_id": 20270158,
+                    "variant_id": 84411587
+                  }
+                },
+                "url": {
+                  "uri": "/product/dkp-20270158/",
+                  "params": {
+                    "product_id": 20270158,
+                    "variant_id": 84411587
+                  }
+                }
+              },
+              "index": 1,
+              "type": "product"
+            }
+          ]
+        },
+        "type": "vertical_product_listing"
+      }
+    ]
+  }
+}

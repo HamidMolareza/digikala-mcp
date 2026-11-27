@@ -27,8 +27,9 @@ public sealed class GetBrandPageService(IDigikalaApiClient apiClient, ICacheStor
                 CacheTier.MediumTerm,
                 async token =>
                 {
-                    using var response = await apiClient.GetBrandPremiumAsync(brandSlug, token);
-                    return mapper.MapToBrandPage(response);
+                    using var newest = await apiClient.GetBrandProductsAsync(brandSlug, sort: (int)SortOption.Newest, ct: token);
+                    using var bestSelling = await apiClient.GetBrandProductsAsync(brandSlug, sort: (int)SortOption.BestSelling, ct: token);
+                    return mapper.MapToBrandPage(newest, bestSelling);
                 },
                 skipCache,
                 ct);

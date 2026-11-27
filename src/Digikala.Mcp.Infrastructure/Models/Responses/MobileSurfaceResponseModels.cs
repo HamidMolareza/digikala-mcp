@@ -302,6 +302,7 @@ public sealed class MagnetProductModel
     public MagnetProductImagesModel? Images { get; set; }
 
     [JsonPropertyName("price")]
+    [JsonConverter(typeof(EmptyArrayAsNullConverter<PriceModel>))]
     public PriceModel? Price { get; set; }
 }
 
