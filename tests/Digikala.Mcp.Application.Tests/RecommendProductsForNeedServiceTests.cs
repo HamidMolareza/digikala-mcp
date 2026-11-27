@@ -3,6 +3,7 @@ using Digikala.Mcp.Application.Mapping;
 using Digikala.Mcp.Application.Services;
 using Digikala.Mcp.Domain.Enums;
 using Digikala.Mcp.Domain.Interfaces;
+using Digikala.Mcp.Domain.ValueObjects;
 using NSubstitute;
 using Xunit;
 
@@ -23,7 +24,7 @@ public class RecommendProductsForNeedServiceTests
         var feedbackService = new GetProductFeedbackSummaryService(detailService, reviewsService);
         var service = new RecommendProductsForNeedService(searchService, feedbackService);
 
-        apiClient.SearchCategoryAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<Dictionary<string, string[]>?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+        apiClient.SearchProductsAsync(Arg.Any<ProductSearchRequest>(), Arg.Any<CancellationToken>())
             .Returns(JsonDocument.Parse("""
                 {
                   "status": 200,
@@ -179,7 +180,7 @@ public class RecommendProductsForNeedServiceTests
         var feedbackService = new GetProductFeedbackSummaryService(detailService, reviewsService);
         var service = new RecommendProductsForNeedService(searchService, feedbackService);
 
-        apiClient.SearchCategoryAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<Dictionary<string, string[]>?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+        apiClient.SearchProductsAsync(Arg.Any<ProductSearchRequest>(), Arg.Any<CancellationToken>())
             .Returns(JsonDocument.Parse("""
                 {
                   "status": 200,
@@ -255,13 +256,7 @@ public class RecommendProductsForNeedServiceTests
         Assert.Contains("lightning", result.QueryUnderstanding.AvoidSignals);
         Assert.Single(result.Recommendations);
         Assert.Equal(300, result.Recommendations[0].Product.Id);
-        await apiClient.Received(1).SearchCategoryAsync(
-            "cell-phone-data-cable",
-            Arg.Any<int>(),
-            Arg.Any<int?>(),
-            Arg.Any<Dictionary<string, string[]>?>(),
-            "کابل شارژ USB به USB-C",
-            Arg.Any<CancellationToken>());
+        await apiClient.Received(1).SearchProductsAsync(Arg.Is<ProductSearchRequest>(r => r.CategorySlug == "cell-phone-data-cable" && r.Query == "کابل شارژ USB به USB-C"), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -277,7 +272,7 @@ public class RecommendProductsForNeedServiceTests
         var feedbackService = new GetProductFeedbackSummaryService(detailService, reviewsService);
         var service = new RecommendProductsForNeedService(searchService, feedbackService);
 
-        apiClient.SearchCategoryAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<Dictionary<string, string[]>?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+        apiClient.SearchProductsAsync(Arg.Any<ProductSearchRequest>(), Arg.Any<CancellationToken>())
             .Returns<Task<JsonDocument>>(_ => throw new HttpRequestException("Digikala API returned HTTP 500 for https://api.digikala.com/v1/categories/hair-shampoo/search/?page=1&q=shampoo"));
 
         var result = await service.ExecuteAsync("Need a balanced shampoo for oily hair.", categorySlug: "hair-shampoo", limit: 2);
@@ -300,7 +295,7 @@ public class RecommendProductsForNeedServiceTests
         var feedbackService = new GetProductFeedbackSummaryService(detailService, reviewsService);
         var service = new RecommendProductsForNeedService(searchService, feedbackService);
 
-        apiClient.SearchCategoryAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<Dictionary<string, string[]>?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+        apiClient.SearchProductsAsync(Arg.Any<ProductSearchRequest>(), Arg.Any<CancellationToken>())
             .Returns(JsonDocument.Parse("""
                 {
                   "status": 200,
@@ -407,7 +402,7 @@ public class RecommendProductsForNeedServiceTests
         Assert.Contains(result.Error.Diagnostics, item => item.Contains("`limit`", StringComparison.Ordinal));
         Assert.Contains(result.Error.Diagnostics, item => item.Contains("`minPriceRials` cannot be greater", StringComparison.Ordinal));
         Assert.Empty(result.Recommendations);
-        await apiClient.DidNotReceiveWithAnyArgs().SearchCategoryAsync(default!, default, default, default, default, default);
+        await apiClient.DidNotReceiveWithAnyArgs().SearchProductsAsync(default!, default);
     }
 
     private static SearchProductsService CreateSearchService(IDigikalaApiClient apiClient, ICacheStore cache, ProductMapper productMapper)
@@ -415,6 +410,47 @@ public class RecommendProductsForNeedServiceTests
         var autocompleteService = new AutocompleteService(apiClient, cache, new AutocompleteMapper());
         var categoryResolutionService = new CategoryResolutionService(autocompleteService);
         return new SearchProductsService(apiClient, cache, productMapper, categoryResolutionService);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_ShouldSearchProductPhrase_AndRetryBroader_WhenLongNeedFindsNothing()
+    {
+        var apiClient = Substitute.For<IDigikalaApiClient>();
+        var cache = new NullCacheStore();
+        var productMapper = new ProductMapper();
+        var detailService = new GetProductDetailService(apiClient, cache, productMapper);
+        var reviewsService = new GetProductReviewsService(apiClient, cache, new ReviewMapper());
+        var service = new RecommendProductsForNeedService(
+            CreateSearchService(apiClient, cache, productMapper),
+            new GetProductFeedbackSummaryService(detailService, reviewsService));
+        apiClient.GetAutocompleteAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(_ => JsonDocument.Parse("""{ "status": 200, "data": { "auto_complete": [] } }"""));
+        apiClient.SearchProductsAsync(Arg.Is<ProductSearchRequest>(r => r.Query == "ماگ سرامیکی بزرگ"), Arg.Any<CancellationToken>())
+            .Returns(_ => JsonDocument.Parse("""{ "status": 200, "data": { "products": [], "pager": { "current_page": 1, "total_pages": 1, "total_items": 0 } } }"""));
+        apiClient.SearchProductsAsync(Arg.Is<ProductSearchRequest>(r => r.Query == "ماگ سرامیکی"), Arg.Any<CancellationToken>())
+            .Returns(_ => JsonDocument.Parse("""
+                {
+                  "status": 200,
+                  "data": {
+                    "products": [
+                      { "id": 5, "title_fa": "ماگ سرامیکی", "status": "marketable", "rating": { "rate": 85, "count": 300 }, "default_variant": { "price": { "selling_price": 3000000 } }, "url": { "uri": "/product/dkp-5/" }, "images": [] }
+                    ],
+                    "pager": { "current_page": 1, "total_pages": 1, "total_items": 1 }
+                  }
+                }
+                """));
+
+        var result = await service.ExecuteAsync(
+            "ماگ سرامیکی بزرگ با حجم بیش از 350 میلی لیتر، دسته خوش‌دست",
+            limit: 1,
+            includeEvidence: false);
+
+        Assert.Equal("ماگ سرامیکی بزرگ", result.SearchQuery);
+        Assert.Equal(5, Assert.Single(result.Recommendations).Product.Id);
+        Assert.Contains("broader query `ماگ سرامیکی`", result.Warning, StringComparison.Ordinal);
+        await apiClient.Received(1).SearchProductsAsync(
+            Arg.Is<ProductSearchRequest>(r => r.Query == "ماگ سرامیکی بزرگ" && r.Sort == null && r.CategorySlug == null),
+            Arg.Any<CancellationToken>());
     }
 
     private sealed class NullCacheStore : ICacheStore

@@ -14,6 +14,9 @@ public sealed record AutocompleteDto
 public sealed record SuggestionDto
 {
     public string Text { get; init; } = string.Empty;
+    /// <summary>"query" or "category".</summary>
+    public string? Type { get; init; }
+    public string? CategoryTitle { get; init; }
     public string? CategorySlug { get; init; }
     public string? Url { get; init; }
 }

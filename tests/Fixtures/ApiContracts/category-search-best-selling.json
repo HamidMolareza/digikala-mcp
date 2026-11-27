@@ -1,0 +1,151 @@
+{
+  "status": 200,
+  "data": {
+    "category": {
+      "id": 11,
+      "title_fa": "گوشی موبایل",
+      "title_en": "گوشی موبایل",
+      "code": "mobile-phone",
+      "description_en": ""
+    },
+    "pager": {
+      "current_page": 1,
+      "total_pages": 263,
+      "total_items": 5253
+    },
+    "sort_options": [
+      {
+        "id": 7,
+        "title_fa": "پرفروش‌ترین‌"
+      },
+      {
+        "id": 22,
+        "title_fa": "مرتبط‌ترین"
+      },
+      {
+        "id": 4,
+        "title_fa": "پربازدیدترین"
+      },
+      {
+        "id": 1,
+        "title_fa": "جدیدترین"
+      },
+      {
+        "id": 20,
+        "title_fa": "ارزان‌ترین"
+      },
+      {
+        "id": 21,
+        "title_fa": "گران‌ترین"
+      },
+      {
+        "id": 29,
+        "title_fa": "منتخب"
+      }
+    ],
+    "products": [
+      {
+        "id": 22719748,
+        "title_fa": "گوشی موبایل اپل مدل iPhone 18 Pro Max CH دو سیم کارت ظرفیت 256 گیگابایت و رم 12 گیگابایت ",
+        "title_en": "Apple iPhone 18 Pro Max CH Dual SIM Storage 256GB and RAM 12GB Mobile Phone ",
+        "status": "coming_soon",
+        "rating": {
+          "rate": 0,
+          "count": 0
+        },
+        "default_variant": [],
+        "url": {
+          "base": null,
+          "uri": "/product/dkp-22719748/گوشی-موبایل-اپل-مدل-iphone-18-pro-max-ch-دو-سیم-کارت-ظرفیت-256-گیگابایت-و-رم-12-گیگابایت",
+          "params": []
+        },
+        "data_layer": {
+          "brand": "اپل"
+        }
+      },
+      {
+        "id": 22667973,
+        "title_fa": "گوشی موبایل اپل مدل iPhone 18 Pro Zaa تک سیم کارت ظرفیت 256 گیگابایت و رم 12 گیگابایت ",
+        "title_en": "Apple iPhone 18 Pro Zaa Single SIM Storage 256GB and RAM 12GB Mobile Phone",
+        "status": "coming_soon",
+        "rating": {
+          "rate": 0,
+          "count": 0
+        },
+        "default_variant": [],
+        "url": {
+          "base": null,
+          "uri": "/product/dkp-22667973/گوشی-موبایل-اپل-مدل-iphone-18-pro-zaa-تک-سیم-کارت-ظرفیت-256-گیگابایت-و-رم-12-گیگابایت",
+          "params": []
+        },
+        "data_layer": {
+          "brand": "اپل"
+        }
+      },
+      {
+        "id": 22719648,
+        "title_fa": "گوشی موبایل اپل مدل iPhone 18 Pro CH دو سیم کارت ظرفیت 256 گیگابایت و رم 12 گیگابایت",
+        "title_en": "Apple iPhone 18 Pro CH Dual SIM Storage 256GB and RAM 12GB Mobile Phone",
+        "status": "coming_soon",
+        "rating": {
+          "rate": 0,
+          "count": 0
+        },
+        "default_variant": [],
+        "url": {
+          "base": null,
+          "uri": "/product/dkp-22719648/گوشی-موبایل-اپل-مدل-iphone-18-pro-ch-دو-سیم-کارت-ظرفیت-256-گیگابایت-و-رم-12-گیگابایت",
+          "params": []
+        },
+        "data_layer": {
+          "brand": "اپل"
+        }
+      },
+      {
+        "id": 20109389,
+        "title_fa": "گوشی موبایل سامسونگ مدل Galaxy A07 دو سیم کارت ظرفیت 64 گیگابایت و رم 4 گیگابایت",
+        "title_en": "Samsung Galaxy A07 Dual SIM Storage 64GB And 4GB RAM Mobile Phone",
+        "status": "marketable",
+        "rating": {
+          "rate": 87.5,
+          "count": 2349
+        },
+        "default_variant": {
+          "price": {
+            "selling_price": 400660000,
+            "rrp_price": 413051000,
+            "order_limit": 1,
+            "is_incredible": false,
+            "is_promotion": true,
+            "is_locked_for_digiplus": false,
+            "bnpl_active": false,
+            "discount_percent": 3,
+            "badge": {
+              "title": "فروش ویژه",
+              "color": "#E6123D",
+              "icon": null
+            },
+            "is_digiplus_promotion": false,
+            "is_digiplus_early_access": false,
+            "is_application_incredible": false,
+            "is_lightening_deal": false,
+            "is_plus_early_access": false,
+            "min_order_limit": 1
+          }
+        },
+        "url": {
+          "base": null,
+          "uri": "/product/dkp-20109389/گوشی-موبایل-سامسونگ-مدل-galaxy-a07-دو-سیم-کارت-ظرفیت-64-گیگابایت-و-رم-4-گیگابایت",
+          "params": [
+            {
+              "variant_id": 72287314
+            }
+          ]
+        },
+        "data_layer": {
+          "brand": "سامسونگ"
+        }
+      }
+    ]
+  }
+}
