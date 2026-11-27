@@ -56,7 +56,7 @@ public interface IDigikalaApiClient
     Task<JsonDocument> GetAutocompleteAsync(string query, CancellationToken ct = default);
 
     // Brand
-    Task<JsonDocument> GetBrandPremiumAsync(string brandSlug, CancellationToken ct = default);
+    Task<JsonDocument> GetBrandProductsAsync(string brandSlug, int page = 1, int? sort = null, CancellationToken ct = default);
 
     // Recommendations
     Task<JsonDocument> GetHomeRecommendationAsync(string webPage = "home", CancellationToken ct = default);

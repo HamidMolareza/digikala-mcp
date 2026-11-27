@@ -30,15 +30,12 @@ public sealed class LiveDigikalaContractTests(LiveDigikalaApiFixture fixture)
             fixture.CategorySlug,
             query: fixture.SearchQuery);
 
-        var envelope = DeserializeEnvelope<SearchResponseData>(response);
-
-        Assert.Equal(200, envelope.Status);
-        Assert.NotNull(envelope.Data);
-        Assert.NotNull(envelope.Data!.Products);
-        Assert.NotNull(envelope.Data.Pager);
-        Assert.NotNull(envelope.Data.SortOptions);
-        Assert.True(envelope.Data.Pager!.CurrentPage >= 1);
-        Assert.True(envelope.Data.Pager.TotalPages >= 1);
+        var listing = GetProductListing(response);
+        Assert.True(listing.GetProperty("pager").GetProperty("current_page").GetInt32() >= 1);
+        Assert.True(listing.GetProperty("pager").GetProperty("total_pages").GetInt32() >= 1);
+        Assert.True(listing.GetProperty("category").GetProperty("id").GetInt32() > 0);
+        Assert.NotEmpty(listing.GetProperty("sort_options").EnumerateArray());
+        Assert.NotEmpty(GetListedProducts(listing));
     }
 
     [Fact]
@@ -51,9 +48,7 @@ public sealed class LiveDigikalaContractTests(LiveDigikalaApiFixture fixture)
 
         using var response = await fixture.Client.SearchProductsAsync(new ProductSearchRequest(fixture.SearchQuery));
 
-        var listing = response.RootElement.GetProperty("data").GetProperty("widgets").EnumerateArray()
-            .Single(widget => widget.GetProperty("type").GetString() == "vertical_product_listing")
-            .GetProperty("data");
+        var listing = GetProductListing(response);
         Assert.True(listing.GetProperty("pager").GetProperty("total_items").GetInt32() > 0);
         Assert.Contains(
             listing.GetProperty("widgets").EnumerateArray(),
@@ -79,7 +74,7 @@ public sealed class LiveDigikalaContractTests(LiveDigikalaApiFixture fixture)
             MaxPriceRials: maxPriceRials,
             OnlyAvailable: true));
 
-        var prices = response.RootElement.GetProperty("data").GetProperty("products").EnumerateArray()
+        var prices = GetListedProducts(GetProductListing(response))
             .Select(product => product.GetProperty("default_variant").GetProperty("price").GetProperty("selling_price").GetInt64())
             .ToList();
         Assert.NotEmpty(prices);
@@ -259,6 +254,57 @@ public sealed class LiveDigikalaContractTests(LiveDigikalaApiFixture fixture)
     }
 
     [Fact]
+    public async Task GetIncredibleOffersProductsAsync_ShouldReturnAmazingListing()
+    {
+        if (!IsLiveTestsEnabled())
+        {
+            return;
+        }
+
+        using var response = await fixture.Client.GetIncredibleOffersProductsAsync();
+
+        var products = GetListedProducts(GetProductListing(response));
+        Assert.NotEmpty(products);
+        Assert.All(products, product =>
+        {
+            Assert.True(product.GetProperty("id").GetInt64() > 0);
+            Assert.True(product.GetProperty("price").GetProperty("selling_price").GetInt64() > 0);
+        });
+    }
+
+    [Fact]
+    public async Task GetTagProductsAsync_ShouldReturnTagProducts()
+    {
+        if (!IsLiveTestsEnabled())
+        {
+            return;
+        }
+
+        using var response = await fixture.Client.GetTagProductsAsync("iphone-16");
+
+        var data = response.RootElement.GetProperty("data");
+        Assert.Equal("iphone-16", data.GetProperty("tag").GetProperty("code").GetString());
+        Assert.NotEmpty(data.GetProperty("products").EnumerateArray());
+        Assert.True(data.GetProperty("pager").GetProperty("total_pages").GetInt32() >= 1);
+    }
+
+    [Fact]
+    public async Task GetBrandProductsAsync_ShouldReturnBrandAndProducts()
+    {
+        if (!IsLiveTestsEnabled())
+        {
+            return;
+        }
+
+        using var response = await fixture.Client.GetBrandProductsAsync("samsung", sort: 7);
+
+        var data = response.RootElement.GetProperty("data");
+        Assert.Equal("samsung", data.GetProperty("brand").GetProperty("code").GetString());
+        Assert.NotEmpty(data.GetProperty("products").EnumerateArray());
+        Assert.True(data.GetProperty("pager").GetProperty("total_items").GetInt32() > 0);
+    }
+
+    [Fact]
     public async Task GetMagnetHomePageAsync_ShouldDeserializePostsEnvelope()
     {
         if (!IsLiveTestsEnabled())
@@ -299,6 +345,17 @@ public sealed class LiveDigikalaContractTests(LiveDigikalaApiFixture fixture)
     }
 
     private static bool IsLiveTestsEnabled() => LiveDigikalaApiFixture.IsEnabled;
+
+    private static JsonElement GetProductListing(JsonDocument response) =>
+        response.RootElement.GetProperty("data").GetProperty("widgets").EnumerateArray()
+            .Single(widget => widget.GetProperty("type").GetString() == "vertical_product_listing")
+            .GetProperty("data");
+
+    private static List<JsonElement> GetListedProducts(JsonElement listing) =>
+        listing.GetProperty("widgets").EnumerateArray()
+            .Where(widget => widget.GetProperty("type").GetString() == "product")
+            .Select(widget => widget.GetProperty("data"))
+            .ToList();
 }
 
 public sealed class LiveDigikalaApiFixture : IDisposable
